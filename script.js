@@ -59,14 +59,40 @@ function initFallbackMap(){
   `;
 }
 
+function switchToFallbackMap(){
+  if(mapMode==="fallback") return;
+  try{ if(map) map.remove(); }catch(e){ console.warn(e); }
+  map=null;
+  markerLayer=null;
+  const el=document.getElementById("map");
+  el.className="";
+  el.innerHTML="";
+  initFallbackMap();
+  renderMap(filteredReports());
+  toast("Fond de carte indisponible : affichage de la carte simplifiée.");
+}
+
 function initMap(){
   if(window.L){
     try{
       map = L.map("map",{zoomControl:true}).setView([46.6,2.4],6);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
-        maxZoom:19,
-        attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-      }).addTo(map);
+
+      const tiles = L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+        {
+          subdomains:"abcd",
+          maxZoom:20,
+          attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        }
+      );
+
+      let tileErrors=0;
+      tiles.on("tileerror",()=>{
+        tileErrors++;
+        if(tileErrors>=6 && mapMode==="leaflet") switchToFallbackMap();
+      });
+
+      tiles.addTo(map);
       markerLayer = L.layerGroup().addTo(map);
       mapMode = "leaflet";
       return;
