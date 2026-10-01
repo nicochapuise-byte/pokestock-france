@@ -22,11 +22,21 @@ const cityCoords = {
   rennes:[48.1173,-1.6778],strasbourg:[48.5734,7.7521],montpellier:[43.6108,3.8767],grenoble:[45.1885,5.7245]
 };
 
-let reports = [...seedReports, ...JSON.parse(localStorage.getItem("pokestockReports") || "[]")];
+function readLocalReports(){
+  try { return JSON.parse(localStorage.getItem("pokestockReports") || "[]"); }
+  catch(e){ console.warn("Stockage local indisponible", e); return []; }
+}
+function writeLocalReports(items){
+  try { localStorage.setItem("pokestockReports", JSON.stringify(items)); return true; }
+  catch(e){ console.warn("Stockage local indisponible", e); return false; }
+}
+
+let reports = [...seedReports, ...readLocalReports()];
 let selectedSeries = new Set();
 let photoData = "";
 let map;
 let markerLayer;
+let mapMode = "fallback";
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -35,13 +45,36 @@ const seriesById = id => series.find(s=>s.id===id) || {name:"Autre",color:"#6474
 function ageClass(hours){ return hours<24?"fresh":hours<=72?"medium":"old"; }
 function ageText(hours){ return hours<24?(hours<1?"À l'instant":"Il y a "+hours+" h"):hours<=72?"Il y a "+Math.round(hours/24)+" j":"À vérifier"; }
 
+function initFallbackMap(){
+  const el = document.getElementById("map");
+  mapMode = "fallback";
+  el.classList.add("fallback-map");
+  el.innerHTML = `
+    <div class="fallback-sky"></div>
+    <div class="france-shape">
+      <span class="france-label">FRANCE</span>
+    </div>
+    <div class="fallback-pins" id="fallbackPins"></div>
+    <div class="fallback-note">Carte simplifiée — mode hors dépendance</div>
+  `;
+}
+
 function initMap(){
-  map = L.map("map",{zoomControl:true}).setView([46.6,2.4],6);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
-    maxZoom:19,
-    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-  }).addTo(map);
-  markerLayer = L.layerGroup().addTo(map);
+  if(window.L){
+    try{
+      map = L.map("map",{zoomControl:true}).setView([46.6,2.4],6);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+        maxZoom:19,
+        attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(map);
+      markerLayer = L.layerGroup().addTo(map);
+      mapMode = "leaflet";
+      return;
+    }catch(e){
+      console.warn("Leaflet n'a pas pu démarrer, utilisation de la carte simplifiée.", e);
+    }
+  }
+  initFallbackMap();
 }
 
 function makeIcon(color){
@@ -75,14 +108,31 @@ function renderFilters(){
   }));
 }
 
+function projectToFallback(lat,lng){
+  const minLng=-5.5,maxLng=9.8,minLat=41,maxLat=51.5;
+  const x=Math.max(6,Math.min(94,((lng-minLng)/(maxLng-minLng))*100));
+  const y=Math.max(6,Math.min(94,((maxLat-lat)/(maxLat-minLat))*100));
+  return [x,y];
+}
+
 function renderMap(items){
-  markerLayer.clearLayers();
-  items.forEach(r=>{
-    const s=seriesById(r.series);
-    L.marker([r.lat,r.lng],{icon:makeIcon(s.color)})
-      .bindPopup(`<div class="popup-card"><b>${r.product}</b><span>${r.store} • ${r.city}</span><br><span>${ageText(r.hours||0)} • ${r.price?Number(r.price).toFixed(2)+" €":"Prix non indiqué"}</span></div>`)
-      .addTo(markerLayer);
-  });
+  if(mapMode==="leaflet" && markerLayer){
+    markerLayer.clearLayers();
+    items.forEach(r=>{
+      const s=seriesById(r.series);
+      L.marker([r.lat,r.lng],{icon:makeIcon(s.color)})
+        .bindPopup(`<div class="popup-card"><b>${r.product}</b><span>${r.store} • ${r.city}</span><br><span>${ageText(r.hours||0)} • ${r.price?Number(r.price).toFixed(2)+" €":"Prix non indiqué"}</span></div>`)
+        .addTo(markerLayer);
+    });
+  }else{
+    const holder=document.getElementById("fallbackPins");
+    if(holder){
+      holder.innerHTML=items.map(r=>{
+        const s=seriesById(r.series),p=projectToFallback(r.lat,r.lng);
+        return `<button class="fallback-pin" style="left:${p[0]}%;top:${p[1]}%;background:${s.color}" title="${r.product} — ${r.store}, ${r.city}" aria-label="${r.product}, ${r.store}, ${r.city}"></button>`;
+      }).join("");
+    }
+  }
   $("#visibleCount").textContent=items.length;
 }
 
@@ -156,8 +206,20 @@ function bindUI(){
     if(!navigator.geolocation){toast("La géolocalisation n'est pas disponible dans ce navigateur.");return}
     navigator.geolocation.getCurrentPosition(pos=>{
       const p=[pos.coords.latitude,pos.coords.longitude];
-      map.flyTo(p,12);
-      L.circleMarker(p,{radius:9,color:"#2968e8",fillColor:"#fff",fillOpacity:1,weight:5}).addTo(map).bindPopup("Tu es ici").openPopup();
+      if(mapMode==="leaflet" && map){
+        map.flyTo(p,12);
+        L.circleMarker(p,{radius:9,color:"#2968e8",fillColor:"#fff",fillOpacity:1,weight:5}).addTo(map).bindPopup("Tu es ici").openPopup();
+      }else{
+        const holder=document.getElementById("fallbackPins");
+        if(holder){
+          const xy=projectToFallback(p[0],p[1]);
+          const me=document.createElement("button");
+          me.className="fallback-pin me";
+          me.style.left=xy[0]+"%";me.style.top=xy[1]+"%";
+          me.title="Tu es ici";
+          holder.appendChild(me);
+        }
+      }
       $("#reportLat").value=p[0];$("#reportLng").value=p[1];
       toast("Position trouvée !");
     },()=>toast("Autorise la localisation, ou ouvre le site via HTTPS/localhost pour cette fonction."));
@@ -182,11 +244,14 @@ function bindUI(){
       qty:Number(data.get("quantity"))||1,lat,lng,hours:0,
       img:photoData||"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png"
     };
-    const local=JSON.parse(localStorage.getItem("pokestockReports")||"[]");
-    local.unshift(report);localStorage.setItem("pokestockReports",JSON.stringify(local));
+    const local=readLocalReports();
+    local.unshift(report);
+    writeLocalReports(local);
     reports.unshift(report);
     e.currentTarget.reset();photoData="";$("#photoPreview").innerHTML="<span>🖼️ Aperçu de la photo</span>";
-    closeModal();renderAll();map.flyTo([lat,lng],11);toast("Signalement ajouté à ta démo !");
+    closeModal();renderAll();
+    if(mapMode==="leaflet" && map) map.flyTo([lat,lng],11);
+    toast("Signalement ajouté à ta démo !");
   });
 }
 
