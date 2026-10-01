@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="PokéStock France — carte communautaire des produits Pokémon disponibles en magasin.">
+  <title>PokéStock France</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#accueil" aria-label="PokéStock France">
+      <span class="ball-logo" aria-hidden="true"><i></i></span>
+      <span>PokéStock <b>France</b></span>
+    </a>
+    <nav class="navlinks">
+      <a href="#carte">Carte</a>
+      <a href="#disponibilites">Disponibilités</a>
+      <a href="#fonctionnement">Comment ça marche ?</a>
+    </nav>
+    <button class="btn btn-yellow" id="openReportTop">+ Signaler</button>
+  </header>
+
+  <main id="accueil">
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">⚡ La chasse aux stocks commence ici</span>
+        <h1>Trouve les produits <span>Pokémon</span><br>disponibles près de chez toi.</h1>
+        <p>Une carte communautaire française pour repérer boosters, coffrets, ETB et collections signalés en magasin par d’autres passionnés.</p>
+        <div class="hero-actions">
+          <a class="btn btn-red" href="#carte">🗺️ Explorer la carte</a>
+          <button class="btn btn-white" id="openReportHero">📸 Signaler un produit</button>
+        </div>
+        <div class="hero-stats">
+          <div><b id="reportCount">0</b><span>signalements</span></div>
+          <div><b id="cityCount">0</b><span>villes</span></div>
+          <div><b id="seriesCount">0</b><span>séries suivies</span></div>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+        <div class="card-stack card-a">
+          <span class="mini-tag">En stock</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png" alt="">
+          <strong>Booster Écarlate & Violet</strong>
+          <small>Carrefour • Paris</small>
+        </div>
+        <div class="card-stack card-b">
+          <span class="mini-tag blue">Nouveau</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/151.png" alt="">
+          <strong>Collection 151</strong>
+          <small>Fnac • Lyon</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="section map-section" id="carte">
+      <div class="section-title">
+        <div>
+          <span class="eyebrow dark">📍 Carte des stocks</span>
+          <h2>Que trouve-t-on près de chez toi ?</h2>
+        </div>
+        <button class="btn btn-blue" id="locateBtn">⌖ Me localiser</button>
+      </div>
+
+      <div class="finder">
+        <aside class="filters">
+          <label class="searchbox">
+            <span>🔎</span>
+            <input id="searchInput" type="search" placeholder="Ville, magasin, produit…">
+          </label>
+
+          <div class="filter-head">
+            <h3>Filtrer par série</h3>
+            <button id="clearFilters">Tout effacer</button>
+          </div>
+          <div id="seriesFilters" class="series-filters"></div>
+
+          <div class="legend">
+            <h4>État du signalement</h4>
+            <p><i class="dot fresh"></i> Récent : moins de 24 h</p>
+            <p><i class="dot medium"></i> À vérifier : 1 à 3 jours</p>
+            <p><i class="dot old"></i> Ancien : plus de 3 jours</p>
+          </div>
+
+          <div class="community-box">
+            <b>📸 Preuve photo</b>
+            <p>Les signalements communautaires peuvent inclure une photo prise en magasin.</p>
+          </div>
+        </aside>
+
+        <div class="map-wrap">
+          <div id="map"></div>
+          <div class="map-chip">🇫🇷 France • <span id="visibleCount">0</span> stocks affichés</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="disponibilites">
+      <div class="section-title">
+        <div>
+          <span class="eyebrow dark">🔥 Signalements récents</span>
+          <h2>Dernières disponibilités</h2>
+        </div>
+        <button class="btn btn-red" id="openReportList">+ Ajouter un stock</button>
+      </div>
+      <div id="stockGrid" class="stock-grid"></div>
+      <p id="emptyState" class="empty-state" hidden>Aucun signalement ne correspond à tes filtres.</p>
+    </section>
+
+    <section class="section how" id="fonctionnement">
+      <span class="eyebrow dark">✨ Simple et communautaire</span>
+      <h2>Trois étapes pour aider la communauté</h2>
+      <div class="steps">
+        <article><span>1</span><b>Repère</b><p>Tu vois un produit Pokémon en rayon.</p></article>
+        <article><span>2</span><b>Photographie</b><p>Ajoute une photo et les informations utiles.</p></article>
+        <article><span>3</span><b>Partage</b><p>Le signalement apparaît sur la carte pour les autres.</p></article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="brand small"><span class="ball-logo"><i></i></span><span>PokéStock France</span></div>
+    <p>Projet communautaire non affilié à Nintendo, Game Freak ou The Pokémon Company.</p>
+  </footer>
+
+  <div class="modal" id="reportModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <form class="modal-card" id="reportForm">
+      <button type="button" class="modal-close" data-close-modal aria-label="Fermer">×</button>
+      <span class="eyebrow dark">📸 Nouveau signalement</span>
+      <h2>Signaler un produit</h2>
+      <p class="modal-intro">Cette démo enregistre ton signalement uniquement dans ton navigateur.</p>
+
+      <div class="form-grid">
+        <label><span>Magasin *</span><input name="store" required placeholder="Ex. Carrefour Market"></label>
+        <label><span>Ville *</span><input name="city" required placeholder="Ex. Lille"></label>
+        <label><span>Série *</span><select name="series" id="reportSeries" required></select></label>
+        <label><span>Produit *</span><input name="product" required placeholder="Ex. Coffret 6 boosters"></label>
+        <label><span>Prix (€)</span><input name="price" type="number" min="0" step="0.01" placeholder="29.99"></label>
+        <label><span>Quantité vue</span><input name="quantity" type="number" min="1" max="999" value="1"></label>
+        <label class="wide"><span>Photo</span><input name="photo" id="photoInput" type="file" accept="image/*"></label>
+        <div class="photo-preview wide" id="photoPreview"><span>🖼️ Aperçu de la photo</span></div>
+      </div>
+
+      <input type="hidden" name="lat" id="reportLat">
+      <input type="hidden" name="lng" id="reportLng">
+      <p class="coord-help">La démo positionnera le signalement près de la ville indiquée ou au centre de la France.</p>
+      <button class="btn btn-red full" type="submit">Publier le signalement</button>
+    </form>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
