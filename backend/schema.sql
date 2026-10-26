@@ -65,7 +65,10 @@ CREATE TABLE IF NOT EXISTS public.catalog_series (
   color varchar(9) NOT NULL DEFAULT '#5467A2',
   source_url text,
   is_active boolean NOT NULL DEFAULT true,
-  display_order integer NOT NULL DEFAULT 0
+  display_order integer NOT NULL DEFAULT 0,
+  block_name varchar(90),
+  set_code varchar(25),
+  release_date date
 );
 CREATE TABLE IF NOT EXISTS public.catalog_products (
   id varchar(90) PRIMARY KEY,
@@ -74,7 +77,8 @@ CREATE TABLE IF NOT EXISTS public.catalog_products (
   name varchar(180) NOT NULL,
   source_url text,
   is_active boolean NOT NULL DEFAULT true,
-  display_order integer NOT NULL DEFAULT 0
+  display_order integer NOT NULL DEFAULT 0,
+  release_date date
 );
 CREATE TABLE IF NOT EXISTS public.catalog_variants (
   id varchar(120) PRIMARY KEY,
@@ -94,3 +98,11 @@ ALTER TABLE public.stock_reports ADD COLUMN IF NOT EXISTS catalog_variant_id var
 CREATE INDEX IF NOT EXISTS catalog_products_series_idx ON public.catalog_products(series_id);
 CREATE INDEX IF NOT EXISTS catalog_variants_product_idx ON public.catalog_variants(product_id);
 CREATE INDEX IF NOT EXISTS stock_reports_catalog_variant_idx ON public.stock_reports(catalog_variant_id);
+
+-- Migration évolutive des bases ayant déjà le catalogue initial.
+ALTER TABLE public.catalog_series ADD COLUMN IF NOT EXISTS block_name varchar(90);
+ALTER TABLE public.catalog_series ADD COLUMN IF NOT EXISTS set_code varchar(25);
+ALTER TABLE public.catalog_series ADD COLUMN IF NOT EXISTS release_date date;
+ALTER TABLE public.catalog_products ADD COLUMN IF NOT EXISTS release_date date;
+CREATE INDEX IF NOT EXISTS catalog_series_block_idx ON public.catalog_series(block_name,display_order);
+CREATE INDEX IF NOT EXISTS catalog_series_release_idx ON public.catalog_series(release_date DESC);
