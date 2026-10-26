@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="PokéStock France : administration des photographies officielles ou autorisées du catalogue Pokémon.">
+<meta name="robots" content="noindex,nofollow">
+<title>Administration du catalogue — PokéStock France</title>
+<link rel="stylesheet" href="admin-page.css?v=20261026-admin-v1">
+</head>
+<body>
+<header class="adm-header">
+  <a class="adm-brand" href="index.html"><span class="adm-ball" aria-hidden="true"></span>PokéStock <b>France</b></a>
+  <a class="adm-back" href="index.html">← Retour à la carte</a>
+</header>
+<main class="adm-layout">
+  <section class="adm-intro">
+    <div><span class="adm-eyebrow">🛡️ ESPACE ADMINISTRATEUR</span>
+      <h1>Photothèque des <em>articles Pokémon</em></h1>
+      <p>Choisis une série et un art set, ajoute une photo, puis utilise-la automatiquement sur la carte et lors de la création des signalements.</p>
+    </div>
+    <span class="adm-lock">🔒 Accès sécurisé</span>
+  </section>
+
+  <div id="admGate" class="adm-gate" role="status">
+    <div class="adm-spinner"></div><h2>Vérification du compte…</h2>
+    <p>La photothèque est réservée aux administrateurs de PokéStock France.</p>
+  </div>
+  <div id="admProtected" hidden>
+    <section class="adm-stats" aria-label="Statistiques du catalogue">
+      <div class="adm-stat"><span>🎴 Variantes</span><b id="admTotal">—</b><small>Références du catalogue</small></div>
+      <div class="adm-stat"><span>📷 Avec photo</span><b id="admWithImage">—</b><small>Photos validées</small></div>
+      <div class="adm-stat"><span>🖼️ À compléter</span><b id="admMissing">—</b><small>Photographies manquantes</small></div>
+    </section>
+    <div class="adm-progress"><span id="admProgressLabel">Couverture de la photothèque</span><progress id="admProgress" max="100" value="0"></progress></div>
+    <nav class="adm-tabs" aria-label="Rubriques administrateur">
+      <button type="button" class="adm-tab is-active" data-panel="gallery" aria-current="page">🖼️ Photothèque</button>
+      <button type="button" class="adm-tab" data-panel="upload">➕ Ajouter une photo</button>
+      <button type="button" class="adm-tab" data-panel="bulk">📚 Import multiple</button>
+      <button type="button" class="adm-tab" data-panel="proposals">👥 Photos proposées <span id="admPendingCount"></span></button>
+      <a class="adm-tab adm-tab-link" href="index.html#administration">🗺️ Signalements ↗</a>
+    </nav>
+    <section id="admGalleryPanel" class="adm-panel">
+      <div class="adm-section-head"><div><h2>Catalogue des articles</h2><p>La photographie validée devient l'image principale du produit pour tous les visiteurs.</p></div>
+        <button type="button" class="adm-quiet-button" id="admExport">📥 Exporter les photos manquantes</button></div>
+      <div class="adm-filter-row">
+        <label>🔎 Rechercher<input id="admSearch" type="search" placeholder="151, Noctali, ETB, ME03…" autocomplete="off"></label>
+        <label>📁 Série<select id="admSeriesFilter"><option value="">Toutes les séries</option></select></label>
+        <label>📷 Couverture<select id="admCoverageFilter">
+          <option value="missing">Sans photographie</option>
+          <option value="all">Tous les produits</option>
+          <option value="present">Avec photographie</option>
+        </select></label>
+      </div>
+      <div class="adm-list-head"><span id="admListCount">Chargement…</span><small>Séries classées par date de sortie (30ᵉ Anniversaire en tête)</small></div>
+      <div id="admPhotoGallery" class="adm-product-grid"></div>
+      <button type="button" id="admGalleryMore" class="adm-more" hidden>Afficher plus d'articles ↓</button>
+    </section>
+
+    <section id="admUploadPanel" class="adm-panel" hidden>
+      <div class="adm-section-head"><div><h2>Ajouter ou remplacer une photo</h2>
+        <p>La référence et sa variante doivent correspondre exactement à l'image que tu importes.</p></div></div>
+      <div class="adm-formgrid">
+        <div class="adm-fieldbox">
+          <label>🎴 Série<select id="admPickSeries"><option value="">Choisir une extension</option></select></label>
+          <label>📦 Article<select id="admPickProduct" disabled><option value="">Choisis une série</option></select></label>
+          <label>🎨 Art set / Variante<select id="admPickVariant" disabled><option value="">Choisis un produit</option></select></label>
+          <p id="admSelectedInfo" class="adm-tip">Choisis un produit ou utilise « Ajouter » depuis la photothèque.</p>
+          <div class="adm-image-preview">
+            <div><small>IMAGE PRINCIPALE ACTUELLE</small><img id="admCurrentImage" src="catalog-placeholder.svg" alt="Visuel actuel"></div>
+            <div><small>NOUVELLE PHOTO</small><img id="admNewImage" src="catalog-placeholder.svg" alt="Aperçu de l'image à ajouter"></div>
+          </div>
+        </div>
+        <div class="adm-fieldbox">
+          <label>📷 Sélectionner la photo<input id="admPhotoFile" type="file" accept="image/*"></label>
+          <p class="adm-tip">JPG, PNG ou HEIC reconnu par Safari, 10 Mo maximum. Image compressée automatiquement.</p>
+          <label>📄 Origine et droits de publication<textarea id="admRights" rows="3" maxlength="240" placeholder="Par exemple : photographie personnelle dont je détiens les droits"></textarea></label>
+          <label class="adm-checkbox"><input type="checkbox" id="admRightsCheck"> Je confirme avoir le droit de publier cette image sur PokéStock.</label>
+          <button id="admUploadOne" type="button" class="adm-primary">💾 Enregistrer comme photo principale</button>
+          <p id="admUploadStatus" class="adm-message" role="status"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="admBulkPanel" class="adm-panel" hidden>
+      <div class="adm-section-head"><div><h2>Importer plusieurs photographies</h2>
+        <p>Associe chaque fichier à un article précis. Tu peux importer jusqu'à 25 photos par opération.</p></div></div>
+      <div class="adm-fieldbox adm-bulk-controls">
+        <label>📁 Fichiers<input id="admBulkFiles" type="file" accept="image/*" multiple></label>
+        <p class="adm-tip">Astuce : nomme le fichier avec l'identifiant de la variante, par exemple <code>prism-minitin-noctali.jpg</code>, pour une association automatique.</p>
+        <label>📄 Origine et droits communs au lot<textarea id="admBulkRights" maxlength="240" rows="2" placeholder="Photographies personnelles originales, tous droits détenus"></textarea></label>
+        <label class="adm-checkbox"><input id="admBulkRightsCheck" type="checkbox"> Je confirme les droits de publication sur toutes ces photographies.</label>
+        <label class="adm-checkbox"><input id="admBulkReplace" type="checkbox"> Autoriser le remplacement de photos existantes</label>
+        <div id="admBulkItems" class="adm-bulk-items"></div>
+        <button id="admBulkSend" type="button" class="adm-primary" disabled>📤 Importer les photos associées</button>
+        <p id="admBulkStatus" class="adm-message" role="status"></p>
+      </div>
+    </section>
+
+    <section id="admProposalsPanel" class="adm-panel" hidden>
+      <div class="adm-section-head"><div><h2>Photographies proposées par les membres</h2>
+        <p>Vérifie le bon produit et les droits déclarés avant d'approuver une proposition.</p></div>
+        <button id="admRefreshProposals" type="button" class="adm-quiet-button">↻ Actualiser</button></div>
+      <p id="admProposalStatus" role="status" class="adm-message"></p>
+      <div id="admProposals" class="adm-proposal-grid"></div>
+    </section>
+  </div>
+</main>
+<footer class="adm-footer">PokéStock France · Gestion sécurisée des visuels · Les photographies de preuve des signalements restent privées.</footer>
+<script src="admin-page.js?v=20261026-admin-v1"></script>
+</body>
+</html>
