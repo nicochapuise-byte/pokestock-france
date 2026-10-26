@@ -15,7 +15,7 @@ Une connexion Internet est nécessaire (fonds OpenStreetMap, adresses IGN, authe
 
 ## Catalogue de références et art sets (octobre 2026)
 
-Catalogue structuré dans PostgreSQL : 6 séries, 22 références de produits et 48 variantes/art sets documentés avec liens vers les fiches sources. Le contenu de démarrage se trouve dans `backend/catalog-seed.sql` et le schéma dans `backend/schema.sql`.
+Catalogue structuré dans PostgreSQL : 125 séries, 271 références / types de produits scellés et 333 variantes et art sets (dont certaines références provisoires indiquées « illustration non précisée ») avec liens vers les fiches sources. Le contenu de démarrage se trouve dans `backend/catalog-seed.sql` et le schéma dans `backend/schema.sql`.
 
 - `GET /catalog` donne les séries, produits, types et art sets actifs.
 - Le formulaire choisit successivement **série → type d'article → référence → art set**. Le serveur déduit le nom et la série à partir de la variante sélectionnée et enregistre `stock_reports.catalog_variant_id` ; l'utilisateur ne peut pas injecter un produit inexistant par texte libre.
@@ -29,6 +29,18 @@ Catalogue structuré dans PostgreSQL : 6 séries, 22 références de produits et
 
 
 Les variantes de boosters supplémentaires (Écarlate et Violet, Méga-Évolution, Évolutions Prismatiques, Destinées de Paldea, Foudre Noire et Flamme Blanche) ont été complétées d'après une galerie de référence de visuels de boosters. Aucune image de ces pages n'est réhébergée sans licence.
+
+## Extension historique du catalogue (26 octobre 2026)
+
+Source principale : **PokéCardex**, [catalogue des séries](https://www.pokecardex.com/series) et [catalogue des produits](https://www.pokecardex.com/produits), complétés par son [calendrier des sorties 2026](https://www.pokecardex.com/forums/viewtopic.php?t=49894).
+
+- Séries regroupées par bloc : Méga-Évolution, Écarlate et Violet, Épée et Bouclier, Soleil et Lune, XY, Noir et Blanc, HeartGold SoulSilver, Platine, Diamant et Perle, EX et classiques Wizards.
+- Une **série de cartes n'est pas un article scellé** : chaque série est une entité distincte, associée à ses références de booster, ETB, display et coffrets lorsqu'elles ont été documentées ; une catégorie générique peut présenter « modèle / illustration non précisé(e) » pour éviter d'inventer un art set précis.
+- Variantes identifiées avec leur illustration exacte pour les boosters ME03, ME04, ME05, ME06 ; mini-boîtes Héros Transcendants et Illumis ; collections spéciales et packs documentés en 2026.
+- Filtres de carte repliables par bloc, recherche par nom ou code, formulaire série → type → article → variante avec recherche de série. Les nouveautés non sorties sont visibles comme **🔜** mais ne peuvent pas être signalées ; date contrôlée par le serveur, par exemple **Règne Delta** annoncé pour le 6 novembre 2026.
+- Les **333 variantes** incluent des choix génériques « Art set non précisé » quand aucune donnée sûre n'a été recensée. Ce nombre ne signifie pas que 333 photographies sont disponibles.
+- PokéCardex n'annonce pas d'API publique pour son catalogue : il ne s'agit **pas d'une synchronisation officielle automatique**, mais d'une première importation documentée. Ne pas réhéberger leurs visuels ou images Pokémon sans autorisation.
+- Scripts idempotents : `backend/catalog-expanded-series-2026.sql`, `backend/catalog-expanded-products-2026.sql`, `backend/catalog-expanded-artsets-2026.sql`, `backend/catalog-confirmed-products-2026.sql`. Les six séries initiales et les signalements existants ont été préservés.
 
 ## Signalement d'un stock
 
