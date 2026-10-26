@@ -159,3 +159,34 @@
   .adm-cardex-candidate img{height:105px}
   .adm-cardex-chosen{max-height:225px}
 }
+
+/* Suivi des images sur toutes les séries PokéCardex. */
+.adm-series-coverage{margin:18px 0;border:1px solid #dbe5fa;border-radius:14px;background:#f7f9ff;overflow:hidden}
+.adm-series-coverage>summary{padding:15px 16px;color:#3155a9;font-size:13px;font-weight:900;cursor:pointer;line-height:1.4}
+.adm-series-coverage[open]>summary{border-bottom:1px solid #dae5f8}
+.adm-series-coverage-inner{padding:14px;display:grid;gap:12px}
+.adm-series-coverage-inner p{font-size:12px;color:#657690;margin:0;line-height:1.5}
+.adm-series-coverage-inner input{width:100%;padding:12px;border:1px solid #cad8f1;border-radius:10px;font-size:13px;min-width:0}
+.adm-coverage-entries{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;max-height:480px;overflow:auto;overscroll-behavior:contain}
+.adm-series-coverage-row{border:1px solid #dae5f6;border-radius:12px;background:#fff;display:flex;gap:10px;align-items:center;justify-content:space-between;padding:11px;min-width:0}
+.adm-series-coverage-title{display:grid;gap:5px;min-width:0;flex:1}
+.adm-series-coverage-title strong{font-size:12px;color:#264277;line-height:1.4;overflow-wrap:anywhere}
+.adm-series-coverage-title small{font-size:10px;color:#738099;line-height:1.4}
+.adm-series-coverage-title progress{width:100%;height:8px;accent-color:#16a66c}
+.adm-series-coverage-row button{border:0;border-radius:9px;background:#eaf1ff;color:#2c58ab;font-size:11px;font-weight:850;padding:10px 8px;min-width:84px;white-space:normal;line-height:1.3}
+.adm-cardex-bulk-details{margin:16px 0;padding:12px;border:1px solid #d1dcf4;border-radius:12px;background:#f3f6ff}
+.adm-cardex-bulk-details summary{color:#2b509b;font-size:12px;font-weight:900;cursor:pointer}
+.adm-cardex-bulk-details p{font-size:11px;color:#65738e;line-height:1.55}
+.adm-cardex-bulk-details textarea{margin:8px 0;min-height:95px;width:100%}
+.adm-bulk-results{display:grid;gap:9px;margin-top:12px}
+.adm-bulk-cardex-row{display:grid;grid-template-columns:78px minmax(0,1fr);gap:10px;padding:10px;background:#fff;border:1px solid #dfe6f4;border-radius:11px}
+.adm-bulk-cardex-row img{width:78px;height:95px;object-fit:contain;background:#f5f7ff;border-radius:8px}
+.adm-bulk-cardex-row>div{min-width:0;display:grid;align-content:start;gap:7px}
+.adm-bulk-cardex-row strong{font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.adm-bulk-cardex-row small{font-size:10px;color:#6b7b99}
+.adm-bulk-cardex-row button{border:0;border-radius:8px;background:#e6efff;color:#2c5eb8;font-size:11px;font-weight:800;padding:10px 7px}
+@media(max-width:690px){
+ .adm-coverage-entries{grid-template-columns:1fr;max-height:440px}
+ .adm-series-coverage-row button{min-width:90px}
+ .adm-series-coverage-inner{padding:10px}
+}
