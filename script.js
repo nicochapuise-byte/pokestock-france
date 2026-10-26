@@ -190,14 +190,75 @@ function projectToFallback(lat,lng){
   return [x,y];
 }
 
+
+/**
+ * Carte : une popup riche avec le visuel public du catalogue.
+ * Ne jamais exposer les photos de preuve privées des contributeurs.
+ */
+function buildProductPopup(report, options={}){
+  const title=escapeHtml(report.product||"Produit Pokémon");
+  const store=escapeHtml(report.store||"Magasin non précisé");
+  const city=escapeHtml(report.city||"");
+  const artSet=report.artSet?escapeHtml(report.artSet):"";
+  const status=escapeHtml(options.status||(
+    report.demo?"🧪 Exemple fictif":report.votes?.state==="confirmed"?"✅ Stock confirmé par des membres":
+    report.votes?.state==="out_of_stock"?"❌ Rupture signalée":"🟠 Non vérifié"
+  ));
+  const approvedCatalogImage=!!(
+    report.catalogVariantId&&report.img&&safeImage(report.img)!=="catalog-placeholder.svg"
+  );
+  const demoIllustration=!!(report.demo&&report.img);
+  const image=approvedCatalogImage||demoIllustration?safeImage(report.img):"catalog-placeholder.svg";
+  const imageLabel=approvedCatalogImage?"Visuel du catalogue":demoIllustration?"Illustration d’exemple":"Visuel indicatif";
+  const votes=report.votes
+    ?`<p class="popup-votes">✅ ${Number(report.votes.available)||0} confirmation(s) · ❌ ${Number(report.votes.unavailable)||0} rupture(s)</p>`
+    :"";
+  const amount=report.price!==null&&report.price!==undefined&&report.price!==""
+    ?Number(report.price).toFixed(2)+" €":"Prix non indiqué";
+  return `
+    <div class="popup-product-card">
+      <div class="popup-product-media">
+        <img class="popup-product-image" src="${image}"
+          alt="${approvedCatalogImage?"Visuel catalogue : ":"Illustration indicative pour "}${title}"
+          loading="eager">
+        <span class="popup-product-picture-note">${imageLabel}</span>
+      </div>
+      <div class="popup-product-details">
+        <strong class="popup-product-title">${title}</strong>
+        ${artSet?`<span class="popup-product-artset">🎨 ${artSet}</span>`:""}
+        <span class="popup-product-store">📍 ${store} · ${city}</span>
+        <span class="popup-product-status">${status}</span>
+        <span class="popup-product-age">🕒 ${escapeHtml(ageText(reportHours(report)))}</span>
+        <span class="popup-product-price">💶 ${escapeHtml(amount)}</span>
+      </div>
+      ${votes}
+      <p class="popup-product-disclaimer">Stock déclaré par la communauté, non garanti en temps réel.</p>
+    </div>`;
+}
+function attachPopupImageFallback(marker){
+  marker.on("popupopen",()=>{
+    const img=marker.getPopup()?.getElement()?.querySelector(".popup-product-image");
+    if(!img)return;
+    const fallback=()=>{
+      img.src="catalog-placeholder.svg";
+      img.alt="Illustration indicative du catalogue";
+      const note=img.closest(".popup-product-media")?.querySelector(".popup-product-picture-note");
+      if(note)note.textContent="Visuel indicatif";
+    };
+    img.addEventListener("error",fallback,{once:true});
+    if(img.complete&&img.naturalWidth===0&&img.src&&!img.src.endsWith("/catalog-placeholder.svg"))fallback();
+  });
+}
+
 function renderMap(items){
   if(mapMode==="leaflet" && markerLayer){
     markerLayer.clearLayers();
     items.forEach(r=>{
       const s=seriesById(r.series);
-      L.marker([r.lat,r.lng],{icon:makeIcon(s.color)})
-        .bindPopup(`<div class="popup-card"><b>${escapeHtml(r.product)}</b><span>${escapeHtml(r.store)} • ${escapeHtml(r.city)}</span><br><span>${r.demo?"🧪 Exemple • ":""}${ageText(reportHours(r))} • ${r.price?Number(r.price).toFixed(2)+" €":"Prix non indiqué"}</span></div>`)
+      const marker=L.marker([r.lat,r.lng],{icon:makeIcon(s.color)})
+        .bindPopup(buildProductPopup(r),{maxWidth:330,minWidth:265,autoPan:true})
         .addTo(markerLayer);
+      attachPopupImageFallback(marker);
     });
   }else{
     const holder=document.getElementById("fallbackPins");
