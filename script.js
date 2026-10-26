@@ -427,9 +427,18 @@ function bindUI(){
     if(!photoData){toast("Ajoute une photo du produit en rayon.");return;}
     const api=window.pokestockApi;
     if(!api?.ready){toast("Initialisation de la connexion en cours. Réessaie.");return;}
-    const token=await api.getToken();
-    if(!token){
+    if(!api.getUser()){
       toast("Connecte-toi pour publier un signalement communautaire.");
+      api.openLogin();return;
+    }
+    let token;
+    try{token=await api.getToken();}
+    catch(error){
+      toast(error.message||"Impossible de valider la session.");
+      return;
+    }
+    if(!token){
+      toast("La session a expiré. Reconnecte-toi puis réessaie.");
       api.openLogin();return;
     }
     const payload={
