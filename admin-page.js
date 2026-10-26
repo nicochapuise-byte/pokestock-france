@@ -331,6 +331,7 @@ async function reloadCatalog(){
     $("admPickVariant").value=selected;
     setSelected(selected);
   }
+  await loadAllSeriesCoverage();
 }
 function batchClear(){
   for(const item of batch)if(item.previewUrl)URL.revokeObjectURL(item.previewUrl);
@@ -503,7 +504,6 @@ async function importCardexSelected(){
       method:"POST",body:{imageUrl:cardexImageUrl,pageUrl,rightsNote,rightsConfirmed:true},long:true
     });
     await reloadCatalog();
-    await loadAllSeriesCoverage();
     setMessage("admCardexImportStatus","✅ "+result.message+" La photo s'affiche désormais sur les signalements de cette référence.");
     $("admCardexRightsConfirm").checked=false;
   }catch(error){setMessage("admCardexImportStatus","⚠️ "+error.message,true);}
