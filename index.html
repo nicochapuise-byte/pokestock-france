@@ -7,7 +7,7 @@
   <title>PokéStock France</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="styles.css?v=20261026-popupfix-v2">
+  <link rel="stylesheet" href="styles.css?v=20261026-fullseries-v1">
 </head>
 <body>
   <header class="topbar">
@@ -77,7 +77,10 @@
             <h3>Filtrer par série</h3>
             <button id="clearFilters">Tout effacer</button>
           </div>
-          <div id="seriesFilters" class="series-filters"></div>
+          <label class="series-filter-search"><span>🔎 Rechercher une extension</span>
+            <input id="seriesFilterSearch" type="search" placeholder="Ex. Évolution Céleste, EB07…">
+          </label>
+          <div id="seriesFilters" class="series-filters" aria-label="Filtres des extensions Pokémon par bloc"></div>
 
           <div class="legend">
             <h4>État du signalement</h4>
@@ -162,6 +165,7 @@
       <section class="admin-catalog-media" id="adminCatalogMedia">
         <h3>🖼️ Images du catalogue</h3>
         <p>Ajoute une image seulement si tu détiens les droits ou une autorisation explicite permettant sa diffusion sur ce site. À défaut, nous affichons un visuel neutre.</p>
+        <label><span>Rechercher une référence</span><input id="adminCatalogSearch" type="search" placeholder="Ex. booster 151, Noctali, ME06…"></label>
         <label><span>Référence / art set</span><select id="adminCatalogVariant"><option value="">Chargement du catalogue…</option></select></label>
         <label><span>Image JPEG/PNG à importer (10 Mo maximum)</span><input id="adminCatalogPhoto" type="file" accept="image/*"></label>
         <label><span>Justificatif de l'autorisation *</span><textarea id="adminCatalogRights" maxlength="240" placeholder="Ex. Photo originale prise par moi, droits d'utilisation du visuel accordés par..."></textarea></label>
@@ -215,7 +219,11 @@
         <div class="catalog-picker wide">
           <p class="catalog-intro">🎴 Choisis la référence exacte. L'image du catalogue remplacera la photo prise en magasin lorsque nous disposerons d'un visuel autorisé.</p>
           <div class="catalog-picker-grid">
-            <label><span>Extension / Série *</span><select id="catalogSeries" required><option value="">Chargement du catalogue…</option></select></label>
+            <label><span>Extension / Série *</span>
+              <input id="catalogSeriesSearch" type="search" placeholder="🔎 Nom ou code : 151, ME03, Évolution..." autocomplete="off">
+              <select id="catalogSeries" required><option value="">Chargement du catalogue…</option></select>
+              <small>Les extensions sont regroupées par bloc. 🔜 indique un produit à venir.</small>
+            </label>
             <label><span>Type de produit *</span><select id="catalogType" required disabled><option value="">Choisir une série</option></select></label>
             <label><span>Article *</span><select id="catalogProduct" required disabled><option value="">Choisir un type</option></select></label>
             <label><span>Art set / Variante *</span><select id="catalogVariant" required disabled><option value="">Choisir un article</option></select></label>
@@ -257,10 +265,10 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js?v=20261026-popupfix-v2"></script>
+  <script src="script.js?v=20261026-fullseries-v1"></script>
   <script src="community.js?v=20261026-popupfix-v2"></script>
   <script src="moderation.js?v=20261026-moderation-v1"></script>
-  <script src="catalog-ui.js?v=20261026-popupfix-v2"></script>
+  <script src="catalog-ui.js?v=20261026-fullseries-v1"></script>
   <script type="module" src="auth-ui.js?v=20261026-votes-v1"></script>
 </body>
 </html>
