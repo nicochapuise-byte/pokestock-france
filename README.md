@@ -84,6 +84,24 @@ Les six points préchargés sont fictifs et clairement signalés. Les signalemen
 
 La migration SQL, la syntaxe du JavaScript et le déploiement Neon Function ont été vérifiés. Les appels HTTP authentifiés de vote et l'ergonomie Safari nécessitent encore une validation réelle avec des comptes distincts. Les deux signalements de test préexistants ont été conservés sans suppression.
 
+## Nouvel espace administrateur dédié (26 octobre 2026)
+
+L'administrateur est désormais accessible depuis le bouton **🛡️ Admin** et ouvre la **page séparée `admin.html`** plutôt que le grand panneau multifonction :
+
+- **Photothèque** : galerie responsive de toutes les références, recherche, filtre par série et par état « avec/sans photo », sélection directe d'un art set, progression des images enregistrées.
+- **Ajouter une photo** : série → article → art set, aperçu comparatif actuel/nouvel article, ajout ou remplacement du visuel principal avec attestation des droits.
+- **Import multiple** : jusqu'à 25 fichiers, reconnaissance possible du nom de fichier `id-de-la-variante.jpg`, confirmation visuelle des associations, contrôle des doublons, limitation des remplacements accidentels.
+- **Photos proposées** : modération des images soumises par les membres, avec autorisation et référence à vérifier.
+- **Signalements** : lien de retour vers `index.html#administration` pour l'ancien écran de gestion des magasins, désormais allégé de la photothèque.
+
+Le serveur contrôle les JWT et le rôle depuis `public.stock_admins` pour chaque opération. Le JavaScript côté navigateur n'accorde aucun privilège.
+
+## Classement par sortie des séries Pokémon
+
+Depuis le 26 octobre 2026, l'API `GET /catalog` renvoie les séries **par date de sortie décroissante**, avec **30ᵉ Anniversaire (16 septembre 2026) en première position**, comme demandé. Les sorties non encore disponibles (par exemple Règne Delta, sortie générale prévue le 6 novembre 2026) se placent à la fin et restent non signalables avant leur date.
+
+La date connue figure dans le menu de sélection des extensions et les filtres. Les anciennes séries dont nous ne disposons pas encore de date fiable sont classées en utilisant leur ordre historique déjà enregistré (`display_order`) et non à partir de dates inventées.
+
 ## Suppression par l'auteur et modération administrateur (octobre 2026)
 
 - `moderation.js` ajoute **Supprimer mon signalement** sous les référencements de l'utilisateur connecté. Après confirmation, le serveur vérifie que le JWT appartient réellement à l'auteur ; une personne ne peut pas supprimer les fiches d'un autre utilisateur.
