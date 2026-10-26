@@ -45,7 +45,9 @@ function setCatalogSeriesOptions(query=""){
     optgroup.label=name;
     for(const entry of items){
       const notReleased=!!(entry.releaseDate&&entry.releaseDate>today);
-      const opt=new Option((entry.code?entry.code+" · ":"")+entry.name+(notReleased?" 🔜":""),
+      const release=entry.releaseDate?" · "+entry.releaseDate.slice(0,10).split("-").reverse().join("/"):"";
+      const featured=entry.id==="me30"?"🎉 ":"";
+      const opt=new Option(featured+(entry.code?entry.code+" · ":"")+entry.name+release+(notReleased?" 🔜":""),
         entry.id);
       opt.disabled=notReleased;
       optgroup.appendChild(opt);
@@ -135,7 +137,7 @@ async function loadPokemonCatalog(){
       throw Error("Données catalogue incorrectes.");
     catalogData=data;
     catalogReady=true;
-    series=data.series.map(entry=>({id:entry.id,name:entry.name,color:entry.color,block:entry.block,code:entry.code}));
+    series=data.series.map(entry=>({id:entry.id,name:entry.name,color:entry.color,block:entry.block,code:entry.code,releaseDate:entry.releaseDate}));
     renderFilters();
     renderAll();
     // Les administrateurs peuvent corriger aussi les nouvelles séries importées.
