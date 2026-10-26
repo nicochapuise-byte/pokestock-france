@@ -74,7 +74,7 @@ renderMap=function(items){
     const state=communityStockStatus(r);
     const normal=seriesById(r.series).color;
     pin.setIcon(makeIcon(state.css==="out-of-stock"?"#94a3b8":normal));
-    pin.setPopupContent('<div class="popup-card"><b>'+escapeHtml(r.product)+'</b><span>'+escapeHtml(r.store)+' • '+escapeHtml(r.city)+'</span><br><span>'+escapeHtml(state.text)+'</span><br><span>✅ '+(Number(r.votes.available)||0)+' · ❌ '+(Number(r.votes.unavailable)||0)+'</span></div>');
+    pin.setPopupContent(buildProductPopup(r,{status:state.text}));
   });
 };
 const originalCommunityLoad=loadCommunityReports;
