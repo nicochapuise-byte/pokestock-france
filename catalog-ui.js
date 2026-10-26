@@ -134,6 +134,24 @@ async function loadPokemonCatalog(){
     series=data.series.map(entry=>({id:entry.id,name:entry.name,color:entry.color,block:entry.block,code:entry.code}));
     renderFilters();
     renderAll();
+    // Les administrateurs peuvent corriger aussi les nouvelles séries importées.
+    const adminSeries=document.querySelector('#adminEditForm select[name="series"]');
+    if(adminSeries){
+      const previous=adminSeries.value;
+      adminSeries.replaceChildren();
+      const groups=new Map();
+      for(const entry of catalogData.series){
+        const group=entry.block||"Autres séries";
+        if(!groups.has(group))groups.set(group,[]);
+        groups.get(group).push(entry);
+      }
+      for(const [block,entries] of groups){
+        const holder=document.createElement("optgroup");holder.label=block;
+        entries.forEach(entry=>holder.appendChild(new Option((entry.code?entry.code+" · ":"")+entry.name,entry.id)));
+        adminSeries.appendChild(holder);
+      }
+      if(catalogData.series.some(entry=>entry.id===previous))adminSeries.value=previous;
+    }
     resetCatalogSelectors();
     fillAdminCatalogVariantSelector();
   }catch(error){
