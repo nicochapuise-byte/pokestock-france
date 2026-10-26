@@ -419,55 +419,57 @@ function bindUI(){
 
   $("#reportForm").addEventListener("submit",async e=>{
     e.preventDefault();
-    // currentTarget redevient null après un await : conserver le formulaire maintenant.
     const form=e.currentTarget;
+    const submitBtn=form.querySelector('button[type="submit"]');
+    // Désactiver immédiatement le bouton : Safari permet autrement deux envois rapides.
+    if(submitBtn.disabled)return;
     const data=new FormData(form);
     if(!verifiedAddress){
       toast("Sélectionne une adresse vérifiée pour le magasin.");
       $("#storeAddress").focus();return;
     }
     if(!photoData){toast("Ajoute une photo du produit en rayon.");return;}
-    const api=window.pokestockApi;
-    if(!api?.ready){toast("Initialisation de la connexion en cours. Réessaie.");return;}
-    if(!api.getUser()){
-      toast("Connecte-toi pour publier un signalement communautaire.");
-      api.openLogin();return;
-    }
-    let token;
-    try{token=await api.getToken();}
-    catch(error){
-      toast(error.message||"Impossible de valider la session.");
-      return;
-    }
-    if(!token){
-      toast("La session a expiré. Reconnecte-toi puis réessaie.");
-      api.openLogin();return;
-    }
-    const payload={
-      store:String(data.get("store")||"").trim().slice(0,140),
-      city:String(data.get("city")||"").trim().slice(0,120),
-      address:verifiedAddress.label,
-      series:String(data.get("series")||""),
-      product:String(data.get("product")||"").trim().slice(0,200),
-      price:data.get("price")?Number(data.get("price")):null,
-      qty:Number(data.get("quantity"))||1,
-      lat:verifiedAddress.lat,lng:verifiedAddress.lng,photo:photoData
-    };
-    if(!payload.store||!payload.city||!payload.product||!payload.series){
-      toast("Complète tous les champs obligatoires.");return;
-    }
-    const submitBtn=$("#reportForm button[type=submit]");
-    submitBtn.disabled=true;submitBtn.textContent="⏳ Publication...";
+    submitBtn.disabled=true;
+    submitBtn.textContent="⏳ Publication...";
     try{
+      const api=window.pokestockApi;
+      if(!api?.ready)throw Error("Connexion en cours d'initialisation. Réessaie.");
+      if(!api.getUser()){
+        toast("Connecte-toi pour publier un signalement communautaire.");
+        api.openLogin();return;
+      }
+      const token=await api.getToken();
+      if(!token){
+        toast("La session a expiré. Reconnecte-toi puis réessaie.");
+        api.openLogin();return;
+      }
+      const payload={
+        store:String(data.get("store")||"").trim().slice(0,140),
+        city:String(data.get("city")||"").trim().slice(0,120),
+        address:verifiedAddress.label,
+        series:String(data.get("series")||""),
+        product:String(data.get("product")||"").trim().slice(0,200),
+        price:data.get("price")?Number(data.get("price")):null,
+        qty:Number(data.get("quantity"))||1,
+        lat:verifiedAddress.lat,lng:verifiedAddress.lng,photo:photoData
+      };
+      if(!payload.store||!payload.city||!payload.product||!payload.series){
+        toast("Complète tous les champs obligatoires.");return;
+      }
       const response=await fetch(API_BASE+"/reports",{
         method:"POST",
         headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
         body:JSON.stringify(payload),signal:AbortSignal.timeout(25000)
       });
-      const result=await response.json();
+      let result;
+      try{result=await response.json();}
+      catch{throw Error("Le serveur a renvoyé une réponse incorrecte.");}
+      if(response.status===409&&result.duplicate){
+        toast("✅ Ce produit est déjà signalé pour ce magasin. Aucun doublon ajouté.");
+        return;
+      }
       if(!response.ok)throw Error(result.error||"Erreur de publication ("+response.status+").");
-      // Publication déjà enregistrée sur le serveur : ne pas la présenter comme un échec
-      // si l'actualisation visuelle rencontre ensuite un problème.
+      // Une réponse positive vaut succès même si le rafraîchissement de la carte échoue.
       form.reset();
       photoData="";
       resetVerifiedAddress();
@@ -476,8 +478,12 @@ function bindUI(){
       toast("✅ Signalement enregistré ! Stock non vérifié.");
       if(mapMode==="leaflet"&&map)map.flyTo([payload.lat,payload.lng],13);
       loadCommunityReports().catch(err=>console.warn("Affichage communautaire:",err));
-    }catch(err){toast("Impossible de publier : "+(err.message||"Erreur de connexion"));}
-    finally{submitBtn.disabled=false;submitBtn.textContent="Publier le signalement";}
+    }catch(err){
+      toast("Impossible de publier : "+(err.message||"Erreur de connexion"));
+    }finally{
+      submitBtn.disabled=false;
+      submitBtn.textContent="Publier le signalement";
+    }
   });
 }
 
