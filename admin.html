@@ -6,7 +6,7 @@
 <meta name="description" content="PokéStock France : administration des photographies officielles ou autorisées du catalogue Pokémon.">
 <meta name="robots" content="noindex,nofollow">
 <title>Administration du catalogue — PokéStock France</title>
-<link rel="stylesheet" href="admin-page.css?v=20261026-admin-v1">
+<link rel="stylesheet" href="admin-page.css?v=20261026-admin-v2">
 </head>
 <body>
 <header class="adm-header">
@@ -42,7 +42,10 @@
     </nav>
     <section id="admGalleryPanel" class="adm-panel">
       <div class="adm-section-head"><div><h2>Catalogue des articles</h2><p>La photographie validée devient l'image principale du produit pour tous les visiteurs.</p></div>
-        <button type="button" class="adm-quiet-button" id="admExport">📥 Exporter les photos manquantes</button></div>
+        <div class="adm-head-actions">
+          <button type="button" class="adm-primary adm-quick-button" id="admQuickUpload">➕ Ajouter une photo</button>
+          <button type="button" class="adm-quiet-button" id="admExport">📥 Liste CSV</button>
+        </div></div>
       <div class="adm-filter-row">
         <label>🔎 Rechercher<input id="admSearch" type="search" placeholder="151, Noctali, ETB, ME03…" autocomplete="off"></label>
         <label>📁 Série<select id="admSeriesFilter"><option value="">Toutes les séries</option></select></label>
@@ -107,6 +110,6 @@
   </div>
 </main>
 <footer class="adm-footer">PokéStock France · Gestion sécurisée des visuels · Les photographies de preuve des signalements restent privées.</footer>
-<script src="admin-page.js?v=20261026-admin-v1"></script>
+<script src="admin-page.js?v=20261026-admin-v2"></script>
 </body>
 </html>
