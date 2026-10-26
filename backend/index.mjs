@@ -56,7 +56,9 @@ function photoUrl(key){
 async function sql(query,params=[]){
   if(!DB_URL)throw Error("DATABASE_URL absent");
   const host=new URL(DB_URL).hostname;
-  const r=await fetch("https://"+host+"/sql",{
+  // Neon SQL-over-HTTP utilise le proxy api.<region>.neon.tech, pas le hostname PostgreSQL.
+  const proxyHost=host.replace(/^[^.]+\./,"api.");
+  const r=await fetch("https://"+proxyHost+"/sql",{
     method:"POST",
     headers:{"Content-Type":"application/json","Neon-Connection-String":DB_URL,"Neon-Raw-Text-Output":"false"},
     body:JSON.stringify({query,params})
