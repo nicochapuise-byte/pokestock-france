@@ -111,6 +111,7 @@ $("#signOutBtn").addEventListener("click",async()=>{
     client=createAuthClient(AUTH_URL);
     api.ready=true;
     await refreshSession();
+    if(window.location.hash==="#connexion"&&!currentUser)api.openLogin();
   }catch(error){
     console.error("Neon Auth indisponible",error);
     $("#accountBtn").textContent="⚠️ Connexion indisponible";
