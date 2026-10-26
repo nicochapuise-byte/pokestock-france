@@ -148,7 +148,7 @@ export default {
 
       if(url.pathname==="/catalog"&&request.method==="GET"){
         const [seriesRows,productRows,variantRows]=await Promise.all([
-          sql("SELECT id,name,color,block_name,set_code,release_date,source_url AS source_url FROM public.catalog_series WHERE is_active=true ORDER BY display_order,name"),
+          sql("SELECT id,name,color,block_name,set_code,release_date,source_url AS source_url FROM public.catalog_series WHERE is_active=true ORDER BY CASE WHEN id='me30' THEN 0 WHEN release_date>CURRENT_DATE THEN 2 ELSE 1 END, CASE WHEN release_date<=CURRENT_DATE THEN release_date END DESC NULLS LAST, CASE WHEN release_date>CURRENT_DATE THEN release_date END ASC NULLS LAST,display_order,name"),
           sql("SELECT id,series_id,type_key,name,source_url,release_date FROM public.catalog_products WHERE is_active=true ORDER BY series_id,display_order,name"),
           sql("SELECT v.id,v.product_id,v.variant_name,v.image_object_key,v.image_url,v.image_approved,v.source_url FROM public.catalog_variants v JOIN public.catalog_products p ON p.id=v.product_id JOIN public.catalog_series s ON s.id=p.series_id WHERE v.is_active=true AND p.is_active=true AND s.is_active=true ORDER BY v.display_order,v.variant_name")
         ]);
