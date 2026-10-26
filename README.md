@@ -42,6 +42,21 @@ Source principale : **PokéCardex**, [catalogue des séries](https://www.pokecar
 - PokéCardex n'annonce pas d'API publique pour son catalogue : il ne s'agit **pas d'une synchronisation officielle automatique**, mais d'une première importation documentée. Ne pas réhéberger leurs visuels ou images Pokémon sans autorisation.
 - Scripts idempotents : `backend/catalog-expanded-series-2026.sql`, `backend/catalog-expanded-products-2026.sql`, `backend/catalog-expanded-artsets-2026.sql`, `backend/catalog-confirmed-products-2026.sql`. Les six séries initiales et les signalements existants ont été préservés.
 
+## Photographies manquantes : ajout par lots et modération (26 octobre 2026)
+
+Couverture actuelle contrôlée en base : **1 photographie réelle validée pour 333 variantes**, celle du coffret Ultra-Premium 151 transmise par le responsable du projet (`catalog-upc151-chat.svg`). Les autres références affichent un visuel générique clairement signalé ; elles ne doivent pas être annoncées comme photographiées.
+
+- **Administration → Images du catalogue → Couverture** : compteur, progression, filtres « manquantes / toutes / avec photo » et recherche. Chaque art set donne accès à son bouton « Ajouter ».
+- **Import groupé** : sélection de 25 photographies maximum, identification automatique lorsque le nom du fichier **correspond exactement à l'identifiant de l'art set** (ex. `151-upc-mew.jpg`), association manuelle si le nom ne correspond pas, avertissement sur les doublons et possibilité explicite de remplacer un visuel déjà validé.
+- L'import groupé demande une **attestation de droits pour tout le lot**, compresse les images avant envoi et utilise l'API administrateur protégée. Les images approuvées s'affichent automatiquement sur le catalogue, la carte et les fiches de disponibilité.
+- **Contributions communautaires** : lorsqu'un membre sélectionne une référence sans photo, il peut proposer une photographie de l'article accompagnée de son origine/autorisation. Elle reste privée jusqu'à vérification. Le contributeur ne peut publier directement dans le catalogue.
+- **Modération** : sous « Photos proposées par la communauté », un administrateur peut voir les photos et informations fournies, les refuser ou les approuver. Une photo approuvée remplace la vignette indicative.
+- Endpoint public `GET /catalog` et contrôles d'accès serveur sur `POST /catalog/photo-proposals`, `GET /admin/catalog/photo-proposals`, `POST /admin/catalog/photo-proposals/:id/review` et `POST /admin/catalog/variants/:id/image`. Les propositions sont plafonnées à 5 par compte et par 24 heures.
+- La proposition et la preuve photo de stock sont **deux fichiers distincts** ; une preuve privée ne devient jamais publique sans nouvelle autorisation explicite. Les images provenant de PokéCardex ou d'autres magasins ne sont pas aspirées sans droit de réutilisation.
+- Le schéma table `public.catalog_photo_proposals` est conservé dans `backend/schema.sql`.
+
+La syntaxe JS, la base de données et le déploiement backend ont été vérifiés. Il reste à valider le parcours d'import groupé et la modération depuis Safari/iPhone avec de vraies images autorisées.
+
 ## Signalement d'un stock
 
 1. Choisir la série, le type de produit, le produit et la variante/art set.
