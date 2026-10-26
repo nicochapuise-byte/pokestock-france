@@ -57,3 +57,40 @@ CREATE TABLE IF NOT EXISTS public.stock_report_edits (
 );
 CREATE INDEX IF NOT EXISTS stock_report_edits_report_idx
   ON public.stock_report_edits (report_id,edited_at DESC);
+
+-- Référentiel produits ; références & art sets indépendants des signalements.
+CREATE TABLE IF NOT EXISTS public.catalog_series (
+  id varchar(60) PRIMARY KEY,
+  name varchar(150) NOT NULL,
+  color varchar(9) NOT NULL DEFAULT '#5467A2',
+  source_url text,
+  is_active boolean NOT NULL DEFAULT true,
+  display_order integer NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS public.catalog_products (
+  id varchar(90) PRIMARY KEY,
+  series_id varchar(60) NOT NULL REFERENCES public.catalog_series(id),
+  type_key varchar(50) NOT NULL,
+  name varchar(180) NOT NULL,
+  source_url text,
+  is_active boolean NOT NULL DEFAULT true,
+  display_order integer NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS public.catalog_variants (
+  id varchar(120) PRIMARY KEY,
+  product_id varchar(90) NOT NULL REFERENCES public.catalog_products(id),
+  variant_name varchar(120) NOT NULL DEFAULT 'Standard',
+  image_url text,
+  image_license_note text,
+  image_approved boolean NOT NULL DEFAULT false,
+  image_object_key text,
+  source_url text,
+  is_active boolean NOT NULL DEFAULT true,
+  display_order integer NOT NULL DEFAULT 0
+);
+-- Photo de preuve facultative : privée et non publiée dans les fiches.
+ALTER TABLE public.stock_reports ALTER COLUMN photo_object_key DROP NOT NULL;
+ALTER TABLE public.stock_reports ADD COLUMN IF NOT EXISTS catalog_variant_id varchar(120) REFERENCES public.catalog_variants(id);
+CREATE INDEX IF NOT EXISTS catalog_products_series_idx ON public.catalog_products(series_id);
+CREATE INDEX IF NOT EXISTS catalog_variants_product_idx ON public.catalog_variants(product_id);
+CREATE INDEX IF NOT EXISTS stock_reports_catalog_variant_idx ON public.stock_reports(catalog_variant_id);
