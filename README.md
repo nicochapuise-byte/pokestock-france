@@ -13,15 +13,28 @@
 Il n'y a pas de Next.js, npm, React ou Tailwind à installer pour afficher le site.
 Une connexion Internet est nécessaire (fonds OpenStreetMap, adresses IGN, authentification et stocks communautaires).
 
+## Catalogue de références et art sets (octobre 2026)
+
+Catalogue structuré dans PostgreSQL : 6 séries, 18 types de produits réels et 30 variantes/art sets documentés avec liens vers les fiches sources. Le contenu de démarrage se trouve dans `backend/catalog-seed.sql` et le schéma dans `backend/schema.sql`.
+
+- `GET /catalog` donne les séries, produits, types et art sets actifs.
+- Le formulaire choisit successivement **série → type d'article → référence → art set**. Le serveur déduit le nom et la série à partir de la variante sélectionnée et enregistre `stock_reports.catalog_variant_id` ; l'utilisateur ne peut pas injecter un produit inexistant par texte libre.
+- Le visuel public est celui du catalogue ; **les photos de preuve envoyées par les utilisateurs restent privées** et ne sont consultables que par les administrateurs via des liens temporaires.
+- Une preuve photographique prise en magasin est facultative, mais l'adresse du magasin reste vérifiée et le déclarant doit confirmer avoir vu le produit.
+- Les variantes sans photo autorisée affichent `catalog-placeholder.svg`, une illustration neutre créée pour le projet. **Aucune photographie Pokémon protégée n'a été copiée depuis les galeries commerciales sans autorisation**.
+- L'administrateur peut ajouter un vrai visuel dans « 🛡️ Admin → Images du catalogue » en attestant disposer du droit de publication et en précisant son origine. Les images sont stockées dans un bucket privé séparé `catalog-images`, et exposées avec des liens de consultation temporaires. Le référentiel offre des liens sortants vers les fiches produit pour vérification.
+- Le catalogue est volontairement partiel : art sets additionnels, EAN, langues d'édition, dates et éventuelles autorisations de reproduction restent à compléter.
+
+**Références officielles utilisées pour la sélection** : galeries produits Pokémon en français, annonces éditeur Évolutions Prismatiques (mini-boîtes Aquali, Voltali, Pyroli, Mentali, Noctali, Phyllali, Givrali, Nymphali) et présentation Méga-Évolution. Les liens sont conservés produit par produit.
+
 ## Signalement d'un stock
 
-1. Ouvrir `+ Signaler`, puis renseigner le magasin, la ville, la série, le produit et la quantité.
-2. Indiquer l'adresse complète, cliquer `Rechercher l'adresse`, puis **sélectionner une adresse proposée par l'IGN**.
-3. Ajouter une photo obligatoire, de 10 Mo maximum avant compression automatique.
-4. Confirmer disposer de l'autorisation de partager cette photo (ne pas inclure de personnes).
-5. Se connecter ou créer un compte et publier.
+1. Choisir la série, le type de produit, le produit et la variante/art set.
+2. Renseigner magasin, ville, prix, quantité et adresse complète, puis **sélectionner une adresse validée**.
+3. Si souhaité, ajouter une photo du rayon qui sera **visible uniquement par l'équipe de modération**.
+4. Confirmer l'observation en magasin, se connecter et publier.
+5. La fiche du site affiche la référence canonique, son art set, le visuel approuvé du catalogue (ou une illustration indicative) et le statut « non vérifié ». Les signalements expirent après 72 heures.
 
-L'API revalide les données et les coordonnées, exige un JWT et plafonne le nombre d'envois par compte. Les photos sont conservées dans un bucket privé et sont consultables depuis des liens temporaires. Les signalements nouveaux sont marqués **Non vérifié**, ne garantissent pas le stock, et expirent après 72 heures.
 
 ## Démonstration
 
