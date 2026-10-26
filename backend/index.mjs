@@ -31,13 +31,13 @@ function awsBucketUrl(key,bucket="proofs"){
   base.search="";return base;
 }
 function amzTime(date){return date.toISOString().replace(/[:-]|\.\d{3}/g,"");}
-async function uploadPhoto(bytes,key,bucket="proofs"){
+async function uploadPhoto(bytes,key,bucket="proofs",mime="image/jpeg"){
   const url=awsBucketUrl(key,bucket),date=amzTime(new Date()),day=date.slice(0,8),region=process.env.AWS_REGION;
   const hash=sha(bytes),scope=day+"/"+region+"/s3/aws4_request",signed="host;x-amz-content-sha256;x-amz-date";
   const canonical="PUT\n"+url.pathname+"\n\nhost:"+url.host+"\nx-amz-content-sha256:"+hash+"\nx-amz-date:"+date+"\n\n"+signed+"\n"+hash;
   const signature=createHmac("sha256",signKey(day,region)).update("AWS4-HMAC-SHA256\n"+date+"\n"+scope+"\n"+sha(canonical)).digest("hex");
   const authorization="AWS4-HMAC-SHA256 Credential="+process.env.AWS_ACCESS_KEY_ID+"/"+scope+", SignedHeaders="+signed+", Signature="+signature;
-  const r=await fetch(url,{method:"PUT",headers:{"Content-Type":"image/jpeg","x-amz-date":date,"x-amz-content-sha256":hash,"Authorization":authorization},body:bytes});
+  const r=await fetch(url,{method:"PUT",headers:{"Content-Type":mime,"x-amz-date":date,"x-amz-content-sha256":hash,"Authorization":authorization},body:bytes});
   if(!r.ok)throw new Error("Le stockage de la photo a échoué ("+r.status+").");
 }
 function photoUrl(key,bucket="proofs"){
@@ -133,6 +133,70 @@ async function validateAddress(address,city,lat,lng){
     return Number.isFinite(distance)&&distance<350;
   });
 }
+
+const CARDEX_HOSTS=new Set(["pokecardex.com","www.pokecardex.com","pokecardex.b-cdn.net","cdn.pokecardex.com","assets.pokecardex.com"]);
+function cardexUrl(raw){
+  if(typeof raw!=="string"||raw.length>1800)return null;
+  try{const u=new URL(raw);
+    if(u.protocol!=="https:"||!CARDEX_HOSTS.has(u.hostname.toLowerCase())||u.username||u.password)return null;
+    if(u.port&&u.port!=="443")return null;
+    return u;
+  }catch{return null;}
+}
+async function getCardexResponse(url,accept){
+  let current=url;
+  for(let i=0;i<3;i++){
+    const response=await fetch(current,{redirect:"manual",signal:AbortSignal.timeout(11000),headers:{
+      "Accept":accept,"User-Agent":"Mozilla/5.0 (compatible; PokeStockFrance catalog import)"
+    }});
+    if([301,302,303,307,308].includes(response.status)){
+      const to=cardexUrl(new URL(response.headers.get("location")||"",current).href);
+      if(!to)throw Error("Redirection de PokéCardex non autorisée.");
+      current=to;continue;
+    }
+    return response;
+  }
+  throw Error("Trop de redirections.");
+}
+function classifyCardexImage(bytes){
+  if(bytes.length<512||bytes.length>2600000)return null;
+  if(bytes[0]===255&&bytes[1]===216&&bytes[2]===255)return {mime:"image/jpeg",ext:"jpg"};
+  if(bytes[0]===137&&bytes.subarray(1,4).toString("ascii")==="PNG")return {mime:"image/png",ext:"png"};
+  if(bytes.subarray(0,4).toString("ascii")==="RIFF"&&bytes.subarray(8,12).toString("ascii")==="WEBP")return {mime:"image/webp",ext:"webp"};
+  if(bytes.subarray(0,3).toString("ascii")==="GIF")return {mime:"image/gif",ext:"gif"};
+  return null;
+}
+function extractCardexCandidates(html,page){
+  const entries=[],seen=new Set();
+  const decode=str=>String(str).replace(/&amp;/gi,"&").replace(/&quot;/gi,'"').replace(/&#39;|&apos;/gi,"'");
+  const attr=(tag,key)=>{
+    const token=tag.match(new RegExp(key+'=["\\x27]([^"\\x27]+)["\\x27]','i'));
+    return token?.[1]||null;
+  };
+  function add(raw,priority){
+    if(!raw)return;
+    let parsed;
+    try{parsed=cardexUrl(new URL(decode(raw),page).href);}catch{return;}
+    if(!parsed||seen.has(parsed.href))return;
+    if(!/\.(?:jpe?g|png|webp|gif|avif)(?:$|\?)/i.test(parsed.pathname+parsed.search)
+       && !/(image|img|photo|product|produit|thumb|cdn)/i.test(parsed.pathname))return;
+    seen.add(parsed.href);entries.push({url:parsed.href,priority});
+  }
+  for(const tag of html.match(/<meta\b[^>]+>/gi)||[]){
+    const key=attr(tag,"property")||attr(tag,"name")||"";
+    if(/^(?:og:image|og:image:url|twitter:image)$/i.test(key))add(attr(tag,"content"),100);
+  }
+  for(const tag of html.match(/<img\b[^>]+>/gi)||[]){
+    add(attr(tag,"data-src")||attr(tag,"src"),10);
+    const srcset=attr(tag,"srcset")||attr(tag,"data-srcset")||"";
+    for(const part of srcset.split(","))add(part.trim().split(/\s+/)[0],5);
+  }
+  for(const tag of html.match(/<source\b[^>]+>/gi)||[]){
+    for(const part of (attr(tag,"srcset")||"").split(","))add(part.trim().split(/\s+/)[0],3);
+  }
+  return entries.sort((a,b)=>b.priority-a.priority).slice(0,36);
+}
+
 function voteSummary(a,b){
   const available=Number(a)||0,unavailable=Number(b)||0;
   const state=available>=2&&available>unavailable?"confirmed":unavailable>=2&&unavailable>available?"out_of_stock":"unverified";
@@ -145,6 +209,50 @@ export default {
     if(request.method==="OPTIONS")return new Response(null,{status:204,headers});
     try{
       if(url.pathname==="/"&&request.method==="GET")return json({name:"PokéStock API",ok:true},200,request);
+
+
+      if(url.pathname==="/admin/catalog/pokecardex/candidates"&&request.method==="POST"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connexion nécessaire."},401,request);
+        if(!await isSiteAdmin(user))return json({error:"Accès administrateur requis."},403,request);
+        const raw=await request.text();if(raw.length>2500)return json({error:"Lien trop long."},413,request);
+        let payload;try{payload=JSON.parse(raw)}catch{return json({error:"Données invalides."},400,request);}
+        const page=cardexUrl(payload?.pageUrl);
+        if(!page)return json({error:"Indique une adresse HTTPS de PokéCardex."},400,request);
+        const response=await getCardexResponse(page,"text/html,image/*;q=0.5");
+        if(!response.ok)return json({error:"PokéCardex ne permet pas l'accès à cette page ("+response.status+")."},502,request);
+        const type=response.headers.get("content-type")||"";
+        if(type.startsWith("image/"))return json({kind:"image",candidates:[{url:page.href,priority:100}]},200,request);
+        if(!type.includes("html"))return json({error:"Ce lien ne contient pas une page ou une image."},400,request);
+        if(Number(response.headers.get("content-length")||0)>1800000)return json({error:"Page trop volumineuse."},413,request);
+        const html=await response.text();if(html.length>1800000)return json({error:"Page trop volumineuse."},413,request);
+        return json({kind:"page",page:page.href,candidates:extractCardexCandidates(html,page)},200,request);
+      }
+      const cardexImport=/^\/admin\/catalog\/variants\/([a-z0-9-]{2,120})\/import-pokecardex$/.exec(url.pathname);
+      if(cardexImport&&request.method==="POST"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connexion nécessaire."},401,request);
+        if(!await isSiteAdmin(user))return json({error:"Accès administrateur requis."},403,request);
+        const raw=await request.text();if(raw.length>4800)return json({error:"Requête trop longue."},413,request);
+        let payload;try{payload=JSON.parse(raw)}catch{return json({error:"Données invalides."},400,request);}
+        if(payload?.rightsConfirmed!==true||!validText(payload?.rightsNote,240))return json({error:"Confirme les droits et l'origine de la photographie."},400,request);
+        const picture=cardexUrl(payload.imageUrl),page=cardexUrl(payload.pageUrl||payload.imageUrl);
+        if(!picture||!page)return json({error:"L'image et la page source doivent provenir de PokéCardex."},400,request);
+        const variantId=cardexImport[1];
+        const variant=await sql("SELECT id FROM public.catalog_variants WHERE id=$1 AND is_active=true LIMIT 1",[variantId]);
+        if(!variant.length)return json({error:"Variante inconnue."},404,request);
+        const response=await getCardexResponse(picture,"image/jpeg,image/png,image/webp,image/gif;q=0.9");
+        if(!response.ok)return json({error:"Téléchargement de l'image impossible ("+response.status+")."},502,request);
+        if(Number(response.headers.get("content-length")||0)>2600000)return json({error:"Image trop volumineuse (2,6 Mo maximum)."},413,request);
+        const bytes=Buffer.from(await response.arrayBuffer());
+        const type=classifyCardexImage(bytes);
+        if(!type)return json({error:"Format incorrect : seuls JPG, PNG, WebP ou GIF jusqu'à 2,6 Mo sont acceptés."},400,request);
+        const key="imports/pokecardex/"+randomUUID()+"."+type.ext;
+        await uploadPhoto(bytes,key,"catalog-images",type.mime);
+        await sql("UPDATE public.catalog_variants SET image_object_key=$2,image_url=NULL,image_source_url=$3,image_imported_at=now(),image_approved=true,image_license_note=$4 WHERE id=$1",
+          [variantId,key,page.href,payload.rightsNote.trim()]);
+        return json({ok:true,variantId,source:page.href,message:"Image téléchargée et enregistrée comme photo principale."},201,request);
+      }
 
       if(url.pathname==="/catalog"&&request.method==="GET"){
         const [seriesRows,productRows,variantRows]=await Promise.all([
