@@ -244,7 +244,17 @@ export default {
         const response=await getCardexResponse(picture,"image/jpeg,image/png,image/webp,image/gif;q=0.9");
         if(!response.ok)return json({error:"Téléchargement de l'image impossible ("+response.status+")."},502,request);
         if(Number(response.headers.get("content-length")||0)>2600000)return json({error:"Image trop volumineuse (2,6 Mo maximum)."},413,request);
-        const bytes=Buffer.from(await response.arrayBuffer());
+        const chunks=[];let total=0;
+        const reader=response.body?.getReader();
+        if(!reader)return json({error:"Téléchargement impossible."},502,request);
+        while(true){
+          const {done,value}=await reader.read();
+          if(done)break;
+          total+=value.byteLength;
+          if(total>2600000){await reader.cancel();return json({error:"Photo trop volumineuse (max 2,6 Mo)."},413,request);}
+          chunks.push(Buffer.from(value));
+        }
+        const bytes=Buffer.concat(chunks);
         const type=classifyCardexImage(bytes);
         if(!type)return json({error:"Format incorrect : seuls JPG, PNG, WebP ou GIF jusqu'à 2,6 Mo sont acceptés."},400,request);
         const key="imports/pokecardex/"+randomUUID()+"."+type.ext;
@@ -258,12 +268,12 @@ export default {
         const [seriesRows,productRows,variantRows]=await Promise.all([
           sql("SELECT id,name,color,block_name,set_code,release_date,source_url AS source_url FROM public.catalog_series WHERE is_active=true ORDER BY CASE WHEN id='me30' THEN 0 WHEN release_date>CURRENT_DATE THEN 2 ELSE 1 END, CASE WHEN release_date<=CURRENT_DATE THEN release_date END DESC NULLS LAST, CASE WHEN release_date>CURRENT_DATE THEN release_date END ASC NULLS LAST,display_order,name"),
           sql("SELECT id,series_id,type_key,name,source_url,release_date FROM public.catalog_products WHERE is_active=true ORDER BY series_id,display_order,name"),
-          sql("SELECT v.id,v.product_id,v.variant_name,v.image_object_key,v.image_url,v.image_approved,v.source_url FROM public.catalog_variants v JOIN public.catalog_products p ON p.id=v.product_id JOIN public.catalog_series s ON s.id=p.series_id WHERE v.is_active=true AND p.is_active=true AND s.is_active=true ORDER BY v.display_order,v.variant_name")
+          sql("SELECT v.id,v.product_id,v.variant_name,v.image_object_key,v.image_url,v.image_approved,v.source_url,v.image_source_url FROM public.catalog_variants v JOIN public.catalog_products p ON p.id=v.product_id JOIN public.catalog_series s ON s.id=p.series_id WHERE v.is_active=true AND p.is_active=true AND s.is_active=true ORDER BY v.display_order,v.variant_name")
         ]);
         return json({
           series:seriesRows.map(r=>({id:r.id,name:r.name,color:r.color,block:r.block_name||'Autres séries',code:r.set_code||'',releaseDate:r.release_date||null,sourceUrl:r.source_url})),
           products:productRows.map(r=>({id:r.id,seriesId:r.series_id,type:r.type_key,name:r.name,releaseDate:r.release_date||null,sourceUrl:r.source_url})),
-          variants:variantRows.map(r=>({id:r.id,productId:r.product_id,name:r.variant_name,image:!r.image_approved?null:r.image_object_key?photoUrl(r.image_object_key,"catalog-images"):r.image_url==="catalog-upc151-chat.svg"?r.image_url:null,sourceUrl:r.source_url}))
+          variants:variantRows.map(r=>({id:r.id,productId:r.product_id,name:r.variant_name,image:!r.image_approved?null:r.image_object_key?photoUrl(r.image_object_key,"catalog-images"):r.image_url==="catalog-upc151-chat.svg"?r.image_url:null,sourceUrl:r.source_url,imageSourceUrl:r.image_source_url}))
         },200,request);
       }
 
@@ -322,7 +332,7 @@ export default {
         if(!isReportId(id))return json({error:"Référence de proposition incorrecte."},400,request);
         if(payload.decision==="approved"){
           const updated=await sql(
-            "WITH review AS (UPDATE public.catalog_photo_proposals SET status='approved',reviewed_by=$2,reviewed_at=now() WHERE id=$1::uuid AND status='pending' RETURNING variant_id,photo_object_key,rights_note) UPDATE public.catalog_variants v SET image_object_key=review.photo_object_key,image_approved=true,image_license_note=review.rights_note,image_url=NULL FROM review WHERE v.id=review.variant_id RETURNING v.id",
+            "WITH review AS (UPDATE public.catalog_photo_proposals SET status='approved',reviewed_by=$2,reviewed_at=now() WHERE id=$1::uuid AND status='pending' RETURNING variant_id,photo_object_key,rights_note) UPDATE public.catalog_variants v SET image_object_key=review.photo_object_key,image_approved=true,image_license_note=review.rights_note,image_url=NULL,image_source_url=NULL,image_imported_at=now() FROM review WHERE v.id=review.variant_id RETURNING v.id",
             [id,user]
           );
           if(!updated.length)return json({error:"Photo déjà examinée ou référence introuvable."},409,request);
@@ -353,7 +363,7 @@ export default {
         if(!variants.length)return json({error:"Variante inconnue."},404,request);
         const key="images/"+randomUUID()+".jpg";
         await uploadPhoto(bytes,key,"catalog-images");
-        await sql("UPDATE public.catalog_variants SET image_object_key=$2,image_approved=true,image_license_note=$3 WHERE id=$1",
+        await sql("UPDATE public.catalog_variants SET image_object_key=$2,image_url=NULL,image_source_url=NULL,image_imported_at=now(),image_approved=true,image_license_note=$3 WHERE id=$1",
           [variantId,key,payload.rightsNote.trim()]);
         return json({ok:true,variantId,message:"Visuel ajouté au catalogue."},201,request);
       }
