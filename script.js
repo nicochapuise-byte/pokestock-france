@@ -195,45 +195,43 @@ function projectToFallback(lat,lng){
  * Carte : une popup riche avec le visuel public du catalogue.
  * Ne jamais exposer les photos de preuve privées des contributeurs.
  */
+function popupProductPhoto(report){
+  // Les signalements récents utilisent les visuels autorisés du catalogue.
+  // Pas de diffusion des photos de preuve privées.
+  if(report.catalogVariantId==="151-upc-mew" && !report.img)return "catalog-upc151-chat.svg";
+  const url=safeImage(report.img);
+  return url||"catalog-placeholder.svg";
+}
 function buildProductPopup(report, options={}){
   const title=escapeHtml(report.product||"Produit Pokémon");
   const store=escapeHtml(report.store||"Magasin non précisé");
   const city=escapeHtml(report.city||"");
   const artSet=report.artSet?escapeHtml(report.artSet):"";
   const status=escapeHtml(options.status||(
-    report.demo?"🧪 Exemple fictif":report.votes?.state==="confirmed"?"✅ Stock confirmé par des membres":
+    report.demo?"🧪 Exemple fictif":report.votes?.state==="confirmed"?"✅ Confirmé par des membres":
     report.votes?.state==="out_of_stock"?"❌ Rupture signalée":"🟠 Non vérifié"
   ));
-  const approvedCatalogImage=!!(
-    report.catalogVariantId&&report.img&&safeImage(report.img)!=="catalog-placeholder.svg"
-  );
-  const demoIllustration=!!(report.demo&&report.img);
-  const image=approvedCatalogImage||demoIllustration?safeImage(report.img):"catalog-placeholder.svg";
-  const imageLabel=approvedCatalogImage?"Visuel du catalogue":demoIllustration?"Illustration d’exemple":"Visuel indicatif";
-  const votes=report.votes
-    ?`<p class="popup-votes">✅ ${Number(report.votes.available)||0} confirmation(s) · ❌ ${Number(report.votes.unavailable)||0} rupture(s)</p>`
-    :"";
-  const amount=report.price!==null&&report.price!==undefined&&report.price!==""
+  const image=popupProductPhoto(report);
+  const realProductPhoto=image!=="catalog-placeholder.svg"&&!report.demo;
+  const caption=realProductPhoto?"📸 Photo du produit":report.demo?"Illustration de démonstration":"Visuel indicatif";
+  const amount=report.price!==null&&report.price!==undefined&&report.price!==""&&Number.isFinite(Number(report.price))
     ?Number(report.price).toFixed(2)+" €":"Prix non indiqué";
-  return `
-    <div class="popup-product-card">
-      <div class="popup-product-media">
-        <img class="popup-product-image" src="${image}"
-          alt="${approvedCatalogImage?"Visuel catalogue : ":"Illustration indicative pour "}${title}"
-          loading="eager">
-        <span class="popup-product-picture-note">${imageLabel}</span>
-      </div>
-      <div class="popup-product-details">
-        <strong class="popup-product-title">${title}</strong>
-        ${artSet?`<span class="popup-product-artset">🎨 ${artSet}</span>`:""}
-        <span class="popup-product-store">📍 ${store} · ${city}</span>
-        <span class="popup-product-status">${status}</span>
-        <span class="popup-product-age">🕒 ${escapeHtml(ageText(reportHours(report)))}</span>
-        <span class="popup-product-price">💶 ${escapeHtml(amount)}</span>
-      </div>
-      ${votes}
-      <p class="popup-product-disclaimer">Stock déclaré par la communauté, non garanti en temps réel.</p>
-    </div>`;
+  const counts=report.votes?
+    '<span class="popup-stock-votes">✅ '+(Number(report.votes.available)||0)+' · ❌ '+(Number(report.votes.unavailable)||0)+'</span>':"";
+  return '<div class="popup-product-card">'+
+    '<div class="popup-product-photo">'+
+      '<img class="popup-product-image" src="'+escapeHtml(image)+'" alt="'+(realProductPhoto?"Photo du coffret : ":"Illustration pour ")+title+'" loading="eager">'+
+      '<span class="popup-product-picture-note">'+caption+'</span>'+
+    '</div>'+
+    '<div class="popup-product-details">'+
+      '<h3 class="popup-product-title">'+title+'</h3>'+
+      (artSet?'<span class="popup-product-artset">🎨 '+artSet+'</span>':"")+
+      '<p class="popup-product-store">📍 '+store+' · '+city+'</p>'+
+      '<div class="popup-product-info"><span class="popup-product-status">'+status+'</span>'+counts+'</div>'+
+      '<div class="popup-product-bottom"><span>'+escapeHtml(ageText(reportHours(report)))+'</span><b>'+escapeHtml(amount)+'</b></div>'+
+      '<p class="popup-product-disclaimer">Stock déclaré par un membre ; disponibilité non garantie.</p>'+
+    '</div>'+
+  '</div>';
 }
 function attachPopupImageFallback(marker){
   marker.on("popupopen",()=>{
@@ -256,7 +254,7 @@ function renderMap(items){
     items.forEach(r=>{
       const s=seriesById(r.series);
       const marker=L.marker([r.lat,r.lng],{icon:makeIcon(s.color)})
-        .bindPopup(buildProductPopup(r),{maxWidth:330,minWidth:265,autoPan:true})
+        .bindPopup(buildProductPopup(r),{className:"pokestock-popup",maxWidth:288,minWidth:288,autoPan:true,autoPanPadding:[16,16],keepInView:true})
         .addTo(markerLayer);
       attachPopupImageFallback(marker);
     });
