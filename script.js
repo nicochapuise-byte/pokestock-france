@@ -23,7 +23,7 @@ const cityCoords = {
 };
 
 function readLocalReports(){
-  try { return JSON.parse(localStorage.getItem("pokestockReports") || "[]"); }
+  try { const stored=JSON.parse(localStorage.getItem("pokestockReports") || "[]"); return Array.isArray(stored)?stored:[]; }
   catch(e){ console.warn("Stockage local indisponible", e); return []; }
 }
 function writeLocalReports(items){
@@ -31,9 +31,11 @@ function writeLocalReports(items){
   catch(e){ console.warn("Stockage local indisponible", e); return false; }
 }
 
-let reports = [...seedReports, ...readLocalReports()];
+let reports = [...seedReports.map(r=>({...r,demo:true})), ...readLocalReports()];
 let selectedSeries = new Set();
 let photoData = "";
+let verifiedAddress = null;
+let addressMatches = [];
 let map;
 let markerLayer;
 let mapMode = "fallback";
@@ -42,6 +44,9 @@ const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const seriesById = id => series.find(s=>s.id===id) || {name:"Autre",color:"#64748b"};
 
+function escapeHtml(value){return String(value??"").replace(/[&<>"\x27]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\x27":"&#39;"}[c]));}
+function safeImage(src){const value=String(src||"");return /^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/|^data:image\/(?:png|jpeg|webp);base64,/i.test(value)?value:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png";}
+function reportHours(r){return r.createdAt?Math.max(0,(Date.now()-Date.parse(r.createdAt))/3600000):(r.hours||0);}
 function ageClass(hours){ return hours<24?"fresh":hours<=72?"medium":"old"; }
 function ageText(hours){ return hours<24?(hours<1?"À l'instant":"Il y a "+hours+" h"):hours<=72?"Il y a "+Math.round(hours/24)+" j":"À vérifier"; }
 
@@ -189,7 +194,7 @@ function renderMap(items){
     items.forEach(r=>{
       const s=seriesById(r.series);
       L.marker([r.lat,r.lng],{icon:makeIcon(s.color)})
-        .bindPopup(`<div class="popup-card"><b>${r.product}</b><span>${r.store} • ${r.city}</span><br><span>${ageText(r.hours||0)} • ${r.price?Number(r.price).toFixed(2)+" €":"Prix non indiqué"}</span></div>`)
+        .bindPopup(`<div class="popup-card"><b>${escapeHtml(r.product)}</b><span>${escapeHtml(r.store)} • ${escapeHtml(r.city)}</span><br><span>${r.demo?"🧪 Exemple • ":""}${ageText(reportHours(r))} • ${r.price?Number(r.price).toFixed(2)+" €":"Prix non indiqué"}</span></div>`)
         .addTo(markerLayer);
     });
   }else{
@@ -197,7 +202,7 @@ function renderMap(items){
     if(holder){
       holder.innerHTML=items.map(r=>{
         const s=seriesById(r.series),p=projectToFallback(r.lat,r.lng);
-        return `<button class="fallback-pin" style="left:${p[0]}%;top:${p[1]}%;background:${s.color}" title="${r.product} — ${r.store}, ${r.city}" aria-label="${r.product}, ${r.store}, ${r.city}"></button>`;
+        return `<button class="fallback-pin" style="left:${p[0]}%;top:${p[1]}%;background:${s.color}" title="${escapeHtml(r.product)} — ${escapeHtml(r.store)}, ${escapeHtml(r.city)}" aria-label="${escapeHtml(r.product)}, ${escapeHtml(r.store)}, ${escapeHtml(r.city)}"></button>`;
       }).join("");
     }
   }
@@ -207,16 +212,16 @@ function renderMap(items){
 function renderCards(items){
   const grid=$("#stockGrid");
   grid.innerHTML=items.map(r=>{
-    const s=seriesById(r.series), age=ageClass(r.hours||0);
+    const s=seriesById(r.series), age=ageClass(reportHours(r));
     return `<article class="stock-card">
       <div class="stock-image">
-        <span class="age-badge ${age}">${ageText(r.hours||0)}</span>
-        <img src="${r.img||"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png"}" alt="">
+        <span class="age-badge ${age}">${r.demo?"🧪 Exemple":"🕒 "+ageText(reportHours(r))}</span>
+        <img src="${safeImage(r.img)}" alt="Photo du produit">
       </div>
       <div class="stock-body">
-        <span class="stock-series" style="color:${s.color}">${s.name}</span>
-        <h3>${r.product}</h3>
-        <p class="stock-place">📍 ${r.store} • ${r.city}</p>
+        <span class="stock-series" style="color:${s.color}">${escapeHtml(s.name)}</span>
+        <h3>${escapeHtml(r.product)}</h3>
+        <p class="stock-place">📍 ${escapeHtml(r.store)} • ${escapeHtml(r.city)}</p>${r.address?`<p class="stock-address">${escapeHtml(r.address)}</p>`:""}
         <div class="stock-meta"><span>Stock aperçu : <b>${r.qty||1}</b></span><b>${r.price?Number(r.price).toFixed(2)+" €":"—"}</b></div>
       </div>
     </article>`;
@@ -225,7 +230,7 @@ function renderCards(items){
 }
 
 function updateStats(){
-  $("#reportCount").textContent=reports.length;
+  $("#reportCount").textContent=reports.filter(r=>!r.demo).length;
   $("#cityCount").textContent=new Set(reports.map(r=>r.city.toLowerCase())).size;
   $("#seriesCount").textContent=series.length;
 }
@@ -258,6 +263,82 @@ function approximateCoordinates(city){
   return [46.6+(Math.random()-.5)*1.2,2.4+(Math.random()-.5)*1.5];
 }
 
+
+function resetVerifiedAddress(){
+  verifiedAddress=null;
+  $("#reportLat").value="";
+  $("#reportLng").value="";
+  $("#addressResult").hidden=true;
+  $("#addressResult").replaceChildren();
+  $("#addressStatus").textContent="Recherche l'adresse, puis sélectionne le résultat correspondant au magasin.";
+}
+function getAddressFeature(feature){
+  const coords=feature?.geometry?.coordinates,props=feature?.properties||{};
+  if(!Array.isArray(coords)||coords.length<2 || !Number.isFinite(coords[0]) || !Number.isFinite(coords[1]))return null;
+  const lon=Number(coords[0]),lat=Number(coords[1]);
+  if(lat<41||lat>52||lon< -6||lon>10)return null;
+  return {lat:lat,lng:lon,label:String(props.label||props.name||""),city:String(props.city||""),score:Number(props.score||0)};
+}
+async function searchStoreAddress(){
+  const address=$("#storeAddress").value.trim(),city=$("#storeCity").value.trim();
+  const button=$("#verifyAddress"),results=$("#addressResult"),status=$("#addressStatus");
+  resetVerifiedAddress();
+  if(address.length<5||city.length<2){
+    status.textContent="Indique l'adresse complète et la ville avant de rechercher.";return;
+  }
+  button.disabled=true;button.textContent="⏳ Recherche...";
+  try{
+    const query=encodeURIComponent(address+" "+city);
+    const response=await fetch("https://data.geopf.fr/geocodage/search/?q="+query+"&limit=5",{headers:{Accept:"application/json"}});
+    if(!response.ok)throw new Error("Service de géocodage indisponible ("+response.status+").");
+    const data=await response.json();
+    addressMatches=(data.features||[]).map(getAddressFeature).filter(Boolean).filter(x=>x.label);
+    if(!addressMatches.length){
+      status.textContent="Aucune adresse trouvée. Précise la rue, le numéro et la commune.";return;
+    }
+    results.add(new Option("Sélectionne l'adresse exacte parmi les résultats", ""));
+    addressMatches.forEach((result,i)=>results.add(new Option(result.label,String(i))));
+    results.hidden=false;
+    status.textContent="Sélectionne l'adresse du magasin dans la liste pour placer le point.";
+  }catch(err){
+    status.textContent="Impossible de vérifier cette adresse pour le moment. "+err.message;
+  }finally{button.disabled=false;button.textContent="📍 Rechercher l'adresse";}
+}
+function chooseStoreAddress(){
+  const index=$("#addressResult").value;
+  verifiedAddress=index===""?null:addressMatches[Number(index)]||null;
+  if(verifiedAddress){
+    $("#reportLat").value=verifiedAddress.lat;
+    $("#reportLng").value=verifiedAddress.lng;
+    $("#storeAddress").value=verifiedAddress.label;
+    if(verifiedAddress.city)$("#storeCity").value=verifiedAddress.city;
+    $("#addressStatus").textContent="✅ Adresse validée : "+verifiedAddress.label;
+  }
+}
+function imageAsJpeg(file){
+  return new Promise((resolve,reject)=>{
+    if(file.size>10*1024*1024){reject(new Error("La photo ne doit pas dépasser 10 Mo."));return;}
+    if(!file.type.startsWith("image/")){reject(new Error("Sélectionne une image valide."));return;}
+    const image=new Image(),url=URL.createObjectURL(file);
+    image.onload=()=>{
+      try{
+        URL.revokeObjectURL(url);
+        const ratio=Math.min(1,1000/Math.max(image.naturalWidth,image.naturalHeight));
+        if(!image.naturalWidth||!image.naturalHeight)throw new Error("Image illisible.");
+        const canvas=document.createElement("canvas");
+        canvas.width=Math.max(1,Math.round(image.naturalWidth*ratio));
+        canvas.height=Math.max(1,Math.round(image.naturalHeight*ratio));
+        const ctx=canvas.getContext("2d");
+        if(!ctx)throw new Error("Impossible de préparer la photo.");
+        ctx.drawImage(image,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL("image/jpeg",0.68));
+      }catch(err){reject(err);}
+    };
+    image.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("Format d'image non reconnu par Safari."));};
+    image.src=url;
+  });
+}
+
 function bindUI(){
   ["#openReportTop","#openReportHero","#openReportList"].forEach(id=>$(id).addEventListener("click",openModal));
   $$("[data-close-modal]").forEach(el=>el.addEventListener("click",closeModal));
@@ -288,38 +369,70 @@ function bindUI(){
           holder.appendChild(me);
         }
       }
-      $("#reportLat").value=p[0];$("#reportLng").value=p[1];
-      toast("Position trouvée !");
+      toast("Position trouvée ! Attention : les signalements utilisent l’adresse du magasin, pas ta position.");
     },()=>toast("Autorise la localisation, ou ouvre le site via HTTPS/localhost pour cette fonction."));
   });
 
-  $("#photoInput").addEventListener("change",e=>{
-    const file=e.target.files[0];
-    if(!file){photoData="";$("#photoPreview").innerHTML="<span>🖼️ Aperçu de la photo</span>";return}
-    const reader=new FileReader();
-    reader.onload=()=>{photoData=reader.result;$("#photoPreview").innerHTML='<img src="'+photoData+'" alt="Aperçu">'};
-    reader.readAsDataURL(file);
+  $("#verifyAddress").addEventListener("click",searchStoreAddress);
+  $("#addressResult").addEventListener("change",chooseStoreAddress);
+  $("#storeAddress").addEventListener("input",resetVerifiedAddress);
+  $("#storeCity").addEventListener("input",resetVerifiedAddress);
+
+  $("#photoInput").addEventListener("change",async e=>{
+    photoData="";
+    const file=e.target.files[0],preview=$("#photoPreview");
+    preview.textContent="🖼️ Aperçu de la photo";
+    if(!file)return;
+    preview.textContent="⏳ Préparation de la photo...";
+    try{
+      photoData=await imageAsJpeg(file);
+      const img=document.createElement("img");
+      img.src=photoData;img.alt="Aperçu du produit";
+      preview.replaceChildren(img);
+    }catch(err){
+      e.target.value="";
+      preview.textContent="⚠️ "+err.message;
+      toast(err.message);
+    }
   });
 
   $("#reportForm").addEventListener("submit",e=>{
     e.preventDefault();
     const data=new FormData(e.currentTarget);
-    let lat=Number(data.get("lat")),lng=Number(data.get("lng"));
-    if(!lat||!lng){[lat,lng]=approximateCoordinates(data.get("city"))}
+    if(!verifiedAddress){
+      toast("Sélectionne une adresse vérifiée pour le magasin.");
+      $("#storeAddress").focus();
+      return;
+    }
+    if(!photoData){
+      toast("Ajoute une photo du produit en rayon.");return;
+    }
     const report={
-      id:"local-"+Date.now(),store:data.get("store").trim(),city:data.get("city").trim(),
-      series:data.get("series"),product:data.get("product").trim(),price:Number(data.get("price"))||null,
-      qty:Number(data.get("quantity"))||1,lat,lng,hours:0,
-      img:photoData||"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png"
+      id:"local-"+Date.now(),
+      store:String(data.get("store")||"").trim().slice(0,140),
+      city:String(data.get("city")||"").trim().slice(0,120),
+      address:verifiedAddress.label,
+      series:String(data.get("series")||""),
+      product:String(data.get("product")||"").trim().slice(0,200),
+      price:data.get("price")?Number(data.get("price")):null,
+      qty:Number(data.get("quantity"))||1,
+      lat:verifiedAddress.lat,lng:verifiedAddress.lng,
+      createdAt:new Date().toISOString(),hours:0,img:photoData
     };
+    if(!report.store||!report.city||!report.product||!report.series){
+      toast("Complète tous les champs obligatoires.");return;
+    }
     const local=readLocalReports();
     local.unshift(report);
-    writeLocalReports(local);
+    if(!writeLocalReports(local)){
+      toast("Espace de stockage plein. Essaie une photo plus légère ou libère de l'espace.");return;
+    }
     reports.unshift(report);
-    e.currentTarget.reset();photoData="";$("#photoPreview").innerHTML="<span>🖼️ Aperçu de la photo</span>";
+    e.currentTarget.reset();photoData="";resetVerifiedAddress();
+    $("#photoPreview").textContent="🖼️ Aperçu de la photo";
     closeModal();renderAll();
-    if(mapMode==="leaflet" && map) map.flyTo([lat,lng],11);
-    toast("Signalement ajouté à ta démo !");
+    if(mapMode==="leaflet"&&map)map.flyTo([report.lat,report.lng],13);
+    toast("Signalement enregistré sur cet appareil !");
   });
 }
 
