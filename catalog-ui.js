@@ -65,6 +65,8 @@ function resetCatalogPhotoPreview(){
   catalogDom("catalogPreviewMessage").textContent="Les visuels de produits seront ajoutés au fur et à mesure des autorisations obtenues.";
   catalogDom("catalogSourceLink").hidden=true;
   catalogDom("catalogVariantId").value="";
+  const contribution=catalogDom("catalogContribute");
+  if(contribution){contribution.hidden=true;contribution.open=false;}
   const legacyProduct=document.querySelector('#reportForm input[name="product"]');
   if(legacyProduct)legacyProduct.value="";
 }
@@ -106,6 +108,8 @@ function onCatalogVariant(){
   const legacyProduct=document.querySelector('#reportForm input[name="product"]');
   if(!variant||!product){resetCatalogPhotoPreview();return;}
   catalogDom("catalogVariantId").value=variant.id;
+  const contribution=catalogDom("catalogContribute");
+  if(contribution){contribution.hidden=!!variant.image;contribution.open=false;}
   if(legacyProduct)legacyProduct.value=product.name;
   title.textContent=product.name+" — "+variant.name;
   const communityExample=variant.id==="151-upc-mew"&&!variant.image;
@@ -154,6 +158,7 @@ async function loadPokemonCatalog(){
     }
     resetCatalogSelectors();
     fillAdminCatalogVariantSelector();
+    document.dispatchEvent(new CustomEvent("pokestock:catalogloaded",{detail:{total:data.variants.length,withImages:data.variants.filter(v=>!!v.image).length}}));
   }catch(error){
     catalogReady=false;
     cs.replaceChildren(new Option("⚠️ Catalogue indisponible, actualise la page",""));
