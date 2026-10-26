@@ -13,7 +13,7 @@ function cors(request){
   const h={"Vary":"Origin","Cache-Control":"no-store"};
   if(origin===SITE_ORIGIN){
     h["Access-Control-Allow-Origin"]=SITE_ORIGIN;
-    h["Access-Control-Allow-Methods"]="GET,POST,OPTIONS";
+    h["Access-Control-Allow-Methods"]="GET,POST,PATCH,DELETE,OPTIONS";
     h["Access-Control-Allow-Headers"]="Authorization,Content-Type";
   }
   return h;
@@ -96,6 +96,28 @@ async function authenticate(request){
     return valid?body.sub:null;
   }catch{return null;}
 }
+async function isSiteAdmin(userId){
+  if(!userId)return false;
+  const rows=await sql("SELECT 1 AS allowed FROM public.stock_admins WHERE user_id=$1 AND role='admin' LIMIT 1",[userId]);
+  return rows.length>0;
+}
+function isReportId(str){
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+function editedValues(input){
+  if(!validText(input?.store,140)||!validText(input?.city,120)||!validText(input?.address,240)
+     ||!validText(input?.product,200)||!ALLOWED_SERIES.has(input?.series))return null;
+  const lat=Number(input.lat),lng=Number(input.lng);
+  if(!validCoordinates(lat,lng))return null;
+  const qty=Number(input.qty);
+  if(!Number.isInteger(qty)||qty<1||qty>999)return null;
+  const price=input.price===null||input.price===""?null:Number(input.price);
+  if(price!==null&&(!Number.isFinite(price)||price<0||price>10000))return null;
+  if(!["pending","approved","rejected"].includes(input.status))return null;
+  return {store:input.store.trim(),city:input.city.trim(),address:input.address.trim(),product:input.product.trim(),
+    series:input.series,lat,lng,qty,price,status:input.status};
+}
+
 function validText(v,max){return typeof v==="string"&&v.trim().length>=2&&v.trim().length<=max;}
 function validCoordinates(lat,lng){return Number.isFinite(lat)&&Number.isFinite(lng)&&lat>=41&&lat<=52&&lng>=-6&&lng<=10;}
 async function validateAddress(address,city,lat,lng){
@@ -122,8 +144,73 @@ export default {
     if(request.method==="OPTIONS")return new Response(null,{status:204,headers});
     try{
       if(url.pathname==="/"&&request.method==="GET")return json({name:"PokéStock API",ok:true},200,request);
+
+      if(url.pathname==="/me/role"&&request.method==="GET"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connexion nécessaire."},401,request);
+        return json({isAdmin:await isSiteAdmin(user)},200,request);
+      }
+      if(url.pathname==="/me/reports"&&request.method==="GET"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connexion nécessaire."},401,request);
+        const rows=await sql("SELECT r.id FROM public.stock_reports r WHERE r.user_id=$1 AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) ORDER BY r.created_at DESC LIMIT 250",[user]);
+        return json({ids:rows.map(x=>x.id)},200,request);
+      }
+      if(url.pathname==="/admin/reports"&&request.method==="GET"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connexion nécessaire."},401,request);
+        if(!await isSiteAdmin(user))return json({error:"Accès réservé à l'administration."},403,request);
+        const rows=await sql(
+          "SELECT r.id,r.store_name AS store,r.store_address AS address,r.city,r.series_id AS series,r.product_name AS product,r.price_eur AS price,r.quantity AS qty,r.latitude AS lat,r.longitude AS lng,r.status,r.created_at AS created_at, d.removed_at AS removed_at FROM public.stock_reports r LEFT JOIN public.stock_report_removals d ON d.report_id=r.id ORDER BY r.created_at DESC LIMIT 150"
+        );
+        return json({reports:rows},200,request);
+      }
+      const adminEdit=/^\/admin\/reports\/([0-9a-f-]{36})$/.exec(url.pathname);
+      if(adminEdit&&request.method==="PATCH"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connexion nécessaire."},401,request);
+        if(!await isSiteAdmin(user))return json({error:"Accès réservé à l'administration."},403,request);
+        const id=adminEdit[1];
+        if(!isReportId(id))return json({error:"Identifiant invalide."},400,request);
+        const before=await sql("SELECT store_name AS store,store_address AS address,city,series_id AS series,product_name AS product,price_eur AS price,quantity AS qty,latitude AS lat,longitude AS lng,status FROM public.stock_reports WHERE id=$1::uuid LIMIT 1",[id]);
+        if(!before.length)return json({error:"Signalement introuvable."},404,request);
+        const raw=await request.text();
+        if(raw.length>5000)return json({error:"Requête trop volumineuse."},413,request);
+        let payload;
+        try{payload=JSON.parse(raw)}catch{return json({error:"Données incorrectes."},400,request);}
+        const updated=editedValues(payload);
+        if(!updated)return json({error:"Vérifie les champs, le statut et les coordonnées."},400,request);
+        const verified=await validateAddress(updated.address,updated.city,updated.lat,updated.lng);
+        if(!verified)return json({error:"Adresse invalide. Choisis une adresse vérifiée."},400,request);
+        await sql(
+          "UPDATE public.stock_reports SET store_name=$2,store_address=$3,city=$4,series_id=$5,product_name=$6,price_eur=$7,quantity=$8,latitude=$9,longitude=$10,status=$11 WHERE id=$1::uuid",
+          [id,updated.store,updated.address,updated.city,updated.series,updated.product,updated.price,updated.qty,updated.lat,updated.lng,updated.status]
+        );
+        try{
+          await sql("INSERT INTO public.stock_report_edits(report_id,edited_by,old_values,new_values) VALUES ($1::uuid,$2,$3::jsonb,$4::jsonb)",
+            [id,user,JSON.stringify(before[0]),JSON.stringify(updated)]);
+        }catch(error){console.error("Admin audit unavailable:",error?.message);}
+        return json({ok:true,id,message:"Référencement modifié."},200,request);
+      }
+      const removeReport=/^\/reports\/([0-9a-f-]{36})$/.exec(url.pathname);
+      if(removeReport&&request.method==="DELETE"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connexion nécessaire."},401,request);
+        const id=removeReport[1];
+        if(!isReportId(id))return json({error:"Identifiant incorrect."},400,request);
+        const found=await sql("SELECT user_id FROM public.stock_reports WHERE id=$1::uuid LIMIT 1",[id]);
+        if(!found.length)return json({error:"Signalement introuvable."},404,request);
+        const admin=await isSiteAdmin(user);
+        if(found[0].user_id!==user&&!admin)return json({error:"Tu ne peux supprimer que tes propres signalements."},403,request);
+        const reason=admin&&found[0].user_id!==user?"Suppression par administrateur":"Suppression par auteur";
+        await sql(
+          "INSERT INTO public.stock_report_removals(report_id,removed_by,reason) VALUES ($1::uuid,$2,$3) ON CONFLICT (report_id) DO NOTHING",
+          [id,user,reason]
+        );
+        return json({ok:true,id,message:"Signalement supprimé de la carte et des disponibilités."},200,request);
+      }
       if(url.pathname==="/reports"&&request.method==="GET"){
-        const rows=await sql("SELECT r.id,r.store_name,r.store_address,r.city,r.series_id,r.product_name,r.price_eur,r.quantity,r.latitude,r.longitude,r.photo_object_key,r.status,r.created_at,COALESCE(v.available_count,0)::int AS available_count,COALESCE(v.unavailable_count,0)::int AS unavailable_count FROM public.stock_reports r LEFT JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE verdict='available') AS available_count,COUNT(*) FILTER (WHERE verdict='unavailable') AS unavailable_count FROM public.stock_votes WHERE report_id=r.id) v ON TRUE WHERE r.status IN ('approved','pending') AND r.expires_at>now() ORDER BY r.created_at DESC LIMIT 100");
+        const rows=await sql("SELECT r.id,r.store_name,r.store_address,r.city,r.series_id,r.product_name,r.price_eur,r.quantity,r.latitude,r.longitude,r.photo_object_key,r.status,r.created_at,COALESCE(v.available_count,0)::int AS available_count,COALESCE(v.unavailable_count,0)::int AS unavailable_count FROM public.stock_reports r LEFT JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE verdict='available') AS available_count,COUNT(*) FILTER (WHERE verdict='unavailable') AS unavailable_count FROM public.stock_votes WHERE report_id=r.id) v ON TRUE WHERE r.status IN ('approved','pending') AND r.expires_at>now() AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) ORDER BY r.created_at DESC LIMIT 100");
         return json({reports:rows.map(r=>({id:r.id,store:r.store_name,address:r.store_address,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,img:photoUrl(r.photo_object_key),votes:voteSummary(r.available_count,r.unavailable_count)}))},200,request);
       }
       if(url.pathname==="/me/votes"&&request.method==="GET"){
@@ -151,7 +238,7 @@ export default {
         let payload;
         try{payload=JSON.parse(raw)}catch{return json({error:"Données invalides."},400,request);}
         if(!["available","unavailable"].includes(payload?.verdict))return json({error:"Choix invalide."},400,request);
-        const found=await sql("SELECT id,user_id FROM public.stock_reports WHERE id=$1::uuid AND status IN ('pending','approved') AND expires_at>now() LIMIT 1",[id]);
+        const found=await sql("SELECT id,user_id FROM public.stock_reports WHERE id=$1::uuid AND status IN ('pending','approved') AND expires_at>now() AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=public.stock_reports.id) LIMIT 1",[id]);
         if(!found.length)return json({error:"Signalement introuvable ou expiré."},404,request);
         if(found[0].user_id===user)return json({error:"Tu ne peux pas voter sur ton propre signalement."},403,request);
         const existing=await sql("SELECT verdict FROM public.stock_votes WHERE report_id=$1::uuid AND voter_user_id=$2",[id,user]);
