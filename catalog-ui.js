@@ -72,12 +72,16 @@ function onCatalogVariant(){
   catalogDom("catalogVariantId").value=variant.id;
   if(legacyProduct)legacyProduct.value=product.name;
   title.textContent=product.name+" — "+variant.name;
-  image.src=variant.image||"catalog-placeholder.svg";
-  image.alt=variant.image?"Photo autorisée du produit : "+product.name+" ("+variant.name+")":"Visuel indicatif ; photo exacte non encore disponible";
+  const communityExample=variant.id==="151-upc-mew"&&!variant.image;
+  image.src=variant.image||(communityExample?"catalog-upc151-chat.svg":"catalog-placeholder.svg");
+  image.alt=variant.image?"Photo autorisée du produit : "+product.name+" ("+variant.name+")":
+    communityExample?"Photo du coffret 151 transmise par le responsable du site":"Visuel indicatif ; photo exacte non encore disponible";
   image.onerror=()=>{image.onerror=null;image.src="catalog-placeholder.svg";};
   message.textContent=variant.image
     ?"✅ Visuel du produit disponible dans la médiathèque PokéStock."
-    :"🖼️ Photographie officielle non intégrée : visuel neutre en attendant une image utilisable avec autorisation.";
+    :communityExample
+      ?"📸 Photo de ce coffret 151 fournie directement par le responsable de PokéStock."
+      :"🖼️ Photographie officielle non intégrée : visuel neutre en attendant une image utilisable avec autorisation.";
   const url=variant.sourceUrl||product.sourceUrl;
   source.hidden=!url;
   if(url)source.href=url;
