@@ -10,7 +10,10 @@ const catalogTypes={
   tin:"🪙 Boîte métal",
   upc:"✨ Collection Ultra-Premium (UPC)",
   collection:"🎁 Collection / Coffret",
-  display:"📦 Display"
+  display:"📦 Display",
+  tripack:"🎴 Tripack / 3 boosters",
+  blister:"📌 Blister",
+  deck:"🃏 Deck / Coffret combat"
 };
 let catalogData={series:[],products:[],variants:[]};
 let catalogReady=false;
@@ -21,8 +24,40 @@ function fillCatalogSelect(select,choices,firstText){
   for(const item of choices)select.add(new Option(item.name,item.id));
   select.value="";
   select.disabled=!choices.length;
+  for(const item of choices){if(item.releaseDate&&item.releaseDate>new Date().toISOString().slice(0,10)){const option=[...select.options].find(o=>o.value===item.id);if(option){option.disabled=true;option.textContent+=" 🔜";}}}
 }
 function catalogById(arr,id){return arr.find(entry=>entry.id===id);}
+function setCatalogSeriesOptions(query=""){
+  const keep=cs.value;
+  const filter=query.trim().toLocaleLowerCase("fr");
+  cs.replaceChildren(new Option("Sélectionne une extension",""));
+  const groups=new Map();
+  for(const entry of catalogData.series){
+    const label=[entry.name,entry.block,entry.code].join(" ").toLocaleLowerCase("fr");
+    if(filter&&!label.includes(filter))continue;
+    const group=entry.block||"Autres séries";
+    if(!groups.has(group))groups.set(group,[]);
+    groups.get(group).push(entry);
+  }
+  const today=new Date().toISOString().slice(0,10);
+  for(const [name,items] of groups){
+    const optgroup=document.createElement("optgroup");
+    optgroup.label=name;
+    for(const entry of items){
+      const notReleased=!!(entry.releaseDate&&entry.releaseDate>today);
+      const opt=new Option((entry.code?entry.code+" · ":"")+entry.name+(notReleased?" 🔜":""),
+        entry.id);
+      opt.disabled=notReleased;
+      optgroup.appendChild(opt);
+    }
+    cs.appendChild(optgroup);
+  }
+  if(keep&&catalogData.series.some(entry=>entry.id===keep)&&cs.querySelector('option[value="'+keep+'"]')){
+    cs.value=keep;
+  }
+  cs.disabled=!groups.size;
+}
+
 function resetCatalogPhotoPreview(){
   catalogDom("catalogPreviewImage").src="catalog-placeholder.svg";
   catalogDom("catalogPreviewImage").alt="Illustration générique, pas une photo de l'article";
@@ -34,7 +69,8 @@ function resetCatalogPhotoPreview(){
   if(legacyProduct)legacyProduct.value="";
 }
 function resetCatalogSelectors(){
-  fillCatalogSelect(cs,catalogData.series,"Sélectionne une extension");
+  catalogDom("catalogSeriesSearch").value="";
+  setCatalogSeriesOptions();
   fillCatalogSelect(ct,[],"Choisis d’abord une série");
   fillCatalogSelect(cp,[],"Choisis d’abord un type");
   fillCatalogSelect(cv,[],"Choisis d’abord un article");
@@ -95,6 +131,9 @@ async function loadPokemonCatalog(){
       throw Error("Données catalogue incorrectes.");
     catalogData=data;
     catalogReady=true;
+    series=data.series.map(entry=>({id:entry.id,name:entry.name,color:entry.color,block:entry.block,code:entry.code}));
+    renderFilters();
+    renderAll();
     resetCatalogSelectors();
     fillAdminCatalogVariantSelector();
   }catch(error){
@@ -106,6 +145,16 @@ async function loadPokemonCatalog(){
   }
 }
 cs.addEventListener("change",onCatalogSeries);
+catalogDom("catalogSeriesSearch").addEventListener("input",event=>{
+  const previous=cs.value;
+  setCatalogSeriesOptions(event.target.value);
+  if(previous&&!cs.value){
+    fillCatalogSelect(ct,[],"Choisis d’abord une série");
+    fillCatalogSelect(cp,[],"Choisis d’abord un type");
+    fillCatalogSelect(cv,[],"Choisis d’abord un article");
+    resetCatalogPhotoPreview();
+  }
+});
 ct.addEventListener("change",onCatalogType);
 cp.addEventListener("change",onCatalogProduct);
 cv.addEventListener("change",onCatalogVariant);
@@ -119,7 +168,11 @@ function fillAdminCatalogVariantSelector(){
     const series=catalogById(catalogData.series,product?.seriesId);
     return {id:v.id,name:(series?.name||"—")+" — "+(product?.name||"—")+" / "+v.name+(v.image?" 📸":"")};
   });
-  fillCatalogSelect(select,options,"Sélectionne une référence du catalogue");
+  const filter=catalogDom("adminCatalogSearch")?.value.trim().toLocaleLowerCase("fr")||"";
+  const show=options.filter(option=>!filter||option.name.toLocaleLowerCase("fr").includes(filter));
+  const previously=select.value;
+  fillCatalogSelect(select,show,"Sélectionne une référence du catalogue");
+  if(show.some(option=>option.id===previously))select.value=previously;
 }
 async function uploadCatalogPhoto(){
   if(!userIsAdmin){catalogDom("adminCatalogStatus").textContent="⚠️ Accès réservé à l'administration.";return;}
@@ -147,4 +200,5 @@ async function uploadCatalogPhoto(){
   finally{button.disabled=false;}
 }
 catalogDom("adminUploadCatalogPhoto").addEventListener("click",uploadCatalogPhoto);
+catalogDom("adminCatalogSearch").addEventListener("input",fillAdminCatalogVariantSelector);
 loadPokemonCatalog();
