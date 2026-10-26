@@ -15,7 +15,7 @@ Une connexion Internet est nécessaire (fonds OpenStreetMap, adresses IGN, authe
 
 ## Catalogue de références et art sets (octobre 2026)
 
-Catalogue structuré dans PostgreSQL : 6 séries, 18 types de produits réels et 30 variantes/art sets documentés avec liens vers les fiches sources. Le contenu de démarrage se trouve dans `backend/catalog-seed.sql` et le schéma dans `backend/schema.sql`.
+Catalogue structuré dans PostgreSQL : 6 séries, 22 références de produits et 48 variantes/art sets documentés avec liens vers les fiches sources. Le contenu de démarrage se trouve dans `backend/catalog-seed.sql` et le schéma dans `backend/schema.sql`.
 
 - `GET /catalog` donne les séries, produits, types et art sets actifs.
 - Le formulaire choisit successivement **série → type d'article → référence → art set**. Le serveur déduit le nom et la série à partir de la variante sélectionnée et enregistre `stock_reports.catalog_variant_id` ; l'utilisateur ne peut pas injecter un produit inexistant par texte libre.
@@ -26,6 +26,9 @@ Catalogue structuré dans PostgreSQL : 6 séries, 18 types de produits réels et
 - Le catalogue est volontairement partiel : art sets additionnels, EAN, langues d'édition, dates et éventuelles autorisations de reproduction restent à compléter.
 
 **Références officielles utilisées pour la sélection** : galeries produits Pokémon en français, annonces éditeur Évolutions Prismatiques (mini-boîtes Aquali, Voltali, Pyroli, Mentali, Noctali, Phyllali, Givrali, Nymphali) et présentation Méga-Évolution. Les liens sont conservés produit par produit.
+
+
+Les variantes de boosters supplémentaires (Écarlate et Violet, Méga-Évolution, Évolutions Prismatiques, Destinées de Paldea, Foudre Noire et Flamme Blanche) ont été complétées d'après une galerie de référence de visuels de boosters. Aucune image de ces pages n'est réhébergée sans licence.
 
 ## Signalement d'un stock
 
