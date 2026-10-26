@@ -112,3 +112,13 @@
   .adm-brand{font-size:14px}
   .adm-tab{font-size:11px}
 }
+
+/* Actions principales de la photothèque */
+.adm-head-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+.adm-head-actions button{min-height:42px;padding:10px 13px;font-size:12px;white-space:normal}
+.adm-head-actions .adm-quick-button{background:#ef4456}
+@media(max-width:690px){
+  .adm-head-actions{width:100%;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:9px}
+  .adm-head-actions button{width:100%;min-width:0;min-height:43px;padding:10px 7px;font-size:11px}
+  .adm-head-actions .adm-quick-button{background:#ef4456}
+}
