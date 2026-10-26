@@ -8,6 +8,7 @@ const PLACEHOLDER="catalog-placeholder.svg";
 const PHOTO_LIMIT=10*1024*1024;
 let jwt=null, jwtExpires=0, catalog=null, listings=[], filtered=[], pageSize=28;
 let selectedId="", previewObjectUrl=null, batch=[], batchBusy=false, singleBusy=false, reviewBusy=false;
+let cardexImageUrl=null, cardexBusy=false;
 const productById=new Map(),seriesById=new Map(),entryById=new Map();
 
 function setMessage(id,message,isError=false){
@@ -138,7 +139,11 @@ function renderGallery(){
     const code=document.createElement("small");code.textContent=e.id;
     const button=document.createElement("button");button.type="button";button.dataset.selectId=e.id;
     button.textContent=e.image?"🔄 Changer la photo":"📸 Ajouter la photo";button.className=e.image?"adm-replace":"";
-    body.append(category,title,variation,code,button);article.append(cover,body);fragment.append(article);
+    const cardex=document.createElement("button");
+    cardex.type="button";cardex.dataset.pokecardexId=e.id;
+    cardex.className="adm-cardex-card-action";
+    cardex.textContent="🌐 Depuis PokéCardex";
+    body.append(category,title,variation,code,button,cardex);article.append(cover,body);fragment.append(article);
   }
   root.append(fragment);
   if(!filtered.length){
@@ -153,7 +158,7 @@ function selectPanel(panel){
     b.classList.toggle("is-active",active);
     if(active)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");
   }
-  const panels={gallery:"admGalleryPanel",upload:"admUploadPanel",bulk:"admBulkPanel",proposals:"admProposalsPanel"};
+  const panels={gallery:"admGalleryPanel",upload:"admUploadPanel",bulk:"admBulkPanel",cardex:"admCardexPanel",proposals:"admProposalsPanel"};
   for(const [key,id] of Object.entries(panels))$(id).hidden=key!==panel;
   if(panel==="proposals")refreshProposals();
   if(window.innerWidth<=690){
@@ -270,6 +275,7 @@ async function reloadCatalog(){
   $("admSeriesFilter").value=catalog.series.some(s=>s.id===previousSeries)?previousSeries:"";
   renderGallery();
   fillSeriesSelect($("admPickSeries"),"Choisir une extension");
+  renderCardexVariants();
   if(selected&&entryById.has(selected)){
     const e=entryById.get(selected);
     $("admPickSeries").value=e.series?.id||"";
@@ -357,6 +363,106 @@ async function refreshProposals(){
     root.append(fragment);
   }catch(e){setMessage("admProposalStatus",e.message,true);}
 }
+
+function cardexSafeUrl(value){
+  try{
+    const url=new URL(value);
+    const allowed=new Set(["pokecardex.com","www.pokecardex.com","pokecardex.b-cdn.net","cdn.pokecardex.com","assets.pokecardex.com"]);
+    return url.protocol==="https:"&&allowed.has(url.hostname)?url.href:null;
+  }catch{return null;}
+}
+function renderCardexVariants(){
+  if(!catalog)return;
+  const choice=$("admCardexVariant"),term=$("admCardexSearch").value.trim().toLocaleLowerCase("fr");
+  const previous=choice.value;
+  choice.replaceChildren(new Option("Sélectionne un produit et sa variante",""));
+  for(const entry of listings){
+    if(term&&!entry.label.toLocaleLowerCase("fr").includes(term)&&!entry.id.toLowerCase().includes(term))continue;
+    choice.add(new Option((entry.image?"📷 ":"")+entry.label,entry.id));
+  }
+  if([...choice.options].some(option=>option.value===previous))choice.value=previous;
+  else if(selectedId&&[...choice.options].some(option=>option.value===selectedId))choice.value=selectedId;
+  $("admCardexTarget").textContent=choice.value&&entryById.has(choice.value)
+    ?"🎨 "+entryById.get(choice.value).label
+    :"Sélectionne la référence précise, puis choisis la photo correspondante.";
+  $("admCardexImport").disabled=!choice.value||!cardexImageUrl||cardexBusy;
+}
+function setCardexChoice(id){
+  if(!entryById.has(id))return;
+  selectedId=id;$("admCardexSearch").value="";
+  renderCardexVariants();
+  $("admCardexVariant").value=id;
+  $("admCardexTarget").textContent="🎨 "+entryById.get(id).label;
+  $("admCardexImport").disabled=!cardexImageUrl;
+  selectPanel("cardex");
+}
+function renderCardexCandidates(candidates){
+  const root=$("admCardexCandidates");root.replaceChildren();
+  cardexImageUrl=null;$("admCardexChosenImage").src=PLACEHOLDER;
+  $("admCardexImport").disabled=true;
+  if(!candidates.length){
+    setMessage("admCardexFindStatus","Aucune image détectée. Sur PokéCardex, ouvre directement une image et copie son adresse, puis relance la recherche.",true);return;
+  }
+  const frag=document.createDocumentFragment();
+  for(const item of candidates){
+    const url=cardexSafeUrl(item.url);if(!url)continue;
+    const button=document.createElement("button");button.type="button";button.className="adm-cardex-candidate";
+    const picture=document.createElement("img");
+    picture.src=url;picture.loading="lazy";picture.alt="Image issue de PokéCardex — à vérifier";
+    picture.onerror=()=>{picture.onerror=null;picture.src=PLACEHOLDER;};
+    const label=document.createElement("span");label.textContent="Choisir cette image";
+    button.append(picture,label);
+    button.addEventListener("click",()=>{
+      root.querySelectorAll(".adm-cardex-candidate").forEach(el=>el.classList.remove("is-selected"));
+      button.classList.add("is-selected");
+      cardexImageUrl=url;
+      $("admCardexChosenImage").src=url;
+      $("admCardexChosenImage").onerror=()=>{$("admCardexChosenImage").onerror=null;$("admCardexChosenImage").src=PLACEHOLDER;};
+      $("admCardexImport").disabled=!$("admCardexVariant").value;
+      setMessage("admCardexImportStatus","Photo sélectionnée. Vérifie qu'elle correspond à l'art set choisi.");
+    });
+    frag.append(button);
+  }
+  root.append(frag);
+  setMessage("admCardexFindStatus",root.children.length+" image(s) trouvée(s) sur PokéCardex. Choisis visuellement la bonne.");
+}
+async function findCardexImages(){
+  if(cardexBusy)return;
+  const url=cardexSafeUrl($("admCardexPageUrl").value.trim());
+  if(!url){setMessage("admCardexFindStatus","Colle un lien HTTPS du site PokéCardex ou l'adresse d'une image hébergée sur PokéCardex.",true);return;}
+  cardexBusy=true;$("admCardexFind").disabled=true;
+  setMessage("admCardexFindStatus","⏳ Recherche des photographies dans la page PokéCardex...");
+  try{
+    const response=await api("/admin/catalog/pokecardex/candidates",{method:"POST",body:{pageUrl:url},long:true});
+    renderCardexCandidates(response.candidates||[]);
+  }catch(error){
+    $("admCardexCandidates").replaceChildren();
+    setMessage("admCardexFindStatus","⚠️ "+error.message+" — essaie une adresse directe de l'image.",true);
+  }finally{cardexBusy=false;$("admCardexFind").disabled=false;}
+}
+async function importCardexSelected(){
+  if(cardexBusy)return;
+  const id=$("admCardexVariant").value,pageUrl=cardexSafeUrl($("admCardexPageUrl").value.trim());
+  const rightsNote=$("admCardexRights").value.trim();
+  if(!id||!cardexImageUrl||!pageUrl){setMessage("admCardexImportStatus","Choisis un produit, une fiche source et une photographie.",true);return;}
+  if(rightsNote.length<5||!$("admCardexRightsConfirm").checked){
+    setMessage("admCardexImportStatus","Indique l'origine et confirme les droits de réutilisation.",true);return;
+  }
+  const entry=entryById.get(id);
+  if(!confirm("Associer l'image PokéCardex à : "+entry?.label+" ? Elle deviendra la photo principale de cet art set."))return;
+  cardexBusy=true;$("admCardexImport").disabled=true;
+  setMessage("admCardexImportStatus","⏳ Importation de l'image dans la base de données Neon...");
+  try{
+    const result=await api("/admin/catalog/variants/"+encodeURIComponent(id)+"/import-pokecardex",{
+      method:"POST",body:{imageUrl:cardexImageUrl,pageUrl,rightsNote,rightsConfirmed:true},long:true
+    });
+    await reloadCatalog();
+    setMessage("admCardexImportStatus","✅ "+result.message+" La photo s'affiche désormais sur les signalements de cette référence.");
+    $("admCardexRightsConfirm").checked=false;
+  }catch(error){setMessage("admCardexImportStatus","⚠️ "+error.message,true);}
+  finally{cardexBusy=false;$("admCardexImport").disabled=!$("admCardexVariant").value||!cardexImageUrl;}
+}
+
 function attachEvents(){
   document.querySelectorAll("[data-panel]").forEach(b=>b.addEventListener("click",()=>selectPanel(b.dataset.panel)));
   for(const id of ["admSearch","admSeriesFilter","admCoverageFilter"]){
@@ -366,8 +472,19 @@ function attachEvents(){
   $("admExport").addEventListener("click",csvMissing);
   $("admQuickUpload").addEventListener("click",()=>selectPanel("upload"));
   $("admPhotoGallery").addEventListener("click",event=>{
-    const b=event.target.closest("[data-select-id]");if(b)selectEntryForUpload(b.dataset.selectId);
+    const pokec=event.target.closest("[data-pokecardex-id]");
+    if(pokec){setCardexChoice(pokec.dataset.pokecardexId);return;}
+    const b=event.target.closest("[data-select-id]");
+    if(b)selectEntryForUpload(b.dataset.selectId);
   });
+  $("admCardexSearch").addEventListener("input",renderCardexVariants);
+  $("admCardexVariant").addEventListener("change",()=>{
+    const id=$("admCardexVariant").value;
+    $("admCardexTarget").textContent=id&&entryById.has(id)?"🎨 "+entryById.get(id).label:"Choisis la référence exacte.";
+    $("admCardexImport").disabled=!id||!cardexImageUrl;
+  });
+  $("admCardexFind").addEventListener("click",findCardexImages);
+  $("admCardexImport").addEventListener("click",importCardexSelected);
   $("admPickSeries").addEventListener("change",()=>{
     populateArticleSelect($("admPickSeries").value);
     populateVariantSelect("");setSelected("");
@@ -427,7 +544,7 @@ async function init(){
     attachEvents();
     await reloadCatalog();
     const hash=location.hash.slice(1);
-    if(["gallery","upload","bulk","proposals"].includes(hash))selectPanel(hash);
+    if(["gallery","upload","bulk","cardex","proposals"].includes(hash))selectPanel(hash);
   }catch(error){showGate("🔒 "+(error.message||"Accès à l'administration indisponible"));}
 }
 init();
