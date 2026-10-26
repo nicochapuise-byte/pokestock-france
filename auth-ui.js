@@ -9,7 +9,7 @@ const api={
     // On demande le JWT au point d'accès officiel de Neon Auth.
     let response;
     try{
-      response=await fetch(AUTH_URL.replace(/\\/$/,"")+"/token",{
+      response=await fetch(AUTH_URL+"/token",{
         method:"GET",
         credentials:"include",
         headers:{"Accept":"application/json"},
