@@ -42,6 +42,18 @@ Source principale : **PokéCardex**, [catalogue des séries](https://www.pokecar
 - PokéCardex n'annonce pas d'API publique pour son catalogue : il ne s'agit **pas d'une synchronisation officielle automatique**, mais d'une première importation documentée. Ne pas réhéberger leurs visuels ou images Pokémon sans autorisation.
 - Scripts idempotents : `backend/catalog-expanded-series-2026.sql`, `backend/catalog-expanded-products-2026.sql`, `backend/catalog-expanded-artsets-2026.sql`, `backend/catalog-confirmed-products-2026.sql`. Les six séries initiales et les signalements existants ont été préservés.
 
+## Gestion des images pour toutes les séries (26 octobre 2026)
+
+Le travail sur les images n'est **pas limité à 30ᵉ Anniversaire** : l'administration compte les références dans **tous les blocs d'extensions** et permet de traiter les 125 séries présentes en base.
+
+- **Photothèque → Avancement des photos pour toutes les séries** : 125 extensions, progression par série, compteur de visuels enregistrés, filtre pour retrouver directement les références sans photo, 30ᵉ Anniversaire épinglé en premier.
+- **Depuis PokéCardex → Traiter plusieurs fiches** : 1 à 6 URL PokéCardex par analyse, extraction côté serveur des visuels candidats. L'administrateur vérifie chaque fiche et choisit explicitement l'**art set correspondant** avant importation dans le stockage privé Neon.
+- L'accès aux outils d'inspection et au tableau de couverture est protégé côté serveur par une session valide et un rôle administrateur : `GET /admin/catalog/coverage` et `POST /admin/catalog/pokecardex/bulk-candidates`. Les photos déjà validées ne sont jamais écrasées par l'inspection.
+- Références scellées supplémentaires intégrées hors série anniversaire : **Collection Classeur 151**, **Boîtier Stratégies et Combats Méga-Évolution**, et **quatre blisters distincts Règne Delta** (les dernières références sont à venir et ne sont pas signalables avant leur date).
+- En date de cette modification : **125 séries, 286 produits et 350 variantes**, dont **8 avec images approuvées**. Les 342 autres variantes restent à illustrer. Les données préexistantes et la liste des photos déjà enregistrées sont préservées.
+
+**Limite réelle :** PokéCardex a confirmé qu'il ne met pas à disposition d'API officielle. Sa page produit peut charger des images dynamiquement et refuser les robots. La fonction de découverte est donc volontairement bornée à 6 fiches explicites par requête ; ce n'est pas un système qui a déjà photographié, téléchargé ou validé les milliers de produits de PokéCardex. Ne jamais promettre une couverture intégrale sans vérifier dans `catalog_variants.image_approved`.
+
 ## Importer des photographies depuis PokéCardex
 
 L'onglet **« 🌐 Depuis PokéCardex »** de `admin.html` permet, pour un art set précis, de récupérer les images d'une page de **produit** de PokéCardex (`https://www.pokecardex.com/produits`) ou de son URL image directe. Les images des cartes de `/series` ne représentent pas nécessairement les produits scellés (booster, coffret, ETB).
