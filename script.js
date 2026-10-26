@@ -47,7 +47,7 @@ const $$ = s => [...document.querySelectorAll(s)];
 const seriesById = id => series.find(s=>s.id===id) || {name:"Autre",color:"#64748b"};
 
 function escapeHtml(value){return String(value??"").replace(/[&<>"\x27]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\x27":"&#39;"}[c]));}
-function safeImage(src){const value=String(src||"");return /^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/|^https:\/\/[a-z0-9.-]+\.neon\.tech\/|^data:image\/(?:png|jpeg|webp);base64,/i.test(value)?value:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png";}
+function safeImage(src){const value=String(src||"");return /^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/|^https:\/\/[a-z0-9.-]+\.neon\.tech\/|^data:image\/(?:png|jpeg|webp);base64,/i.test(value)?value:"catalog-placeholder.svg";}
 function reportHours(r){return r.createdAt?Math.max(0,(Date.now()-Date.parse(r.createdAt))/3600000):(r.hours||0);}
 function ageClass(hours){ return hours<24?"fresh":hours<=72?"medium":"old"; }
 function ageText(hours){ return hours<24?(hours<1?"À l'instant":"Il y a "+hours+" h"):hours<=72?"Il y a "+Math.round(hours/24)+" j":"À vérifier"; }
@@ -222,7 +222,7 @@ function renderCards(items){
       </div>
       <div class="stock-body">
         <span class="stock-series" style="color:${s.color}">${escapeHtml(s.name)}</span>
-        <h3>${escapeHtml(r.product)}</h3>
+        <h3>${escapeHtml(r.product)}</h3>${r.artSet?`<p class="stock-artset">🎨 Art set : ${escapeHtml(r.artSet)}</p>`:""}
         <p class="stock-place">📍 ${escapeHtml(r.store)} • ${escapeHtml(r.city)}</p>${r.address?`<p class="stock-address">${escapeHtml(r.address)}</p>`:""}
         <div class="stock-meta"><span>Stock aperçu : <b>${r.qty||1}</b></span><b>${r.price?Number(r.price).toFixed(2)+" €":"—"}</b></div>
       </div>
@@ -428,7 +428,7 @@ function bindUI(){
       toast("Sélectionne une adresse vérifiée pour le magasin.");
       $("#storeAddress").focus();return;
     }
-    if(!photoData){toast("Ajoute une photo du produit en rayon.");return;}
+    // Photo preuve privée facultative : le visuel public vient du catalogue.
     submitBtn.disabled=true;
     submitBtn.textContent="⏳ Publication...";
     try{
@@ -444,6 +444,7 @@ function bindUI(){
         api.openLogin();return;
       }
       const payload={
+        catalogVariantId:String(data.get("catalogVariantId")||""),
         store:String(data.get("store")||"").trim().slice(0,140),
         city:String(data.get("city")||"").trim().slice(0,120),
         address:verifiedAddress.label,
@@ -453,8 +454,8 @@ function bindUI(){
         qty:Number(data.get("quantity"))||1,
         lat:verifiedAddress.lat,lng:verifiedAddress.lng,photo:photoData
       };
-      if(!payload.store||!payload.city||!payload.product||!payload.series){
-        toast("Complète tous les champs obligatoires.");return;
+      if(!payload.catalogVariantId||!payload.store||!payload.city){
+        toast("Sélectionne une série, un article, un art set et complète les informations du magasin.");return;
       }
       const response=await fetch(API_BASE+"/reports",{
         method:"POST",
@@ -471,6 +472,7 @@ function bindUI(){
       if(!response.ok)throw Error(result.error||"Erreur de publication ("+response.status+").");
       // Une réponse positive vaut succès même si le rafraîchissement de la carte échoue.
       form.reset();
+      document.dispatchEvent(new Event("pokestock:reportreset"));
       photoData="";
       resetVerifiedAddress();
       $("#photoPreview").textContent="🖼️ Aperçu de la photo";
