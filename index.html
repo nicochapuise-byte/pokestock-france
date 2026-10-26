@@ -7,7 +7,7 @@
   <title>PokéStock France</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="styles.css?v=20261026-community-v1">
+  <link rel="stylesheet" href="styles.css?v=20261026-votes-v1">
 </head>
 <body>
   <header class="topbar">
@@ -34,7 +34,7 @@
           <button class="btn btn-white" id="openReportHero">📸 Signaler un produit</button>
         </div>
         <div class="hero-stats">
-          <div><b id="reportCount">0</b><span>signalements sur cet appareil</span></div>
+          <div><b id="reportCount">0</b><span>signalements actifs</span></div>
           <div><b id="cityCount">0</b><span>villes</span></div>
           <div><b id="seriesCount">0</b><span>séries suivies</span></div>
         </div>
@@ -84,6 +84,7 @@
             <p><i class="dot fresh"></i> Récent : moins de 24 h</p>
             <p><i class="dot medium"></i> À vérifier : 1 à 3 jours</p>
             <p><i class="dot old"></i> Ancien : plus de 3 jours</p>
+            <p class="status-help">✅ Confirmé : au moins 2 avis concordants.<br>❌ Rupture : au moins 2 avis concordants.<br>🟠 Sans consensus : non vérifié.</p>
           </div>
 
           <div class="community-box">
@@ -110,6 +111,7 @@
       <p class="demo-notice" id="communityStatus">🧪 Les 6 exemples préchargés sont fictifs. Les vrais signalements partagés afficheront leur photo et seront marqués « non vérifiés » tant qu’ils ne sont pas confirmés.</p>
       <div id="stockGrid" class="stock-grid"></div>
       <p id="emptyState" class="empty-state" hidden>Aucun signalement ne correspond à tes filtres.</p>
+      <p class="vote-disclaimer">ℹ️ Les votes reflètent les observations des membres et ne garantissent jamais un stock en temps réel. Les auteurs ne peuvent pas voter sur leurs propres signalements.</p>
     </section>
 
     <section class="section how" id="fonctionnement">
@@ -139,6 +141,7 @@
       <label><span>E-mail *</span><input id="authEmail" type="email" autocomplete="email" required placeholder="ton@email.fr"></label>
       <label><span>Mot de passe *</span><input id="authPassword" type="password" required minlength="8" autocomplete="current-password" placeholder="8 caractères minimum"></label>
       <p class="auth-status" id="authStatus" role="status"></p>
+      <section id="communityReputation" class="reputation-panel" hidden aria-label="Ma réputation communautaire"></section>
       <button class="btn btn-red full" type="submit" id="authSubmit">Se connecter</button>
       <button class="btn btn-white full" type="button" id="toggleAuthMode">Créer un compte</button>
       <button class="btn btn-white full" type="button" id="signOutBtn" hidden>Se déconnecter</button>
@@ -182,6 +185,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="script.js?v=20261026-no-duplicates-v4"></script>
-  <script type="module" src="auth-ui.js?v=20261026-authfix-v2"></script>
+  <script src="community.js?v=20261026-votes-v1"></script>
+  <script type="module" src="auth-ui.js?v=20261026-votes-v1"></script>
 </body>
 </html>
