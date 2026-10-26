@@ -419,7 +419,9 @@ function bindUI(){
 
   $("#reportForm").addEventListener("submit",async e=>{
     e.preventDefault();
-    const data=new FormData(e.currentTarget);
+    // currentTarget redevient null après un await : conserver le formulaire maintenant.
+    const form=e.currentTarget;
+    const data=new FormData(form);
     if(!verifiedAddress){
       toast("Sélectionne une adresse vérifiée pour le magasin.");
       $("#storeAddress").focus();return;
@@ -464,12 +466,16 @@ function bindUI(){
       });
       const result=await response.json();
       if(!response.ok)throw Error(result.error||"Erreur de publication ("+response.status+").");
-      e.currentTarget.reset();photoData="";resetVerifiedAddress();
+      // Publication déjà enregistrée sur le serveur : ne pas la présenter comme un échec
+      // si l'actualisation visuelle rencontre ensuite un problème.
+      form.reset();
+      photoData="";
+      resetVerifiedAddress();
       $("#photoPreview").textContent="🖼️ Aperçu de la photo";
       closeModal();
-      toast("📸 Signalement communautaire publié (non vérifié) !");
-      await loadCommunityReports();
+      toast("✅ Signalement enregistré ! Stock non vérifié.");
       if(mapMode==="leaflet"&&map)map.flyTo([payload.lat,payload.lng],13);
+      loadCommunityReports().catch(err=>console.warn("Affichage communautaire:",err));
     }catch(err){toast("Impossible de publier : "+(err.message||"Erreur de connexion"));}
     finally{submitBtn.disabled=false;submitBtn.textContent="Publier le signalement";}
   });
