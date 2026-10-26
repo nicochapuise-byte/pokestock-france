@@ -471,6 +471,9 @@ function bindUI(){
     selectedSeries.clear();
     $$("#seriesFilters input").forEach(i=>i.checked=false);
     $("#searchInput").value="";
+    const seriesQuery=$("#seriesFilterSearch");
+    if(seriesQuery)seriesQuery.value="";
+    renderFilters();
     renderAll();
   });
 
