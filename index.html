@@ -7,7 +7,7 @@
   <title>PokéStock France</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="styles.css?v=20261026-photo-v2">
+  <link rel="stylesheet" href="styles.css?v=20261026-admintabs-v1">
 </head>
 <body>
   <header class="topbar">
@@ -157,7 +157,8 @@
       <button type="button" class="modal-close" data-close-admin aria-label="Fermer">×</button>
       <span class="eyebrow dark">🛡️ ADMINISTRATION</span>
       <h2>Gestion des signalements</h2>
-      <p class="modal-intro">Corrige les informations, modère les référencements et retire les signalements incorrects. Les opérations sont réservées aux administrateurs.</p>
+      <p class="modal-intro">Modifie ou supprime les signalements de boutiques. Le catalogue et les photos sont gérés dans une page séparée.</p>
+      <a class="btn btn-blue admin-photo-navigation" href="admin.html#gallery">🖼️ Ouvrir la photothèque des articles ↗</a>
       <label class="admin-search-label">🔎 Rechercher un référencement
         <input id="adminSearch" type="search" placeholder="Magasin, produit, ville…" autocomplete="off">
       </label>
@@ -307,9 +308,9 @@
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="script.js?v=20261026-photo-v2"></script>
   <script src="community.js?v=20261026-popupfix-v2"></script>
-  <script src="moderation.js?v=20261026-moderation-v1"></script>
+  <script src="moderation.js?v=20261026-admintabs-v1"></script>
   <script src="catalog-ui.js?v=20261026-photo-v3"></script>
   <script src="catalog-photo-workflow.js?v=20261026-photo-v4"></script>
-  <script type="module" src="auth-ui.js?v=20261026-votes-v1"></script>
+  <script type="module" src="auth-ui.js?v=20261026-admintabs-v1"></script>
 </body>
 </html>
