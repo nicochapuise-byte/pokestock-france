@@ -7,7 +7,7 @@
   <title>PokéStock France</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20261026-report-v2">
 </head>
 <body>
   <header class="topbar">
@@ -34,7 +34,7 @@
           <button class="btn btn-white" id="openReportHero">📸 Signaler un produit</button>
         </div>
         <div class="hero-stats">
-          <div><b id="reportCount">0</b><span>signalements</span></div>
+          <div><b id="reportCount">0</b><span>signalements sur cet appareil</span></div>
           <div><b id="cityCount">0</b><span>villes</span></div>
           <div><b id="seriesCount">0</b><span>séries suivies</span></div>
         </div>
@@ -94,7 +94,7 @@
 
         <div class="map-wrap">
           <div id="map"></div>
-          <div class="map-chip">🇫🇷 France • <span id="visibleCount">0</span> stocks affichés</div>
+          <div class="map-chip">🇫🇷 France • <span id="visibleCount">0</span> points, dont exemples</div>
         </div>
       </div>
     </section>
@@ -107,6 +107,7 @@
         </div>
         <button class="btn btn-red" id="openReportList">+ Ajouter un stock</button>
       </div>
+      <p class="demo-notice">🧪 Les 6 exemples préchargés servent uniquement à tester le site. Les signalements que tu ajoutes restent pour le moment sur cet appareil.</p>
       <div id="stockGrid" class="stock-grid"></div>
       <p id="emptyState" class="empty-state" hidden>Aucun signalement ne correspond à tes filtres.</p>
     </section>
@@ -133,22 +134,29 @@
       <button type="button" class="modal-close" data-close-modal aria-label="Fermer">×</button>
       <span class="eyebrow dark">📸 Nouveau signalement</span>
       <h2>Signaler un produit</h2>
-      <p class="modal-intro">Cette démo enregistre ton signalement uniquement dans ton navigateur.</p>
+      <p class="modal-intro">📱 Version de test : seuls les signalements enregistrés dans ton navigateur seront visibles sur cet appareil. La publication communautaire arrivera ensuite.</p>
 
       <div class="form-grid">
-        <label><span>Magasin *</span><input name="store" required placeholder="Ex. Carrefour Market"></label>
-        <label><span>Ville *</span><input name="city" required placeholder="Ex. Lille"></label>
+        <label><span>Magasin *</span><input name="store" required maxlength="140" placeholder="Ex. Carrefour Market"></label>
+        <label><span>Ville *</span><input name="city" id="storeCity" required maxlength="120" placeholder="Ex. Lille"></label>
         <label><span>Série *</span><select name="series" id="reportSeries" required></select></label>
-        <label><span>Produit *</span><input name="product" required placeholder="Ex. Coffret 6 boosters"></label>
+        <label><span>Produit *</span><input name="product" required maxlength="200" placeholder="Ex. Coffret 6 boosters"></label>
         <label><span>Prix (€)</span><input name="price" type="number" min="0" step="0.01" placeholder="29.99"></label>
         <label><span>Quantité vue</span><input name="quantity" type="number" min="1" max="999" value="1"></label>
-        <label class="wide"><span>Photo</span><input name="photo" id="photoInput" type="file" accept="image/*"></label>
+        <label class="wide"><span>Adresse complète du magasin *</span><input name="address" id="storeAddress" required maxlength="240" placeholder="Ex. 12 rue Nationale, Lille" autocomplete="street-address"></label>
+        <div class="address-picker wide">
+          <button type="button" class="btn btn-blue" id="verifyAddress">📍 Rechercher l'adresse</button>
+          <select id="addressResult" aria-label="Choisir l'adresse exacte du magasin" hidden></select>
+          <p id="addressStatus" role="status">Recherche l'adresse, puis sélectionne le résultat correspondant à ton magasin.</p>
+        </div>
+        <label class="wide"><span>📷 Photo du produit en rayon * (10 Mo maximum)</span><input name="photo" id="photoInput" type="file" accept="image/*" required></label>
         <div class="photo-preview wide" id="photoPreview"><span>🖼️ Aperçu de la photo</span></div>
       </div>
 
       <input type="hidden" name="lat" id="reportLat">
       <input type="hidden" name="lng" id="reportLng">
-      <p class="coord-help">La démo positionnera le signalement près de la ville indiquée ou au centre de la France.</p>
+      <label class="proof-confirm"><input id="proofConfirm" type="checkbox" required> Je confirme avoir vu ce produit en magasin et disposer de l’autorisation de partager cette photo.</label>
+      <p class="coord-help">📍 Le point sur la carte sera placé à l’adresse validée du magasin, jamais à ta position personnelle. Ne photographie pas les personnes présentes en rayon.</p>
       <button class="btn btn-red full" type="submit">Publier le signalement</button>
     </form>
   </div>
@@ -156,6 +164,6 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js?v=20261026-mapfix"></script>
+  <script src="script.js?v=20261026-report-v2"></script>
 </body>
 </html>
