@@ -7,7 +7,7 @@
   <title>PokéStock France</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="styles.css?v=20261026-fullseries-v1">
+  <link rel="stylesheet" href="styles.css?v=20261026-photo-v2">
 </head>
 <body>
   <header class="topbar">
@@ -172,8 +172,37 @@
         <label class="rights-check"><input id="adminCatalogRightsConfirm" type="checkbox"> Je confirme avoir le droit de publier cette image dans le catalogue.</label>
         <button class="btn btn-blue" type="button" id="adminUploadCatalogPhoto">📤 Ajouter ce visuel</button>
         <p id="adminCatalogStatus" role="status" class="admin-status"></p>
+        <div class="catalog-media-coverage">
+          <h4>📊 Couverture du catalogue</h4>
+          <p id="catalogPhotoCoverage" aria-live="polite">Chargement des photographies du catalogue…</p>
+          <progress id="catalogPhotoProgress" value="0" max="100"></progress>
+          <label><span>Afficher les références</span><select id="catalogMediaFilter">
+            <option value="missing">📷 Sans photo (prioritaires)</option>
+            <option value="all">Toutes les variantes</option>
+            <option value="done">✅ Avec photo</option>
+          </select></label>
+          <label><span>Rechercher</span><input id="catalogMediaSearch" type="search" placeholder="Ex. ETB, Méga-Lucario, 151"></label>
+          <div id="catalogMediaMissingList" class="catalog-media-missing"></div>
+          <button type="button" id="catalogMediaMore" class="btn btn-white" hidden>Afficher davantage</button>
+        </div>
+        <section class="catalog-media-bulk">
+          <h4>📚 Ajouter plusieurs photographies</h4>
+          <p>Prépare tes images nommées avec l'identifiant exact de la variante (ex. <code>151-upc-mew.jpg</code>). Les fichiers reconnus seront associés automatiquement ; vérifie toujours l'attribution avant l'envoi.</p>
+          <label><span>Choisir jusqu'à 25 photos</span><input id="catalogBulkFiles" type="file" accept="image/*" multiple></label>
+          <div id="catalogBulkQueue" class="catalog-bulk-queue"></div>
+          <label class="rights-check"><input id="catalogBulkOverwrite" type="checkbox"> Autoriser le remplacement de photographies existantes</label>
+          <button type="button" class="btn btn-blue" id="catalogBulkUploadBtn" disabled>📤 Importer les photos sélectionnées</button>
+          <p id="catalogBulkStatus" class="admin-status" role="status"></p>
+        </section>
       </section>
-      
+      <section class="catalog-moderate-pending">
+        <h3>🧑‍🤝‍🧑 Photos proposées par la communauté</h3>
+        <p>Vérifie l'image, la référence et les droits avant de la rendre visible.</p>
+        <div id="catalogPendingPhotos" class="catalog-pending-photos"></div>
+        <p id="catalogPendingStatus" class="admin-status" role="status"></p>
+        <button type="button" class="btn btn-white" id="catalogPendingRefresh">Actualiser les propositions</button>
+      </section>
+
       <div id="adminList" class="admin-report-list"></div>
       <form id="adminEditForm" class="admin-edit-form" hidden>
         <h3>✏️ Modifier le référencement</h3>
@@ -235,6 +264,15 @@
               <a id="catalogSourceLink" href="#" target="_blank" rel="noopener noreferrer" hidden>🔎 Voir la référence sur le site source</a>
             </div>
           </div>
+          <details class="catalog-contribute" id="catalogContribute" hidden>
+            <summary>📸 Tu possèdes une photo de cette référence ? Propose-la au catalogue</summary>
+            <p>Une photo prise par toi, centrée sur le produit, sans personnes ni informations personnelles. Elle restera privée tant qu'un administrateur n'aura pas vérifié sa publication.</p>
+            <label><span>Photo de l'article (10 Mo max.)</span><input id="catalogUserPhoto" type="file" accept="image/*"></label>
+            <label><span>Origine et droits de la photo *</span><input id="catalogUserRights" maxlength="240" placeholder="Ex. Photo prise par moi, droit de la partager"></label>
+            <label class="rights-check"><input id="catalogUserConsent" type="checkbox"> J'ai pris cette photo ou j'ai obtenu les autorisations nécessaires à sa publication.</label>
+            <button type="button" id="catalogProposePhotoBtn" class="btn btn-blue">📤 Proposer ce visuel</button>
+            <p id="catalogProposalStatus" class="catalog-proposal-status" role="status"></p>
+          </details>
           <input type="hidden" name="catalogVariantId" id="catalogVariantId" value="">
           <div hidden>
             <select name="series" id="reportSeries"></select>
@@ -268,7 +306,8 @@
   <script src="script.js?v=20261026-fullseries-v1"></script>
   <script src="community.js?v=20261026-popupfix-v2"></script>
   <script src="moderation.js?v=20261026-moderation-v1"></script>
-  <script src="catalog-ui.js?v=20261026-fullseries-v1"></script>
+  <script src="catalog-ui.js?v=20261026-photo-v2"></script>
+  <script src="catalog-photo-workflow.js?v=20261026-photo-v2"></script>
   <script type="module" src="auth-ui.js?v=20261026-votes-v1"></script>
 </body>
 </html>
