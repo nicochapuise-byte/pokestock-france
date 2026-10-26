@@ -73,32 +73,74 @@ function switchToFallbackMap(){
 }
 
 function initMap(){
-  if(window.L){
-    try{
-      map = L.map("map",{zoomControl:true}).setView([46.6,2.4],6);
+  if(!window.L){
+    initFallbackMap();
+    return;
+  }
+  try{
+    map = L.map("map",{zoomControl:true}).setView([46.6,2.4],6);
+    markerLayer = L.layerGroup().addTo(map);
+    mapMode = "leaflet";
 
-      const tiles = L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-        {
-          subdomains:"abcd",
-          maxZoom:20,
-          attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    // CARTO exige desormais une cle API : utiliser des fonds libres sans cle.
+    const tileProviders = [
+      {
+        url:"https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png",
+        options:{
+          subdomains:"abc",maxZoom:20,
+          attribution:'Données &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> — rendu <a href="https://www.openstreetmap.fr/">OSM France</a>'
         }
-      );
+      },
+      {
+        url:"https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        options:{
+          maxZoom:19,
+          attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+        }
+      }
+    ];
 
-      let tileErrors=0;
-      tiles.on("tileerror",()=>{
-        tileErrors++;
-        if(tileErrors>=6 && mapMode==="leaflet") switchToFallbackMap();
+    let activeTiles=null;
+    let loadTimeout=null;
+
+    function useProvider(index){
+      if(mapMode!=="leaflet" || !map) return;
+      if(loadTimeout) clearTimeout(loadTimeout);
+      if(activeTiles) map.removeLayer(activeTiles);
+      if(index>=tileProviders.length){
+        switchToFallbackMap();
+        return;
+      }
+
+      const provider=tileProviders[index];
+      const tiles=L.tileLayer(provider.url,provider.options);
+      activeTiles=tiles;
+      let loaded=false;
+      let errors=0;
+      tiles.on("tileload",()=>{
+        if(activeTiles!==tiles) return;
+        loaded=true;
+        if(loadTimeout) clearTimeout(loadTimeout);
       });
-
+      tiles.on("tileerror",()=>{
+        if(activeTiles!==tiles || loaded) return;
+        errors++;
+        if(errors>=3) useProvider(index+1);
+      });
       tiles.addTo(map);
-      markerLayer = L.layerGroup().addTo(map);
-      mapMode = "leaflet";
-      return;
-    }catch(e){
-      console.warn("Leaflet n'a pas pu démarrer, utilisation de la carte simplifiée.", e);
+      loadTimeout=setTimeout(()=>{
+        if(activeTiles===tiles && !loaded) useProvider(index+1);
+      },8000);
     }
+
+    useProvider(0);
+    setTimeout(()=>{if(map && mapMode==="leaflet") map.invalidateSize();},250);
+    return;
+  }catch(e){
+    console.warn("Impossible de charger Leaflet, affichage de la carte simplifiee.",e);
+    try{if(map) map.remove();}catch(err){console.warn(err);}
+    map=null;
+    markerLayer=null;
   }
   initFallbackMap();
 }
