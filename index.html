@@ -7,7 +7,7 @@
   <title>PokéStock France</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="styles.css?v=20261026-report-v2">
+  <link rel="stylesheet" href="styles.css?v=20261026-community-v1">
 </head>
 <body>
   <header class="topbar">
@@ -20,7 +20,7 @@
       <a href="#disponibilites">Disponibilités</a>
       <a href="#fonctionnement">Comment ça marche ?</a>
     </nav>
-    <button class="btn btn-yellow" id="openReportTop">+ Signaler</button>
+    <div class="top-actions"><button class="btn btn-white" id="accountBtn" type="button">👤 Connexion</button><button class="btn btn-yellow" id="openReportTop">+ Signaler</button></div>
   </header>
 
   <main id="accueil">
@@ -107,7 +107,7 @@
         </div>
         <button class="btn btn-red" id="openReportList">+ Ajouter un stock</button>
       </div>
-      <p class="demo-notice">🧪 Les 6 exemples préchargés servent uniquement à tester le site. Les signalements que tu ajoutes restent pour le moment sur cet appareil.</p>
+      <p class="demo-notice" id="communityStatus">🧪 Les 6 exemples préchargés sont fictifs. Les vrais signalements partagés afficheront leur photo et seront marqués « non vérifiés » tant qu’ils ne sont pas confirmés.</p>
       <div id="stockGrid" class="stock-grid"></div>
       <p id="emptyState" class="empty-state" hidden>Aucun signalement ne correspond à tes filtres.</p>
     </section>
@@ -128,13 +128,30 @@
     <p>Projet communautaire non affilié à Nintendo, Game Freak ou The Pokémon Company.</p>
   </footer>
 
+  <div class="modal" id="authModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-auth></div>
+    <form id="authForm" class="modal-card auth-card">
+      <button type="button" class="modal-close" data-close-auth aria-label="Fermer">×</button>
+      <span class="eyebrow dark">👤 Compte PokéStock</span>
+      <h2 id="authTitle">Se connecter</h2>
+      <p class="modal-intro">Un compte est nécessaire pour publier des photos et des signalements visibles par la communauté.</p>
+      <label id="authNameWrap" hidden><span>Pseudo *</span><input id="authName" maxlength="50" autocomplete="nickname" placeholder="Pseudo public"></label>
+      <label><span>E-mail *</span><input id="authEmail" type="email" autocomplete="email" required placeholder="ton@email.fr"></label>
+      <label><span>Mot de passe *</span><input id="authPassword" type="password" required minlength="8" autocomplete="current-password" placeholder="8 caractères minimum"></label>
+      <p class="auth-status" id="authStatus" role="status"></p>
+      <button class="btn btn-red full" type="submit" id="authSubmit">Se connecter</button>
+      <button class="btn btn-white full" type="button" id="toggleAuthMode">Créer un compte</button>
+      <button class="btn btn-white full" type="button" id="signOutBtn" hidden>Se déconnecter</button>
+    </form>
+  </div>
+
   <div class="modal" id="reportModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-modal></div>
     <form class="modal-card" id="reportForm">
       <button type="button" class="modal-close" data-close-modal aria-label="Fermer">×</button>
       <span class="eyebrow dark">📸 Nouveau signalement</span>
       <h2>Signaler un produit</h2>
-      <p class="modal-intro">📱 Version de test : seuls les signalements enregistrés dans ton navigateur seront visibles sur cet appareil. La publication communautaire arrivera ensuite.</p>
+      <p class="modal-intro">🌍 Pour publier un signalement visible par tous, connecte-toi à ton compte. Photo et adresse vérifiée obligatoires. Les stocks signalés ne sont pas garantis.</p>
 
       <div class="form-grid">
         <label><span>Magasin *</span><input name="store" required maxlength="140" placeholder="Ex. Carrefour Market"></label>
@@ -164,6 +181,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js?v=20261026-report-v2"></script>
+  <script src="script.js?v=20261026-community-v1"></script>
+  <script type="module" src="auth-ui.js?v=20261026-community-v1"></script>
 </body>
 </html>
