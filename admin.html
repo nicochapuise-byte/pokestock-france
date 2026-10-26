@@ -6,7 +6,7 @@
 <meta name="description" content="PokéStock France : administration des photographies officielles ou autorisées du catalogue Pokémon.">
 <meta name="robots" content="noindex,nofollow">
 <title>Administration du catalogue — PokéStock France</title>
-<link rel="stylesheet" href="admin-page.css?v=20261026-cardex-v1">
+<link rel="stylesheet" href="admin-page.css?v=20261026-allseries-v1">
 </head>
 <body>
 <header class="adm-header">
@@ -56,6 +56,15 @@
           <option value="present">Avec photographie</option>
         </select></label>
       </div>
+      <details id="admSeriesCoveragePanel" class="adm-series-coverage">
+        <summary>📊 Voir l'avancement des photos pour toutes les séries</summary>
+        <div class="adm-series-coverage-inner">
+          <p>Suivi des visuels par extension, de la plus récente à la plus ancienne. Ouvre une série pour retrouver les références sans image.</p>
+          <input id="admCoverageSeriesSearch" type="search" placeholder="Rechercher une série ou un bloc…">
+          <p id="admCoverageSeriesStatus" role="status" class="adm-message"></p>
+          <div id="admCoverageSeriesList" class="adm-coverage-entries"></div>
+        </div>
+      </details>
       <div class="adm-list-head"><span id="admListCount">Chargement…</span><small>Séries classées par date de sortie (30ᵉ Anniversaire en tête)</small></div>
       <div id="admPhotoGallery" class="adm-product-grid"></div>
       <button type="button" id="admGalleryMore" class="adm-more" hidden>Afficher plus d'articles ↓</button>
@@ -104,6 +113,14 @@
           </label>
           <button type="button" id="admCardexFind" class="adm-quiet-button">🔎 Rechercher les images de cette page</button>
           <p id="admCardexFindStatus" class="adm-message" role="status"></p>
+          <details class="adm-cardex-bulk-details">
+            <summary>📚 Traiter plusieurs fiches PokéCardex (toutes les séries)</summary>
+            <p>Colle jusqu'à 6 liens de fiches de produits PokéCardex (un lien par ligne). Le site recherche les photographies de chaque page, sans attribuer automatiquement une image à un mauvais art set.</p>
+            <textarea id="admCardexBulkUrls" rows="5" placeholder="https://www.pokecardex.com/produits/details/…&#10;https://www.pokecardex.com/produits/details/…"></textarea>
+            <button type="button" class="adm-quiet-button" id="admCardexBulkFind">🔎 Examiner ces 6 fiches</button>
+            <p id="admCardexBulkStatus" role="status" class="adm-message"></p>
+            <div id="admCardexBulkResults" class="adm-bulk-results"></div>
+          </details>
           <div id="admCardexCandidates" class="adm-cardex-candidates" aria-label="Images trouvées sur PokéCardex"></div>
         </div>
         <div class="adm-fieldbox">
@@ -145,6 +162,6 @@
   </div>
 </main>
 <footer class="adm-footer">PokéStock France · Gestion sécurisée des visuels · Les photographies de preuve des signalements restent privées.</footer>
-<script src="admin-page.js?v=20261026-cardex-v1"></script>
+<script src="admin-page.js?v=20261026-allseries-v1"></script>
 </body>
 </html>
