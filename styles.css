@@ -58,3 +58,29 @@ button,input,select{font:inherit}button,a{transition:.2s ease}.topbar{height:72p
   #accountBtn{width:41px;max-width:41px;overflow:hidden;white-space:nowrap;font-size:0}
   #accountBtn::before{content:"👤";font-size:17px}
 }
+
+/* PokéStock : votes de stock et points de réputation */
+.community-vote-summary{margin-top:16px;padding-top:13px;border-top:1px solid #e8ecf6}
+.community-vote-summary>p{font-size:12px;color:#52617b;font-weight:750;line-height:1.45;margin:0 0 12px}
+.community-vote-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.vote-action{padding:10px 6px;border:2px solid transparent;border-radius:11px;font-size:11px;font-weight:800;cursor:pointer;line-height:1.25;transition:background .2s,border-color .2s,transform .2s}
+.vote-action.yes{background:#e0f7ea;color:#126b3b}
+.vote-action.no{background:#ffe6e5;color:#aa2430}
+.vote-action.yes.is-selected{border-color:#28ac6b;background:#c0f5d9}
+.vote-action.no.is-selected{border-color:#ef3340;background:#ffcbcd}
+.vote-action:disabled{opacity:.6;cursor:progress}
+.vote-action:not(:disabled):active{transform:scale(.98)}
+.community-vote-summary small{display:block;font-size:10px;color:#768198;margin-top:8px;line-height:1.5}
+.age-badge.confirmed{background:#199b57}
+.age-badge.out-of-stock{background:#a4333c}
+.age-badge.unverified{background:#b87816}
+.stock-card.out-of-stock{border-color:#f4bec4}
+.stock-card.confirmed{border-color:#9fdec0}
+.reputation-panel{background:linear-gradient(135deg,#eaf1ff,#fff6d0);border:1px solid #dae5ff;border-radius:16px;padding:16px;color:#273759;margin:10px 0 14px}
+.reputation-panel[hidden]{display:none}
+.reputation-panel h3{font-size:18px;color:#17234d;margin:0 0 10px}
+.reputation-panel p{font-size:12px;line-height:1.5;margin:5px 0}
+.reputation-panel small{color:#63708a;font-size:11px;line-height:1.5;display:block;margin-top:8px}
+.vote-disclaimer{font-size:12px;color:#63708a;line-height:1.5;margin:18px 0 0}
+.status-help{font-size:12px;color:#5a6580;line-height:1.65;margin:12px 0}
+@media(max-width:780px){.community-vote-buttons{gap:10px}.vote-action{font-size:12px;padding:12px 8px}}
