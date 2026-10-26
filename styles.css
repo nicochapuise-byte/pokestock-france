@@ -288,3 +288,58 @@ button,input,select{font:inherit}button,a{transition:.2s ease}.topbar{height:72p
   .series-filter-items{max-height:225px}
   .catalog-picker-grid #catalogSeriesSearch{min-height:44px}
 }
+
+/* V3 Catalogue PokéStock : couverture, uploads et propositions photo. */
+.catalog-media-coverage,.catalog-media-bulk,.catalog-moderate-pending{
+  background:linear-gradient(135deg,#f5f8ff,#fffaf0);
+  border:1px solid #dbe5f8;border-radius:16px;padding:15px;margin:18px 0;
+}
+.catalog-media-coverage h4,.catalog-media-bulk h4,.catalog-moderate-pending h3{
+  margin:0 0 8px;color:#20386b;font-size:17px;font-weight:900
+}
+.catalog-media-coverage p,.catalog-media-bulk p,.catalog-moderate-pending>p{
+  font-size:12px;color:#50627e;line-height:1.6;margin:7px 0 12px
+}
+.catalog-media-coverage progress{display:block;width:100%;height:14px;margin:12px 0;border-radius:8px;accent-color:#387fef}
+.catalog-media-missing{display:grid;gap:6px;max-height:360px;overflow:auto;overscroll-behavior:contain;padding:6px 0}
+.catalog-coverage-row{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid #e0e8f7;background:#fff;padding:9px 10px;border-radius:10px}
+.catalog-coverage-row>div{min-width:0;display:grid;gap:5px;overflow-wrap:anywhere}
+.catalog-coverage-row strong{font-size:12px;color:#293960;line-height:1.4}
+.catalog-coverage-row small{font-size:10px;color:#687792}
+.catalog-coverage-row button{border:0;background:#e9f1ff;color:#2252a3;border-radius:8px;padding:9px 10px;font-size:11px;font-weight:900;flex-shrink:0}
+.catalog-coverage-row button:active{transform:scale(.97)}
+.catalog-media-bulk code{font-size:12px;color:#2455a5;background:#e3edff;border-radius:5px;padding:1px 4px}
+.catalog-bulk-queue{display:grid;gap:10px;margin:12px 0}
+.catalog-bulk-row{display:grid;grid-template-columns:74px 1fr;align-items:start;gap:10px;padding:10px;background:#fff;border:1px solid #dfe7f7;border-radius:12px}
+.catalog-bulk-row img{width:74px;height:84px;object-fit:contain;border-radius:9px;background:#f0f4ff}
+.catalog-bulk-row>div{min-width:0;display:grid;gap:6px}
+.catalog-bulk-row strong{color:#203763;font-size:12px;overflow-wrap:anywhere}
+.catalog-bulk-row small{color:#667991;font-size:10px}
+.catalog-bulk-row select{max-width:100%;width:100%;border:1px solid #d0dbec;border-radius:9px;padding:10px 8px;font-size:11px;background:#fff}
+.catalog-moderate-pending{border-color:#ead6f8}
+.catalog-pending-photos{display:grid;gap:12px;margin:10px 0}
+.catalog-photo-review{display:grid;grid-template-columns:94px 1fr;gap:11px;border:1px solid #dce3f2;border-radius:12px;padding:10px;background:#fff}
+.catalog-photo-review img{width:94px;height:120px;object-fit:contain;border-radius:9px;background:#eef3ff}
+.catalog-photo-review>div{min-width:0}
+.catalog-photo-review strong{font-size:12px;color:#253b6b;line-height:1.5;overflow-wrap:anywhere}
+.catalog-photo-review p{font-size:11px;color:#5a6986;line-height:1.5}
+.catalog-photo-review-actions{display:flex;gap:8px;flex-wrap:wrap}
+.catalog-photo-review-actions button{border:0;background:#e6f6ec;color:#1c6541;font-size:11px;font-weight:900;border-radius:9px;padding:9px 11px}
+.catalog-photo-review-actions button:last-child{background:#fff0f0;color:#a52e3d}
+.catalog-contribute{margin-top:15px;padding:12px;border:1px solid #d2def7;background:#fff;border-radius:13px}
+.catalog-contribute[hidden]{display:none}
+.catalog-contribute summary{color:#2853a3;cursor:pointer;font-size:12px;font-weight:900;line-height:1.45}
+.catalog-contribute>p{margin:9px 0;font-size:11px;line-height:1.6;color:#63718d}
+.catalog-contribute label{display:grid;gap:5px;font-size:12px;color:#384869;margin:9px 0}
+.catalog-contribute input:not([type=checkbox]){min-width:0;width:100%;border:1px solid #d9e2f4;border-radius:9px;padding:10px;font-size:12px}
+.catalog-contribute .rights-check{display:flex;align-items:flex-start;gap:9px;font-size:11px;line-height:1.5}
+.catalog-contribute .rights-check input{flex:0 0 auto;margin-top:3px}
+.catalog-contribute button{margin-top:8px;width:100%;min-height:42px}
+.catalog-proposal-status{font-size:12px;color:#24487c;line-height:1.5}
+@media(max-width:680px){
+  .catalog-media-coverage,.catalog-media-bulk,.catalog-moderate-pending{padding:11px}
+  .catalog-coverage-row{gap:7px}
+  .catalog-coverage-row button{padding:10px 7px}
+  .catalog-photo-review{grid-template-columns:78px 1fr}
+  .catalog-photo-review img{width:78px;height:104px}
+}
