@@ -1,4 +1,4 @@
-const series = [
+let series = [
   {id:"ev",name:"Écarlate & Violet",color:"#ef3340"},
   {id:"151",name:"151",color:"#7357e6"},
   {id:"prism",name:"Évolutions Prismatiques",color:"#2968e8"},
@@ -170,17 +170,59 @@ function filteredReports(){
 }
 
 function renderFilters(){
-  $("#seriesFilters").innerHTML=series.map(s=>`
-    <label class="series-pill">
-      <input type="checkbox" value="${s.id}">
-      <i class="series-swatch" style="background:${s.color}"></i>
-      <span>${s.name}</span>
-    </label>`).join("");
-  $("#reportSeries").innerHTML=series.map(s=>`<option value="${s.id}">${s.name}</option>`).join("");
-  $$("#seriesFilters input").forEach(input=>input.addEventListener("change",e=>{
-    e.target.checked?selectedSeries.add(e.target.value):selectedSeries.delete(e.target.value);
-    renderAll();
-  }));
+  const target=$("#seriesFilters");
+  const search=$("#seriesFilterSearch")?.value?.trim().toLocaleLowerCase("fr")||"";
+  const savedOpen=new Set($$("#seriesFilters details[open]").map(d=>d.dataset.block));
+  const groups=new Map();
+  for(const s of series){
+    const block=s.block||"Autres séries";
+    const searchable=[s.name,s.code,block].join(" ").toLocaleLowerCase("fr");
+    if(search&&!searchable.includes(search))continue;
+    if(!groups.has(block))groups.set(block,[]);
+    groups.get(block).push(s);
+  }
+  target.replaceChildren();
+  for(const [block,entries] of groups){
+    const details=document.createElement("details");
+    details.className="series-filter-group";
+    details.dataset.block=block;
+    details.open=search.length>0||savedOpen.has(block)||(!search&&savedOpen.size===0&&(block==="Méga-Évolution"||block==="Écarlate et Violet"));
+    const summary=document.createElement("summary");
+    summary.textContent=block+" ("+entries.length+")";
+    details.appendChild(summary);
+    const holder=document.createElement("div");
+    holder.className="series-filter-items";
+    entries.forEach(entry=>{
+      const label=document.createElement("label");
+      label.className="series-pill";
+      const checkbox=document.createElement("input");
+      checkbox.type="checkbox";checkbox.value=entry.id;
+      checkbox.checked=selectedSeries.has(entry.id);
+      checkbox.addEventListener("change",()=>{
+        if(checkbox.checked)selectedSeries.add(entry.id);
+        else selectedSeries.delete(entry.id);
+        renderAll();
+      });
+      const dot=document.createElement("i");dot.className="series-swatch";dot.style.background=entry.color;
+      const text=document.createElement("span");
+      text.textContent=entry.name+(entry.code?" · "+entry.code:"");
+      label.append(checkbox,dot,text);
+      holder.appendChild(label);
+    });
+    details.appendChild(holder);
+    target.appendChild(details);
+  }
+  if(!groups.size){
+    const empty=document.createElement("p");
+    empty.className="filters-empty";
+    empty.textContent="Aucune extension correspondant à cette recherche.";
+    target.appendChild(empty);
+  }
+  const oldSelect=$("#reportSeries");
+  const previous=oldSelect.value;
+  oldSelect.replaceChildren();
+  series.forEach(entry=>oldSelect.add(new Option(entry.name,entry.id)));
+  if(series.some(entry=>entry.id===previous))oldSelect.value=previous;
 }
 
 function projectToFallback(lat,lng){
@@ -424,6 +466,7 @@ function bindUI(){
   $$("[data-close-modal]").forEach(el=>el.addEventListener("click",closeModal));
   document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
   $("#searchInput").addEventListener("input",renderAll);
+  $("#seriesFilterSearch")?.addEventListener("input",renderFilters);
   $("#clearFilters").addEventListener("click",()=>{
     selectedSeries.clear();
     $$("#seriesFilters input").forEach(i=>i.checked=false);
