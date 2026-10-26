@@ -71,6 +71,7 @@ async function refreshSession(){
     currentUser=response?.data?.user||null;
   }catch{currentUser=null;}
   renderAuth();
+  document.dispatchEvent(new Event("pokestock:authchanged"));
 }
 function closeAuth(){
   $("#authModal").classList.remove("open");
@@ -101,7 +102,7 @@ $("#authForm").addEventListener("submit",async e=>{
   finally{loading=false;$("#authSubmit").disabled=false;}
 });
 $("#signOutBtn").addEventListener("click",async()=>{
-  try{await client?.signOut();currentUser=null;signup=false;renderAuth();status("Déconnecté.");}
+  try{await client?.signOut();currentUser=null;signup=false;renderAuth();status("Déconnecté.");document.dispatchEvent(new Event("pokestock:authchanged"));}
   catch(err){status("Erreur de déconnexion : "+err.message);}
 });
 (async()=>{
