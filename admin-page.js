@@ -364,6 +364,7 @@ function attachEvents(){
   }
   $("admGalleryMore").addEventListener("click",()=>{pageSize+=28;renderGallery();});
   $("admExport").addEventListener("click",csvMissing);
+  $("admQuickUpload").addEventListener("click",()=>selectPanel("upload"));
   $("admPhotoGallery").addEventListener("click",event=>{
     const b=event.target.closest("[data-select-id]");if(b)selectEntryForUpload(b.dataset.selectId);
   });
