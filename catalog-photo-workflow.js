@@ -53,6 +53,26 @@ photoUi("catalogMediaSearch").addEventListener("input",()=>{photoListOffset=0;re
 photoUi("catalogMediaMore").addEventListener("click",()=>{
   photoListOffset+=photoPageSize;renderMissingPhotoList();
 });
+
+photoUi("catalogMediaExport").addEventListener("click",()=>{
+  if(!catalogReady)return;
+  const items=photoSelectorItems().filter(item=>!item.image);
+  const quote=value=>'"'+String(value??"").replaceAll('"','""')+'"';
+  const rows=[
+    ["Identifiant variante","Série","Produit","Art set","Nom de fichier conseillé","Statut"],
+    ...items.map(item=>[
+      item.id,item.series,item.product,
+      catalogById(catalogData.variants,item.id)?.name||"",
+      item.id+".jpg","Image à fournir / droits à vérifier"
+    ])
+  ];
+  const csv="\ufeff"+rows.map(row=>row.map(quote).join(";")).join("\r\n");
+  const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  const link=document.createElement("a");link.href=url;link.download="pokestock-photos-manquantes.csv";
+  document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+});
+
 photoUi("catalogMediaMissingList").addEventListener("click",event=>{
   const button=event.target.closest("[data-catalog-image-target]");
   if(!button)return;
