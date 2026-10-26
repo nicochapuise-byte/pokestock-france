@@ -151,3 +151,5 @@ button,input,select{font:inherit}button,a{transition:.2s ease}.topbar{height:72p
  .catalog-preview img{width:90px;height:115px}
  .catalog-preview strong{font-size:13px}
 }
+
+.admin-proof-link{display:inline-block;background:#e9fff4;color:#146b42;border:1px solid #a6e2c2;border-radius:9px;padding:9px;text-decoration:none;font-size:12px;font-weight:800}
