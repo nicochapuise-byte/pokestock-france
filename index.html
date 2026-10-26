@@ -7,7 +7,7 @@
   <title>PokéStock France</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="styles.css?v=20261026-moderation-v1">
+  <link rel="stylesheet" href="styles.css?v=20261026-catalog-v1">
 </head>
 <body>
   <header class="topbar">
@@ -159,6 +159,17 @@
         <input id="adminSearch" type="search" placeholder="Magasin, produit, ville…" autocomplete="off">
       </label>
       <p id="adminStatus" class="admin-status" role="status"></p>
+      <section class="admin-catalog-media" id="adminCatalogMedia">
+        <h3>🖼️ Images du catalogue</h3>
+        <p>Ajoute une image seulement si tu détiens les droits ou une autorisation explicite permettant sa diffusion sur ce site. À défaut, nous affichons un visuel neutre.</p>
+        <label><span>Référence / art set</span><select id="adminCatalogVariant"><option value="">Chargement du catalogue…</option></select></label>
+        <label><span>Image JPEG/PNG à importer (10 Mo maximum)</span><input id="adminCatalogPhoto" type="file" accept="image/*"></label>
+        <label><span>Justificatif de l'autorisation *</span><textarea id="adminCatalogRights" maxlength="240" placeholder="Ex. Photo originale prise par moi, droits d'utilisation du visuel accordés par..."></textarea></label>
+        <label class="rights-check"><input id="adminCatalogRightsConfirm" type="checkbox"> Je confirme avoir le droit de publier cette image dans le catalogue.</label>
+        <button class="btn btn-blue" type="button" id="adminUploadCatalogPhoto">📤 Ajouter ce visuel</button>
+        <p id="adminCatalogStatus" role="status" class="admin-status"></p>
+      </section>
+      
       <div id="adminList" class="admin-report-list"></div>
       <form id="adminEditForm" class="admin-edit-form" hidden>
         <h3>✏️ Modifier le référencement</h3>
@@ -196,13 +207,32 @@
       <button type="button" class="modal-close" data-close-modal aria-label="Fermer">×</button>
       <span class="eyebrow dark">📸 Nouveau signalement</span>
       <h2>Signaler un produit</h2>
-      <p class="modal-intro">🌍 Pour publier un signalement visible par tous, connecte-toi à ton compte. Photo et adresse vérifiée obligatoires. Les stocks signalés ne sont pas garantis.</p>
+      <p class="modal-intro">🌍 Pour publier un signalement visible par tous, connecte-toi à ton compte. Sélectionne un produit du catalogue et une adresse vérifiée. La preuve photo est facultative et privée. Les stocks signalés ne sont pas garantis.</p>
 
       <div class="form-grid">
         <label><span>Magasin *</span><input name="store" required maxlength="140" placeholder="Ex. Carrefour Market"></label>
         <label><span>Ville *</span><input name="city" id="storeCity" required maxlength="120" placeholder="Ex. Lille"></label>
-        <label><span>Série *</span><select name="series" id="reportSeries" required></select></label>
-        <label><span>Produit *</span><input name="product" required maxlength="200" placeholder="Ex. Coffret 6 boosters"></label>
+        <div class="catalog-picker wide">
+          <p class="catalog-intro">🎴 Choisis la référence exacte. L'image du catalogue remplacera la photo prise en magasin lorsque nous disposerons d'un visuel autorisé.</p>
+          <div class="catalog-picker-grid">
+            <label><span>Extension / Série *</span><select id="catalogSeries" required><option value="">Chargement du catalogue…</option></select></label>
+            <label><span>Type de produit *</span><select id="catalogType" required disabled><option value="">Choisir une série</option></select></label>
+            <label><span>Article *</span><select id="catalogProduct" required disabled><option value="">Choisir un type</option></select></label>
+            <label><span>Art set / Variante *</span><select id="catalogVariant" required disabled><option value="">Choisir un article</option></select></label>
+          </div>
+          <div id="catalogPreview" class="catalog-preview" aria-live="polite">
+            <img id="catalogPreviewImage" src="catalog-placeholder.svg" alt="Visuel indicatif de catalogue">
+            <div><strong id="catalogPreviewTitle">Choisis une référence</strong>
+              <p id="catalogPreviewMessage">Les références sont documentées par leur fiche source. Les visuels protégés ne sont pas reproduits sans autorisation.</p>
+              <a id="catalogSourceLink" href="#" target="_blank" rel="noopener noreferrer" hidden>🔎 Voir la référence sur le site source</a>
+            </div>
+          </div>
+          <input type="hidden" name="catalogVariantId" id="catalogVariantId" value="">
+          <div hidden>
+            <select name="series" id="reportSeries"></select>
+            <input name="product" maxlength="200" readonly>
+          </div>
+        </div>
         <label><span>Prix (€)</span><input name="price" type="number" min="0" step="0.01" placeholder="29.99"></label>
         <label><span>Quantité vue</span><input name="quantity" type="number" min="1" max="999" value="1"></label>
         <label class="wide"><span>Adresse complète du magasin *</span><input name="address" id="storeAddress" required maxlength="240" placeholder="Ex. 12 rue Nationale, Lille" autocomplete="street-address"></label>
@@ -211,13 +241,14 @@
           <select id="addressResult" aria-label="Choisir l'adresse exacte du magasin" hidden></select>
           <p id="addressStatus" role="status">Recherche l'adresse, puis sélectionne le résultat correspondant à ton magasin.</p>
         </div>
-        <label class="wide"><span>📷 Photo du produit en rayon * (10 Mo maximum)</span><input name="photo" id="photoInput" type="file" accept="image/*" required></label>
+        <label class="wide"><span>📸 Photo de preuve en magasin (facultative, 10 Mo maximum)</span><input name="photo" id="photoInput" type="file" accept="image/*"></label>
+        <p class="wide catalog-help">La photo prise en magasin reste privée et n'est pas affichée publiquement. Le catalogue fournit le visuel du produit lorsqu'une image autorisée est disponible.</p>
         <div class="photo-preview wide" id="photoPreview"><span>🖼️ Aperçu de la photo</span></div>
       </div>
 
       <input type="hidden" name="lat" id="reportLat">
       <input type="hidden" name="lng" id="reportLng">
-      <label class="proof-confirm"><input id="proofConfirm" type="checkbox" required> Je confirme avoir vu ce produit en magasin et disposer de l’autorisation de partager cette photo.</label>
+      <label class="proof-confirm"><input id="proofConfirm" type="checkbox" required> Je confirme avoir vu ce produit en magasin. Si j’ajoute une preuve photo, je dispose de l’autorisation nécessaire pour la transmettre à l’équipe.</label>
       <p class="coord-help">📍 Le point sur la carte sera placé à l’adresse validée du magasin, jamais à ta position personnelle. Ne photographie pas les personnes présentes en rayon.</p>
       <button class="btn btn-red full" type="submit">Publier le signalement</button>
     </form>
@@ -226,9 +257,10 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js?v=20261026-moderation-v1"></script>
+  <script src="script.js?v=20261026-catalog-v1"></script>
   <script src="community.js?v=20261026-votes-v1"></script>
   <script src="moderation.js?v=20261026-moderation-v1"></script>
+  <script src="catalog-ui.js?v=20261026-catalog-v1"></script>
   <script type="module" src="auth-ui.js?v=20261026-votes-v1"></script>
 </body>
 </html>
