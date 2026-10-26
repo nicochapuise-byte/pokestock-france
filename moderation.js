@@ -181,6 +181,16 @@ function drawAdminReports(){
     small.textContent=item.city+" · "+state;
     details.append(strong,small);row.appendChild(details);
     const actions=document.createElement("div");actions.className="admin-row-actions";
+    if(item.proofImage){
+      const proof=document.createElement("a");
+      proof.href=item.proofImage;
+      proof.target="_blank";
+      proof.rel="noopener noreferrer";
+      proof.className="admin-proof-link";
+      proof.textContent="📸 Preuve privée";
+      proof.title="Lien temporaire réservé à la modération";
+      actions.appendChild(proof);
+    }
     if(!item.removed_at){
       const edit=document.createElement("button");
       edit.type="button";edit.dataset.adminAction="edit";edit.dataset.reportId=item.id;
