@@ -190,3 +190,32 @@
  .adm-series-coverage-row button{min-width:90px}
  .adm-series-coverage-inner{padding:10px}
 }
+
+/* Keep product artwork inside a fixed frame, including Safari's intrinsic image sizing. */
+.adm-photo{
+  display:block;
+  height:180px;
+  flex:0 0 auto;
+  min-width:0;
+  overflow:hidden;
+}
+.adm-photo img{
+  position:absolute;
+  top:36px;
+  left:12px;
+  display:block;
+  width:calc(100% - 24px);
+  height:calc(100% - 48px);
+  max-width:100%;
+  max-height:100%;
+  min-width:0;
+  min-height:0;
+  object-fit:contain;
+  object-position:center;
+}
+.adm-image-badge{z-index:1;max-width:calc(100% - 16px)}
+.adm-product-body{min-width:0;align-content:start}
+.adm-product-body .adm-series{overflow-wrap:anywhere}
+@media(max-width:690px){
+  .adm-photo{height:160px}
+}
