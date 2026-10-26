@@ -60,6 +60,11 @@ async function updateModerationPermissions(){
     console.warn("Impossible de vérifier les autorisations PokéStock",error);
   }
   renderCards(filteredReports());
+  // Accessible depuis l'onglet « Signalements » de l'administration dédiée.
+  if(userIsAdmin&&window.location.hash==="#administration"){
+    history.replaceState(null,"",window.location.pathname+window.location.search);
+    openAdminModal();
+  }
 }
 function moderationCardControls(items){
   const cards=document.querySelectorAll("#stockGrid .stock-card");
@@ -147,7 +152,9 @@ async function openAdminModal(){
   document.body.style.overflow="hidden";
   await loadAdminReports();
 }
-document.getElementById("adminBtn").addEventListener("click",openAdminModal);
+document.getElementById("adminBtn").addEventListener("click",()=>{
+  window.location.href="admin.html";
+});
 document.querySelectorAll("[data-close-admin]").forEach(el=>el.addEventListener("click",closeAdminModal));
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"&&modDialog.classList.contains("open"))closeAdminModal();
