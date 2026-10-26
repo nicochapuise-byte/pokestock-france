@@ -42,6 +42,20 @@ Source principale : **PokéCardex**, [catalogue des séries](https://www.pokecar
 - PokéCardex n'annonce pas d'API publique pour son catalogue : il ne s'agit **pas d'une synchronisation officielle automatique**, mais d'une première importation documentée. Ne pas réhéberger leurs visuels ou images Pokémon sans autorisation.
 - Scripts idempotents : `backend/catalog-expanded-series-2026.sql`, `backend/catalog-expanded-products-2026.sql`, `backend/catalog-expanded-artsets-2026.sql`, `backend/catalog-confirmed-products-2026.sql`. Les six séries initiales et les signalements existants ont été préservés.
 
+## Importer des photographies depuis PokéCardex
+
+L'onglet **« 🌐 Depuis PokéCardex »** de `admin.html` permet, pour un art set précis, de récupérer les images d'une page de **produit** de PokéCardex (`https://www.pokecardex.com/produits`) ou de son URL image directe. Les images des cartes de `/series` ne représentent pas nécessairement les produits scellés (booster, coffret, ETB).
+
+1. Choisir la variante PokéStock, puis coller l'URL HTTPS de sa fiche produit PokéCardex.
+2. Le serveur (compte administrateur vérifié) examine les balises images de la page et propose des vignettes. La source ne fournit pas nécessairement de vignettes si les images sont chargées dynamiquement ou si le site refuse les requêtes automatiques.
+3. Vérifier visuellement la correspondance **produit / art set**, sélectionner une vignette, indiquer la provenance et confirmer les droits de réutilisation.
+4. Le serveur importe les octets (JPEG, PNG, WebP, GIF, max 2,6 Mo), les stocke dans `catalog-images` et inscrit l'image principale, la page source et l'horodatage dans `catalog_variants` (`image_object_key`, `image_source_url`, `image_imported_at`).
+5. Cette même photo validée est alors utilisée automatiquement dans le formulaire, les fiches et les popups de la carte.
+
+**Important :** le catalogue PokéCardex n'est pas une API publique documentée et ses pages `/series` et `/produits` ne sont pas toutes accessibles par les outils de consultation de cet environnement. Il n'a pas été possible de recopier automatiquement le catalogue photographique complet. L'importation doit être effectuée via l'interface admin, image par image, après vérification de chaque association et des droits. Ne pas annoncer de photos supplémentaires tant que la colonne `image_source_url` est vide.
+
+Le serveur limite les URL aux domaines contrôlés de PokéCardex et bloque les redirections hors domaine, les formats inattendus et les images trop volumineuses. Les justificatifs de droits sont renseignés par l'administrateur.
+
 ## Photographies manquantes : ajout par lots et modération (26 octobre 2026)
 
 Couverture actuelle contrôlée en base : **1 photographie réelle validée pour 333 variantes**, celle du coffret Ultra-Premium 151 transmise par le responsable du projet (`catalog-upc151-chat.svg`). Les autres références affichent un visuel générique clairement signalé ; elles ne doivent pas être annoncées comme photographiées.
