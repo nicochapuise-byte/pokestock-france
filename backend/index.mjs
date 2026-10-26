@@ -211,6 +211,47 @@ export default {
       if(url.pathname==="/"&&request.method==="GET")return json({name:"PokéStock API",ok:true},200,request);
 
 
+
+      if(url.pathname==="/admin/catalog/coverage"&&request.method==="GET"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connexion nécessaire."},401,request);
+        if(!await isSiteAdmin(user))return json({error:"Accès administrateur requis."},403,request);
+        const rows=await sql(
+          "SELECT s.id,s.name,s.block_name AS block,s.set_code AS code,s.release_date AS released,COUNT(v.id)::int AS variants,COUNT(v.id) FILTER(WHERE v.image_approved=true AND (v.image_object_key IS NOT NULL OR v.image_url IS NOT NULL))::int AS images,COUNT(DISTINCT p.id)::int AS products FROM public.catalog_series s LEFT JOIN public.catalog_products p ON p.series_id=s.id AND p.is_active=true LEFT JOIN public.catalog_variants v ON v.product_id=p.id AND v.is_active=true WHERE s.is_active=true GROUP BY s.id,s.name,s.block_name,s.set_code,s.release_date,s.display_order ORDER BY CASE WHEN s.id='me30' THEN 0 WHEN s.release_date>CURRENT_DATE THEN 2 ELSE 1 END,CASE WHEN s.release_date<=CURRENT_DATE THEN s.release_date END DESC NULLS LAST,CASE WHEN s.release_date>CURRENT_DATE THEN s.release_date END ASC NULLS LAST,s.display_order"
+        );
+        return json({series:rows},200,request);
+      }
+      if(url.pathname==="/admin/catalog/pokecardex/bulk-candidates"&&request.method==="POST"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connexion nécessaire."},401,request);
+        if(!await isSiteAdmin(user))return json({error:"Accès administrateur requis."},403,request);
+        const raw=await request.text();
+        if(raw.length>12000)return json({error:"Liste de liens trop longue."},413,request);
+        let payload;try{payload=JSON.parse(raw)}catch{return json({error:"Données invalides."},400,request);}
+        if(!Array.isArray(payload.urls)||payload.urls.length<1||payload.urls.length>6)
+          return json({error:"Choisis entre un et six liens PokéCardex par recherche."},400,request);
+        const sources=payload.urls.map(link=>cardexUrl(link));
+        if(sources.some(link=>!link))return json({error:"Les URL doivent pointer uniquement vers PokéCardex en HTTPS."},400,request);
+        const results=await Promise.all(sources.map(async page=>{
+          try{
+            const response=await getCardexResponse(page,"text/html,image/*;q=0.7");
+            if(!response.ok)return {pageUrl:page.href,error:"Page inaccessible ("+response.status+")"};
+            const type=response.headers.get("content-type")||"";
+            if(type.startsWith("image/")){
+              return {pageUrl:page.href,title:page.pathname.split("/").pop()||"Image PokéCardex",images:[{url:page.href,priority:100}]};
+            }
+            if(!type.includes("html"))return {pageUrl:page.href,error:"Ce lien n'est ni une fiche produit ni une image."};
+            if(Number(response.headers.get("content-length")||0)>1250000)return {pageUrl:page.href,error:"Page trop volumineuse."};
+            const html=await response.text();
+            if(html.length>1250000)return {pageUrl:page.href,error:"Page trop volumineuse."};
+            const titleTag=html.match(/<title[^>]*>([^<]{1,250})<\/title>/i);
+            const og=html.match(/<meta\b[^>]*\bproperty=["']og:title["'][^>]*\bcontent=["']([^"']{1,250})["']/i);
+            const title=(og?.[1]||titleTag?.[1]||"").replace(/&amp;/gi,"&").trim();
+            return {pageUrl:page.href,title,images:extractCardexCandidates(html,page).slice(0,8)};
+          }catch(error){return {pageUrl:page.href,error:String(error?.message||"Erreur lors de la recherche.").slice(0,160)};}
+        }));
+        return json({results},200,request);
+      }
       if(url.pathname==="/admin/catalog/pokecardex/candidates"&&request.method==="POST"){
         const user=await authenticate(request);
         if(!user)return json({error:"Connexion nécessaire."},401,request);
