@@ -136,6 +136,15 @@ export default {
         if(typeof data.photo!=="string"||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(data.photo))return json({error:"Photo JPEG obligatoire."},400,request);
         const bytes=Buffer.from(data.photo.split(",")[1],"base64");
         if(bytes.length<1000||bytes.length>700000||bytes[0]!==0xff||bytes[1]!==0xd8)return json({error:"Photo JPEG invalide ou trop volumineuse (700 Ko maximum après compression)."},400,request);
+        // Même membre + même adresse + même produit + même série : éviter les renvois
+        // involontaires pendant 24 h (sans bloquer les confirmations d'autres membres).
+        const duplicates=await sql(
+          "SELECT id FROM public.stock_reports WHERE user_id=$1 AND lower(btrim(store_address))=lower(btrim($2)) AND lower(btrim(product_name))=lower(btrim($3)) AND series_id=$4 AND created_at > now() - interval '24 hours' AND status IN ('pending','approved') ORDER BY created_at DESC LIMIT 1",
+          [user,data.address.trim(),data.product.trim(),data.series]
+        );
+        if(duplicates.length){
+          return json({error:"Tu as déjà signalé ce produit dans ce magasin au cours des dernières 24 heures.",duplicate:true,existingId:duplicates[0].id},409,request);
+        }
         const count=await sql("SELECT count(*)::int AS n FROM public.stock_reports WHERE user_id=$1 AND created_at>now()-interval '24 hours'",[user]);
         if(Number(count[0]?.n)>=5)return json({error:"Maximum 5 signalements par jour pour ce compte."},429,request);
         const addressOk=await validateAddress(data.address,data.city,Number(data.lat),Number(data.lng));
