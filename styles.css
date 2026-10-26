@@ -40,3 +40,21 @@ button,input,select{font:inherit}button,a{transition:.2s ease}.topbar{height:72p
 .proof-confirm input{margin-top:3px;accent-color:#2968e8;width:18px;height:18px;flex-shrink:0}
 .stock-address{font-size:12px;color:#6d7587;line-height:1.35;margin:5px 0 0}
 @media(max-width:780px){.modal-card{padding:20px}.address-picker .btn{width:100%}}
+
+/* Connexion de la communauté, y compris affichage au-dessus du formulaire de stock. */
+.top-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+#authModal{z-index:2500}
+.auth-card{max-width:500px;display:flex;flex-direction:column}
+.auth-card label{display:grid;gap:7px;margin-top:12px;font-size:13px;font-weight:800;color:#45536e}
+.auth-card label input{padding:13px;border:1px solid #dfe4ef;border-radius:11px;font:inherit;width:100%}
+.auth-card button[hidden],.auth-card label[hidden]{display:none!important}
+.auth-status{font-size:13px;color:#45536e;line-height:1.55;min-height:20px}
+.auth-card .btn.full{margin-top:10px}
+@media(max-width:780px){
+  .topbar{padding-left:10px;padding-right:10px;gap:8px}
+  .topbar .brand{font-size:14px;gap:5px;white-space:nowrap}
+  .top-actions{gap:6px}
+  .top-actions .btn{padding:10px 8px;border-radius:10px;font-size:13px}
+  #accountBtn{width:41px;max-width:41px;overflow:hidden;white-space:nowrap;font-size:0}
+  #accountBtn::before{content:"👤";font-size:17px}
+}
