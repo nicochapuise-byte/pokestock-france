@@ -7,7 +7,7 @@
   <title>PokéStock France</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="styles.css?v=20261026-votes-v1">
+  <link rel="stylesheet" href="styles.css?v=20261026-moderation-v1">
 </head>
 <body>
   <header class="topbar">
@@ -20,7 +20,7 @@
       <a href="#disponibilites">Disponibilités</a>
       <a href="#fonctionnement">Comment ça marche ?</a>
     </nav>
-    <div class="top-actions"><button class="btn btn-white" id="accountBtn" type="button">👤 Connexion</button><button class="btn btn-yellow" id="openReportTop">+ Signaler</button></div>
+    <div class="top-actions"><button class="btn btn-blue" id="adminBtn" type="button" hidden>🛡️ Admin</button><button class="btn btn-white" id="accountBtn" type="button">👤 Connexion</button><button class="btn btn-yellow" id="openReportTop">+ Signaler</button></div>
   </header>
 
   <main id="accueil">
@@ -148,6 +148,48 @@
     </form>
   </div>
 
+  <div class="modal" id="adminModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-admin></div>
+    <section class="modal-card admin-modal-card" role="dialog" aria-modal="true" aria-label="Administration PokéStock">
+      <button type="button" class="modal-close" data-close-admin aria-label="Fermer">×</button>
+      <span class="eyebrow dark">🛡️ ADMINISTRATION</span>
+      <h2>Gestion des signalements</h2>
+      <p class="modal-intro">Corrige les informations, modère les référencements et retire les signalements incorrects. Les opérations sont réservées aux administrateurs.</p>
+      <label class="admin-search-label">🔎 Rechercher un référencement
+        <input id="adminSearch" type="search" placeholder="Magasin, produit, ville…" autocomplete="off">
+      </label>
+      <p id="adminStatus" class="admin-status" role="status"></p>
+      <div id="adminList" class="admin-report-list"></div>
+      <form id="adminEditForm" class="admin-edit-form" hidden>
+        <h3>✏️ Modifier le référencement</h3>
+        <p id="adminEditingId" class="admin-edit-label"></p>
+        <div class="form-grid">
+          <label><span>Magasin *</span><input name="store" required maxlength="140"></label>
+          <label><span>Ville *</span><input name="city" required maxlength="120"></label>
+          <label><span>Série *</span><select name="series" required></select></label>
+          <label><span>Produit *</span><input name="product" required maxlength="200"></label>
+          <label><span>Prix (€)</span><input name="price" type="number" step="0.01" min="0"></label>
+          <label><span>Quantité *</span><input name="qty" type="number" min="1" max="999" required></label>
+          <label class="wide"><span>Adresse complète *</span><input name="address" required maxlength="240"></label>
+          <div class="address-picker wide">
+            <button type="button" class="btn btn-blue" id="adminFindAddress">📍 Vérifier une nouvelle adresse</button>
+            <select id="adminAddressOptions" hidden aria-label="Choisir la nouvelle adresse"></select>
+            <p id="adminAddressStatus">Si tu modifies l’adresse ou la ville, utilise la recherche pour actualiser les coordonnées.</p>
+          </div>
+          <label class="wide"><span>Modération</span><select name="status">
+            <option value="pending">🟠 Non vérifié</option>
+            <option value="approved">✅ Approuvé</option>
+            <option value="rejected">⛔ Refusé (masqué du site)</option>
+          </select></label>
+        </div>
+        <div class="admin-edit-actions">
+          <button class="btn btn-white" type="button" id="adminCancelEdit">Annuler</button>
+          <button class="btn btn-red" type="submit" id="adminSaveEdit">💾 Enregistrer</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
   <div class="modal" id="reportModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-modal></div>
     <form class="modal-card" id="reportForm">
@@ -184,8 +226,9 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js?v=20261026-no-duplicates-v4"></script>
+  <script src="script.js?v=20261026-moderation-v1"></script>
   <script src="community.js?v=20261026-votes-v1"></script>
+  <script src="moderation.js?v=20261026-moderation-v1"></script>
   <script type="module" src="auth-ui.js?v=20261026-votes-v1"></script>
 </body>
 </html>
