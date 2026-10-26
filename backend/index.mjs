@@ -107,7 +107,7 @@ function isReportId(str){
 }
 function editedValues(input){
   if(!validText(input?.store,140)||!validText(input?.city,120)||!validText(input?.address,240)
-     ||!validText(input?.product,200)||!ALLOWED_SERIES.has(input?.series))return null;
+     ||!validText(input?.product,200)||typeof input?.series!=="string"||!/^[a-z0-9-]{2,60}$/.test(input.series))return null;
   const lat=Number(input.lat),lng=Number(input.lng);
   if(!validCoordinates(lat,lng))return null;
   const qty=Number(input.qty);
@@ -285,6 +285,8 @@ export default {
         try{payload=JSON.parse(raw)}catch{return json({error:"Données incorrectes."},400,request);}
         const updated=editedValues(payload);
         if(!updated)return json({error:"Vérifie les champs, le statut et les coordonnées."},400,request);
+        const seriesRows=await sql("SELECT id FROM public.catalog_series WHERE id=$1 AND is_active=true LIMIT 1",[updated.series]);
+        if(!seriesRows.length)return json({error:"Extension inconnue."},400,request);
         const verified=await validateAddress(updated.address,updated.city,updated.lat,updated.lng);
         if(!verified)return json({error:"Adresse invalide. Choisis une adresse vérifiée."},400,request);
         await sql(
