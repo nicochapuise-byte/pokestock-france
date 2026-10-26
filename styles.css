@@ -153,3 +153,49 @@ button,input,select{font:inherit}button,a{transition:.2s ease}.topbar{height:72p
 }
 
 .admin-proof-link{display:inline-block;background:#e9fff4;color:#146b42;border:1px solid #a6e2c2;border-radius:9px;padding:9px;text-decoration:none;font-size:12px;font-weight:800}
+
+/* Photo d'article visible au premier plan dans la popup Leaflet, sur iPhone aussi. */
+.leaflet-popup-content:has(.popup-product-card){margin:12px 13px;width:auto!important}
+.leaflet-popup-content-wrapper:has(.popup-product-card){border-radius:19px;box-shadow:0 15px 40px rgba(20,37,87,.22)}
+.popup-product-card{
+  display:grid;
+  grid-template-columns:108px minmax(0,1fr);
+  column-gap:12px;
+  row-gap:11px;
+  align-items:start;
+  max-width:315px;
+  padding:3px 0 1px;
+  font-family:inherit;
+  color:#17234d;
+}
+.popup-product-media{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.popup-product-image{
+  display:block;
+  width:108px;
+  height:145px;
+  object-fit:contain;
+  background:linear-gradient(145deg,#eaf0ff,#fff0d1);
+  border:1px solid #e1e7f7;
+  border-radius:12px;
+}
+.popup-product-picture-note{
+  text-align:center;
+  font-size:10px;
+  font-weight:800;
+  color:#586884;
+  line-height:1.3;
+}
+.popup-product-details{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:0}
+.popup-product-title{font-size:15px;line-height:1.3;font-weight:900;overflow-wrap:anywhere;padding-right:8px}
+.popup-product-artset{display:inline-block;font-weight:800;color:#5c459f;background:#f0eaff;border-radius:8px;padding:5px 7px;font-size:11px;line-height:1.3}
+.popup-product-store{font-size:12px;color:#64718d;line-height:1.4;overflow-wrap:anywhere}
+.popup-product-status{font-weight:850;color:#445575;font-size:12px;line-height:1.4}
+.popup-product-age,.popup-product-price{font-size:11px;color:#64718d;line-height:1.3}
+.popup-product-price{font-weight:850;color:#253967}
+.popup-product-votes,.popup-votes{grid-column:1/-1;margin:0!important;background:#f0f6ff;padding:8px 10px;border-radius:9px;color:#385373;font-weight:750;font-size:11px;line-height:1.45}
+.popup-product-disclaimer{grid-column:1/-1;margin:0!important;font-size:10px;color:#77849a;line-height:1.45}
+@media(max-width:420px){
+  .popup-product-card{grid-template-columns:96px minmax(0,1fr);column-gap:10px;max-width:290px}
+  .popup-product-image{width:96px;height:134px}
+  .popup-product-title{font-size:14px}
+}
