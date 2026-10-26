@@ -268,3 +268,23 @@ button,input,select{font:inherit}button,a{transition:.2s ease}.topbar{height:72p
   .leaflet-container .pokestock-popup .popup-product-image{height:105px}
   .leaflet-container .pokestock-popup .popup-product-title{font-size:14px}
 }
+
+/* 2026 - catalogue complet des extensions, recherche et blocs sur iPhone */
+.series-filter-search{display:grid;gap:7px;margin-top:15px;font-size:12px;font-weight:800;color:#3e5276}
+.series-filter-search input{width:100%;min-height:42px;padding:10px 12px;border-radius:11px;border:1px solid #cfdbf1;font:inherit;background:#fff;min-width:0}
+.series-filter-group{border:1px solid #dbe5f5;border-radius:13px;overflow:hidden;background:#fff}
+.series-filter-group>summary{padding:12px 13px;cursor:pointer;list-style-position:inside;font-size:12px;font-weight:850;color:#263b66;background:linear-gradient(100deg,#f7f9ff,#eff5ff);user-select:none}
+.series-filter-group[open]>summary{border-bottom:1px solid #e0e9f6}
+.series-filter-items{display:grid;gap:6px;max-height:260px;overflow:auto;padding:9px;overscroll-behavior:contain}
+.series-filter-items .series-pill{padding:8px 9px;font-size:12px;border-radius:9px;align-items:flex-start;line-height:1.35}
+.series-filter-items .series-pill input{flex-shrink:0}
+.series-filter-items .series-pill span{overflow-wrap:anywhere}
+.filters-empty{font-size:12px;color:#7c859b;padding:12px}
+.catalog-picker-grid #catalogSeriesSearch{min-width:0;width:100%;border-radius:10px;padding:10px 12px;border:1px solid #cfdaf2;font:inherit;background:#fff}
+.catalog-picker-grid label small{font-size:11px;line-height:1.45;color:#6b7790;font-weight:500}
+.catalog-picker-grid select optgroup{font-weight:800;color:#253a73}
+.catalog-picker-grid select option{font-weight:500}
+@media(max-width:780px){
+  .series-filter-items{max-height:225px}
+  .catalog-picker-grid #catalogSeriesSearch{min-height:44px}
+}
