@@ -277,7 +277,7 @@ function renderCards(items){
     return `<article class="stock-card">
       <div class="stock-image">
         <span class="age-badge ${age}">${r.demo?"🧪 Exemple":r.status==="pending"?"🟠 Non vérifié":"🕒 "+ageText(reportHours(r))}</span>
-        <img src="${safeImage(r.img)}" alt="Photo du produit">
+        <img src="${popupProductPhoto(r)}" alt="Image du produit ou visuel de référence">
       </div>
       <div class="stock-body">
         <span class="stock-series" style="color:${s.color}">${escapeHtml(s.name)}</span>
