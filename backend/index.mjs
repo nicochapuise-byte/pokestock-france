@@ -200,9 +200,9 @@ export default {
         if(!user)return json({error:"Connexion nécessaire."},401,request);
         if(!await isSiteAdmin(user))return json({error:"Accès réservé à l'administration."},403,request);
         const rows=await sql(
-          "SELECT r.id,r.store_name AS store,r.store_address AS address,r.city,r.series_id AS series,r.product_name AS product,r.price_eur AS price,r.quantity AS qty,r.latitude AS lat,r.longitude AS lng,r.status,r.created_at AS created_at, d.removed_at AS removed_at FROM public.stock_reports r LEFT JOIN public.stock_report_removals d ON d.report_id=r.id ORDER BY r.created_at DESC LIMIT 150"
+          "SELECT r.id,r.store_name AS store,r.store_address AS address,r.city,r.series_id AS series,r.product_name AS product,r.price_eur AS price,r.quantity AS qty,r.latitude AS lat,r.longitude AS lng,r.status,r.photo_object_key AS proof_key,r.created_at AS created_at, d.removed_at AS removed_at FROM public.stock_reports r LEFT JOIN public.stock_report_removals d ON d.report_id=r.id ORDER BY r.created_at DESC LIMIT 150"
         );
-        return json({reports:rows},200,request);
+        return json({reports:rows.map(({proof_key,...row})=>({...row,proofImage:proof_key?photoUrl(proof_key,"proofs"):null}))},200,request);
       }
       const adminEdit=/^\/admin\/reports\/([0-9a-f-]{36})$/.exec(url.pathname);
       if(adminEdit&&request.method==="PATCH"){
@@ -222,7 +222,7 @@ export default {
         const verified=await validateAddress(updated.address,updated.city,updated.lat,updated.lng);
         if(!verified)return json({error:"Adresse invalide. Choisis une adresse vérifiée."},400,request);
         await sql(
-          "UPDATE public.stock_reports SET store_name=$2,store_address=$3,city=$4,series_id=$5,product_name=$6,price_eur=$7,quantity=$8,latitude=$9,longitude=$10,status=$11 WHERE id=$1::uuid",
+          "UPDATE public.stock_reports SET catalog_variant_id=CASE WHEN series_id=$5 AND product_name=$6 THEN catalog_variant_id ELSE NULL END, store_name=$2,store_address=$3,city=$4,series_id=$5,product_name=$6,price_eur=$7,quantity=$8,latitude=$9,longitude=$10,status=$11 WHERE id=$1::uuid",
           [id,updated.store,updated.address,updated.city,updated.series,updated.product,updated.price,updated.qty,updated.lat,updated.lng,updated.status]
         );
         try{
