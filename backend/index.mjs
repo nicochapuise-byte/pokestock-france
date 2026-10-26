@@ -150,13 +150,79 @@ export default {
         const [seriesRows,productRows,variantRows]=await Promise.all([
           sql("SELECT id,name,color,block_name,set_code,release_date,source_url AS source_url FROM public.catalog_series WHERE is_active=true ORDER BY display_order,name"),
           sql("SELECT id,series_id,type_key,name,source_url,release_date FROM public.catalog_products WHERE is_active=true ORDER BY series_id,display_order,name"),
-          sql("SELECT v.id,v.product_id,v.variant_name,v.image_object_key,v.image_approved,v.source_url FROM public.catalog_variants v JOIN public.catalog_products p ON p.id=v.product_id JOIN public.catalog_series s ON s.id=p.series_id WHERE v.is_active=true AND p.is_active=true AND s.is_active=true ORDER BY v.display_order,v.variant_name")
+          sql("SELECT v.id,v.product_id,v.variant_name,v.image_object_key,v.image_url,v.image_approved,v.source_url FROM public.catalog_variants v JOIN public.catalog_products p ON p.id=v.product_id JOIN public.catalog_series s ON s.id=p.series_id WHERE v.is_active=true AND p.is_active=true AND s.is_active=true ORDER BY v.display_order,v.variant_name")
         ]);
         return json({
           series:seriesRows.map(r=>({id:r.id,name:r.name,color:r.color,block:r.block_name||'Autres séries',code:r.set_code||'',releaseDate:r.release_date||null,sourceUrl:r.source_url})),
           products:productRows.map(r=>({id:r.id,seriesId:r.series_id,type:r.type_key,name:r.name,releaseDate:r.release_date||null,sourceUrl:r.source_url})),
-          variants:variantRows.map(r=>({id:r.id,productId:r.product_id,name:r.variant_name,image:!!r.image_approved&&r.image_object_key?photoUrl(r.image_object_key,"catalog-images"):null,sourceUrl:r.source_url}))
+          variants:variantRows.map(r=>({id:r.id,productId:r.product_id,name:r.variant_name,image:!r.image_approved?null:r.image_object_key?photoUrl(r.image_object_key,"catalog-images"):r.image_url==="catalog-upc151-chat.svg"?r.image_url:null,sourceUrl:r.source_url}))
         },200,request);
+      }
+
+      if(url.pathname==="/catalog/photo-proposals"&&request.method==="POST"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connecte-toi pour proposer une photo."},401,request);
+        if(Number(request.headers.get("content-length"))>1150000)return json({error:"Image trop volumineuse."},413,request);
+        const raw=await request.text();
+        if(raw.length>1150000)return json({error:"Image trop volumineuse."},413,request);
+        let payload;
+        try{payload=JSON.parse(raw)}catch{return json({error:"Données invalides."},400,request);}
+        if(payload.rightsConfirmed!==true||typeof payload.variantId!=="string"||!/^[a-z0-9-]{2,120}$/.test(payload.variantId)
+          ||!validText(payload.rightsNote,240))
+          return json({error:"Choisis une variante et confirme les droits sur la photo."},400,request);
+        if(typeof payload.photo!=="string"||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(payload.photo))
+          return json({error:"Seules les photographies JPEG sont acceptées."},400,request);
+        const bytes=Buffer.from(payload.photo.split(",")[1],"base64");
+        if(bytes.length<1000||bytes.length>650000||bytes[0]!==0xff||bytes[1]!==0xd8)
+          return json({error:"Photo illisible ou trop volumineuse après compression."},400,request);
+        const refs=await sql("SELECT id,image_approved FROM public.catalog_variants WHERE id=$1 AND is_active=true LIMIT 1",[payload.variantId]);
+        if(!refs.length)return json({error:"Référence inconnue."},404,request);
+        if(refs[0].image_approved===true)return json({error:"Cette variante possède déjà une photo validée."},409,request);
+        const limit=await sql("SELECT COUNT(*)::int AS n FROM public.catalog_photo_proposals WHERE proposed_by=$1 AND created_at>now()-interval '24 hours'",[user]);
+        if(Number(limit[0]?.n)>=5)return json({error:"Limite de cinq propositions par jour atteinte."},429,request);
+        const duplicate=await sql("SELECT id FROM public.catalog_photo_proposals WHERE proposed_by=$1 AND variant_id=$2 AND status='pending' LIMIT 1",[user,payload.variantId]);
+        if(duplicate.length)return json({error:"Tu as déjà proposé une photo pour cette référence."},409,request);
+        const key="proposals/"+randomUUID()+".jpg";
+        await uploadPhoto(bytes,key,"catalog-images");
+        const rows=await sql(
+          "INSERT INTO public.catalog_photo_proposals(variant_id,proposed_by,photo_object_key,rights_note) VALUES($1,$2,$3,$4) RETURNING id",
+          [payload.variantId,user,key,payload.rightsNote.trim()]
+        );
+        return json({ok:true,id:rows[0]?.id,message:"Photo proposée. Un administrateur doit la vérifier avant publication."},201,request);
+      }
+      if(url.pathname==="/admin/catalog/photo-proposals"&&request.method==="GET"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connexion nécessaire."},401,request);
+        if(!await isSiteAdmin(user))return json({error:"Accès administrateur uniquement."},403,request);
+        const pending=await sql(
+          "SELECT q.id,q.variant_id,q.photo_object_key,q.rights_note,q.created_at,p.name AS product_name,v.variant_name,s.name AS series_name FROM public.catalog_photo_proposals q JOIN public.catalog_variants v ON v.id=q.variant_id JOIN public.catalog_products p ON p.id=v.product_id JOIN public.catalog_series s ON s.id=p.series_id WHERE q.status='pending' ORDER BY q.created_at ASC LIMIT 100"
+        );
+        return json({pending:pending.map(({photo_object_key,...r})=>({...r,image:photoUrl(photo_object_key,"catalog-images")}))},200,request);
+      }
+      const reviewMatch=/^\/admin\/catalog\/photo-proposals\/([0-9a-f-]{36})\/review$/.exec(url.pathname);
+      if(reviewMatch&&request.method==="POST"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connexion nécessaire."},401,request);
+        if(!await isSiteAdmin(user))return json({error:"Accès réservé aux administrateurs."},403,request);
+        const raw=await request.text();
+        if(raw.length>300)return json({error:"Requête trop longue."},413,request);
+        let payload;
+        try{payload=JSON.parse(raw)}catch{return json({error:"Données invalides."},400,request);}
+        if(!["approved","rejected"].includes(payload.decision))return json({error:"Décision invalide."},400,request);
+        if(payload.decision==="approved"&&payload.rightsConfirmed!==true)return json({error:"Confirme les droits de publication."},400,request);
+        const id=reviewMatch[1];
+        if(!isReportId(id))return json({error:"Référence de proposition incorrecte."},400,request);
+        if(payload.decision==="approved"){
+          const updated=await sql(
+            "WITH review AS (UPDATE public.catalog_photo_proposals SET status='approved',reviewed_by=$2,reviewed_at=now() WHERE id=$1::uuid AND status='pending' RETURNING variant_id,photo_object_key,rights_note) UPDATE public.catalog_variants v SET image_object_key=review.photo_object_key,image_approved=true,image_license_note=review.rights_note,image_url=NULL FROM review WHERE v.id=review.variant_id RETURNING v.id",
+            [id,user]
+          );
+          if(!updated.length)return json({error:"Photo déjà examinée ou référence introuvable."},409,request);
+        }else{
+          const updated=await sql("UPDATE public.catalog_photo_proposals SET status='rejected',reviewed_by=$2,reviewed_at=now() WHERE id=$1::uuid AND status='pending' RETURNING id",[id,user]);
+          if(!updated.length)return json({error:"Photo déjà examinée."},409,request);
+        }
+        return json({ok:true,id,decision:payload.decision},200,request);
       }
       const catalogImageMatch=/^\/admin\/catalog\/variants\/([a-z0-9-]{2,120})\/image$/.exec(url.pathname);
       if(catalogImageMatch&&request.method==="POST"){
