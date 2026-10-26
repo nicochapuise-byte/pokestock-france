@@ -148,13 +148,13 @@ export default {
 
       if(url.pathname==="/catalog"&&request.method==="GET"){
         const [seriesRows,productRows,variantRows]=await Promise.all([
-          sql("SELECT id,name,color,source_url AS source_url FROM public.catalog_series WHERE is_active=true ORDER BY display_order,name"),
-          sql("SELECT id,series_id,type_key,name,source_url FROM public.catalog_products WHERE is_active=true ORDER BY display_order,name"),
+          sql("SELECT id,name,color,block_name,set_code,release_date,source_url AS source_url FROM public.catalog_series WHERE is_active=true ORDER BY display_order,name"),
+          sql("SELECT id,series_id,type_key,name,source_url,release_date FROM public.catalog_products WHERE is_active=true ORDER BY series_id,display_order,name"),
           sql("SELECT v.id,v.product_id,v.variant_name,v.image_object_key,v.image_approved,v.source_url FROM public.catalog_variants v JOIN public.catalog_products p ON p.id=v.product_id JOIN public.catalog_series s ON s.id=p.series_id WHERE v.is_active=true AND p.is_active=true AND s.is_active=true ORDER BY v.display_order,v.variant_name")
         ]);
         return json({
-          series:seriesRows.map(r=>({id:r.id,name:r.name,color:r.color,sourceUrl:r.source_url})),
-          products:productRows.map(r=>({id:r.id,seriesId:r.series_id,type:r.type_key,name:r.name,sourceUrl:r.source_url})),
+          series:seriesRows.map(r=>({id:r.id,name:r.name,color:r.color,block:r.block_name||'Autres séries',code:r.set_code||'',releaseDate:r.release_date||null,sourceUrl:r.source_url})),
+          products:productRows.map(r=>({id:r.id,seriesId:r.series_id,type:r.type_key,name:r.name,releaseDate:r.release_date||null,sourceUrl:r.source_url})),
           variants:variantRows.map(r=>({id:r.id,productId:r.product_id,name:r.variant_name,image:!!r.image_approved&&r.image_object_key?photoUrl(r.image_object_key,"catalog-images"):null,sourceUrl:r.source_url}))
         },200,request);
       }
@@ -304,10 +304,10 @@ export default {
         if(typeof data.catalogVariantId!=="string"||!/^[a-z0-9-]{2,120}$/.test(data.catalogVariantId))
           return json({error:"Sélectionne une série, un produit puis son art set dans le catalogue."},400,request);
         const references=await sql(
-          "SELECT v.id,p.name AS product_name,s.id AS series_id FROM public.catalog_variants v JOIN public.catalog_products p ON p.id=v.product_id JOIN public.catalog_series s ON s.id=p.series_id WHERE v.id=$1 AND v.is_active AND p.is_active AND s.is_active LIMIT 1",
+          "SELECT v.id,p.name AS product_name,s.id AS series_id FROM public.catalog_variants v JOIN public.catalog_products p ON p.id=v.product_id JOIN public.catalog_series s ON s.id=p.series_id WHERE v.id=$1 AND v.is_active AND p.is_active AND s.is_active AND (s.release_date IS NULL OR s.release_date<=CURRENT_DATE) AND (p.release_date IS NULL OR p.release_date<=CURRENT_DATE) LIMIT 1",
           [data.catalogVariantId]
         );
-        if(!references.length)return json({error:"Ce produit n'est plus disponible dans le catalogue."},404,request);
+        if(!references.length)return json({error:"Cette référence est indisponible ou sa date de sortie n'est pas encore passée."},400,request);
         const ref=references[0];
         if(data.price!==null&&(typeof data.price!=="number"||data.price<0||data.price>10000))
           return json({error:"Prix invalide."},400,request);
