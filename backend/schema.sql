@@ -30,3 +30,30 @@ CREATE TABLE IF NOT EXISTS public.stock_votes (
 );
 CREATE INDEX IF NOT EXISTS stock_votes_voter_idx
   ON public.stock_votes (voter_user_id, updated_at DESC);
+
+-- Rôles serveur uniquement : ne JAMAIS accorder de rôle via le JavaScript public.
+CREATE TABLE IF NOT EXISTS public.stock_admins (
+  user_id text PRIMARY KEY,
+  role text NOT NULL DEFAULT 'admin' CHECK (role='admin'),
+  granted_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Suppression logique : fiche invisible au public, traçabilité conservée en privé.
+CREATE TABLE IF NOT EXISTS public.stock_report_removals (
+  report_id uuid PRIMARY KEY REFERENCES public.stock_reports(id) ON DELETE CASCADE,
+  removed_by text NOT NULL,
+  removed_at timestamptz NOT NULL DEFAULT now(),
+  reason varchar(240) NOT NULL DEFAULT 'Suppression demandée'
+);
+
+-- Historique des corrections par un administrateur.
+CREATE TABLE IF NOT EXISTS public.stock_report_edits (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  report_id uuid NOT NULL REFERENCES public.stock_reports(id) ON DELETE CASCADE,
+  edited_by text NOT NULL,
+  edited_at timestamptz NOT NULL DEFAULT now(),
+  old_values jsonb NOT NULL,
+  new_values jsonb NOT NULL
+);
+CREATE INDEX IF NOT EXISTS stock_report_edits_report_idx
+  ON public.stock_report_edits (report_id,edited_at DESC);
