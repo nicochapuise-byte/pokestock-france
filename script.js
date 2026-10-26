@@ -205,7 +205,7 @@ function renderFilters(){
       });
       const dot=document.createElement("i");dot.className="series-swatch";dot.style.background=entry.color;
       const text=document.createElement("span");
-      text.textContent=entry.name+(entry.code?" · "+entry.code:"");
+      text.textContent=(entry.id==="me30"?"🎉 ":"")+entry.name+(entry.code?" · "+entry.code:"")+(entry.releaseDate?" · "+entry.releaseDate.slice(0,10).split("-").reverse().join("/"):"");
       label.append(checkbox,dot,text);
       holder.appendChild(label);
     });
