@@ -110,6 +110,12 @@ async function validateAddress(address,city,lat,lng){
     return Number.isFinite(distance)&&distance<350;
   });
 }
+function voteSummary(a,b){
+  const available=Number(a)||0,unavailable=Number(b)||0;
+  const state=available>=2&&available>unavailable?"confirmed":unavailable>=2&&unavailable>available?"out_of_stock":"unverified";
+  return {available,unavailable,state};
+}
+
 export default {
   async fetch(request){
     const url=new URL(request.url),headers=cors(request);
@@ -117,8 +123,47 @@ export default {
     try{
       if(url.pathname==="/"&&request.method==="GET")return json({name:"PokéStock API",ok:true},200,request);
       if(url.pathname==="/reports"&&request.method==="GET"){
-        const rows=await sql("SELECT id,store_name,store_address,city,series_id,product_name,price_eur,quantity,latitude,longitude,photo_object_key,status,created_at FROM public.stock_reports WHERE status IN ('approved','pending') AND expires_at>now() ORDER BY created_at DESC LIMIT 100");
-        return json({reports:rows.map(r=>({id:r.id,store:r.store_name,address:r.store_address,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,img:photoUrl(r.photo_object_key)}))},200,request);
+        const rows=await sql("SELECT r.id,r.store_name,r.store_address,r.city,r.series_id,r.product_name,r.price_eur,r.quantity,r.latitude,r.longitude,r.photo_object_key,r.status,r.created_at,COALESCE(v.available_count,0)::int AS available_count,COALESCE(v.unavailable_count,0)::int AS unavailable_count FROM public.stock_reports r LEFT JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE verdict='available') AS available_count,COUNT(*) FILTER (WHERE verdict='unavailable') AS unavailable_count FROM public.stock_votes WHERE report_id=r.id) v ON TRUE WHERE r.status IN ('approved','pending') AND r.expires_at>now() ORDER BY r.created_at DESC LIMIT 100");
+        return json({reports:rows.map(r=>({id:r.id,store:r.store_name,address:r.store_address,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,img:photoUrl(r.photo_object_key),votes:voteSummary(r.available_count,r.unavailable_count)}))},200,request);
+      }
+      if(url.pathname==="/me/votes"&&request.method==="GET"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connexion nécessaire."},401,request);
+        const votes=await sql("SELECT v.report_id,v.verdict FROM public.stock_votes v JOIN public.stock_reports r ON r.id=v.report_id WHERE v.voter_user_id=$1 AND r.expires_at>now() ORDER BY v.updated_at DESC LIMIT 100",[user]);
+        return json({votes},200,request);
+      }
+      if(url.pathname==="/me/reputation"&&request.method==="GET"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connexion nécessaire."},401,request);
+        const submitted=await sql("SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE (SELECT COUNT(*) FROM public.stock_votes v WHERE v.report_id=r.id AND v.verdict='available') >= 2 AND (SELECT COUNT(*) FROM public.stock_votes v WHERE v.report_id=r.id AND v.verdict='available') > (SELECT COUNT(*) FROM public.stock_votes v WHERE v.report_id=r.id AND v.verdict='unavailable'))::int AS confirmed FROM public.stock_reports r WHERE r.user_id=$1 AND r.status IN ('approved','pending') AND r.created_at>now()-interval '90 days'",[user]);
+        const helpful=await sql("SELECT COUNT(*)::int AS total FROM public.stock_votes v JOIN public.stock_reports r ON r.id=v.report_id CROSS JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE other.verdict=v.verdict) AS agreeing,COUNT(*) FILTER (WHERE other.verdict<>v.verdict) AS disagreeing FROM public.stock_votes other WHERE other.report_id=v.report_id AND other.voter_user_id<>v.voter_user_id) peer WHERE v.voter_user_id=$1 AND r.created_at>now()-interval '90 days' AND r.status IN ('pending','approved') AND peer.agreeing>=2 AND peer.agreeing>peer.disagreeing",[user]);
+        const reports=Number(submitted[0]?.total)||0,confirmedReports=Number(submitted[0]?.confirmed)||0,helpfulVotes=Number(helpful[0]?.total)||0;
+        const points=confirmedReports*10+helpfulVotes;
+        const badge=points>=100?"Expert":points>=40?"Éclaireur":points>=10?"Explorateur":"Débutant";
+        return json({points,badge,reports,confirmedReports,helpfulVotes,periodDays:90},200,request);
+      }
+      const voteMatch=/^\/reports\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/vote$/i.exec(url.pathname);
+      if(voteMatch&&request.method==="POST"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connecte-toi pour confirmer un stock ou signaler une rupture."},401,request);
+        const id=voteMatch[1],raw=await request.text();
+        if(raw.length>300)return json({error:"Requête trop volumineuse."},413,request);
+        let payload;
+        try{payload=JSON.parse(raw)}catch{return json({error:"Données invalides."},400,request);}
+        if(!["available","unavailable"].includes(payload?.verdict))return json({error:"Choix invalide."},400,request);
+        const found=await sql("SELECT id,user_id FROM public.stock_reports WHERE id=$1::uuid AND status IN ('pending','approved') AND expires_at>now() LIMIT 1",[id]);
+        if(!found.length)return json({error:"Signalement introuvable ou expiré."},404,request);
+        if(found[0].user_id===user)return json({error:"Tu ne peux pas voter sur ton propre signalement."},403,request);
+        const existing=await sql("SELECT verdict FROM public.stock_votes WHERE report_id=$1::uuid AND voter_user_id=$2",[id,user]);
+        if(!existing.length){
+          const usage=await sql("SELECT COUNT(*)::int AS total FROM public.stock_votes WHERE voter_user_id=$1 AND created_at>now()-interval '24 hours'",[user]);
+          if(Number(usage[0]?.total)>=30)return json({error:"Limite de 30 votes par jour atteinte."},429,request);
+        }
+        if(!existing.length||existing[0].verdict!==payload.verdict){
+          await sql("INSERT INTO public.stock_votes(report_id,voter_user_id,verdict) VALUES ($1::uuid,$2,$3) ON CONFLICT(report_id,voter_user_id) DO UPDATE SET verdict=EXCLUDED.verdict,updated_at=now()",[id,user,payload.verdict]);
+        }
+        const tally=await sql("SELECT COUNT(*) FILTER (WHERE verdict='available')::int AS available_count,COUNT(*) FILTER (WHERE verdict='unavailable')::int AS unavailable_count FROM public.stock_votes WHERE report_id=$1::uuid",[id]);
+        return json({ok:true,reportId:id,myVote:payload.verdict,votes:voteSummary(tally[0]?.available_count,tally[0]?.unavailable_count)},200,request);
       }
       if(url.pathname==="/reports"&&request.method==="POST"){
         const user=await authenticate(request);
