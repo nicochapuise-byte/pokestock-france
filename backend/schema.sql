@@ -106,3 +106,20 @@ ALTER TABLE public.catalog_series ADD COLUMN IF NOT EXISTS release_date date;
 ALTER TABLE public.catalog_products ADD COLUMN IF NOT EXISTS release_date date;
 CREATE INDEX IF NOT EXISTS catalog_series_block_idx ON public.catalog_series(block_name,display_order);
 CREATE INDEX IF NOT EXISTS catalog_series_release_idx ON public.catalog_series(release_date DESC);
+
+-- Photos de catalogue offertes par les membres : privées en attendant la vérification.
+-- La photo de preuve d'un stock reste toujours distincte et privée.
+CREATE TABLE IF NOT EXISTS public.catalog_photo_proposals (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  variant_id varchar(120) NOT NULL REFERENCES public.catalog_variants(id),
+  proposed_by text NOT NULL,
+  photo_object_key text NOT NULL UNIQUE,
+  rights_note varchar(240) NOT NULL,
+  status varchar(18) NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending','approved','rejected')),
+  reviewed_by text,
+  reviewed_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS catalog_photo_proposals_pending_idx
+  ON public.catalog_photo_proposals(status,created_at);
