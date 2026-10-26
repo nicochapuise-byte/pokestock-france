@@ -4,11 +4,36 @@ const $=selector=>document.querySelector(selector);
 let client=null,currentUser=null,signup=false,loading=false;
 const api={
   async getToken(){
-    if(!client)return null;
+    if(!client)throw new Error("Le service de connexion n'est pas encore prêt.");
+    // Le SDK peut renvoyer sa session mise en cache au lieu du JWT réel.
+    // On demande le JWT au point d'accès officiel de Neon Auth.
+    let response;
     try{
-      const result=await client.token();
-      return result?.data?.token||null;
-    }catch{return null;}
+      response=await fetch(AUTH_URL.replace(/\\/$/,"")+"/token",{
+        method:"GET",
+        credentials:"include",
+        headers:{"Accept":"application/json"},
+        cache:"no-store",
+        signal:AbortSignal.timeout(15000)
+      });
+    }catch{
+      throw new Error("Impossible de vérifier ta session. Vérifie la connexion Internet.");
+    }
+    if(response.status===401||response.status===403){
+      currentUser=null;
+      renderAuth();
+      return null;
+    }
+    if(!response.ok){
+      throw new Error("Service d'authentification temporairement indisponible ("+response.status+").");
+    }
+    let data;
+    try{data=await response.json();}catch{throw new Error("Réponse d'authentification invalide.");}
+    const token=typeof data?.token==="string"?data.token:data?.data?.token;
+    if(typeof token!=="string"||token.split(".").length!==3){
+      throw new Error("La session est active, mais son jeton d'accès est indisponible. Réessaie ou reconnecte-toi.");
+    }
+    return token;
   },
   getUser(){return currentUser;},
   openLogin(){
@@ -27,6 +52,8 @@ function renderAuth(){
   $("#authNameWrap").hidden=!signup||!!user;
   $("#authEmail").disabled=!!user;
   $("#authPassword").disabled=!!user;
+  $("#authEmail").closest("label").hidden=!!user;
+  $("#authPassword").closest("label").hidden=!!user;
   $("#authSubmit").hidden=!!user;
   $("#signOutBtn").hidden=!user;
   $("#toggleAuthMode").hidden=!!user;
