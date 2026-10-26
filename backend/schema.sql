@@ -123,3 +123,9 @@ CREATE TABLE IF NOT EXISTS public.catalog_photo_proposals (
 );
 CREATE INDEX IF NOT EXISTS catalog_photo_proposals_pending_idx
   ON public.catalog_photo_proposals(status,created_at);
+
+-- Traçabilité des images importées depuis des fiches PokéCardex.
+-- image_source_url est l'URL de la fiche source, tandis que l'image
+-- binaire est hébergée dans le stockage privé 'catalog-images'.
+ALTER TABLE public.catalog_variants ADD COLUMN IF NOT EXISTS image_source_url text;
+ALTER TABLE public.catalog_variants ADD COLUMN IF NOT EXISTS image_imported_at timestamptz;
