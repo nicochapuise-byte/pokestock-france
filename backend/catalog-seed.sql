@@ -64,3 +64,33 @@ INSERT INTO public.catalog_variants (id,product_id,variant_name,source_url,displ
 ('mega-bundle-standard','mega-bundle','Standard','https://www.pokemon.com/fr/actualites/presentation-des-produits-mega-evolution-du-jcc-pokemon','29'),
 ('mega-booster-variable','mega-booster','Visuel à préciser','https://www.pokemon.com/fr/actualites/presentation-des-produits-mega-evolution-du-jcc-pokemon','30')
 ON CONFLICT (id) DO NOTHING;
+
+
+-- Artworks boosters supplémentaires documentés : source de référence visuelle tierce.
+INSERT INTO public.catalog_products(id,series_id,type_key,name,source_url,display_order) VALUES
+('prism-booster','prism','booster','Booster Évolutions Prismatiques','https://www.pittpokeresearch.com/booster-pack-art-gallery','0'),
+('paldea-booster','paldea','booster','Booster Destinées de Paldea','https://www.pittpokeresearch.com/booster-pack-art-gallery','0'),
+('bolt-booster','blackwhite','booster','Booster Foudre Noire','https://www.pittpokeresearch.com/booster-pack-art-gallery','1'),
+('flare-booster','blackwhite','booster','Booster Flamme Blanche','https://www.pittpokeresearch.com/booster-pack-art-gallery','2')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.catalog_variants(id,product_id,variant_name,source_url,display_order) VALUES
+('ev-booster-gyarados','ev-booster','Léviator Téracristal','https://www.pittpokeresearch.com/booster-pack-art-gallery','101'),
+('ev-booster-koraidon','ev-booster','Koraidon','https://www.pittpokeresearch.com/booster-pack-art-gallery','102'),
+('ev-booster-miraidon','ev-booster','Miraidon','https://www.pittpokeresearch.com/booster-pack-art-gallery','103'),
+('ev-booster-starters','ev-booster','Poussacha / Chochodile / Coiffeton','https://www.pittpokeresearch.com/booster-pack-art-gallery','104'),
+('mega-booster-lucario','mega-booster','Méga-Lucario','https://www.pittpokeresearch.com/booster-pack-art-gallery','105'),
+('mega-booster-gardevoir','mega-booster','Méga-Gardevoir','https://www.pittpokeresearch.com/booster-pack-art-gallery','106'),
+('mega-booster-venusaur','mega-booster','Méga-Florizarre','https://www.pittpokeresearch.com/booster-pack-art-gallery','107'),
+('mega-booster-kangaskhan','mega-booster','Méga-Kangourex','https://www.pittpokeresearch.com/booster-pack-art-gallery','108'),
+('prism-booster-eevee-sylveon','prism-booster','Évoli et Nymphali','https://www.pittpokeresearch.com/booster-pack-art-gallery','109'),
+('prism-booster-jvf','prism-booster','Voltali / Aquali / Pyroli','https://www.pittpokeresearch.com/booster-pack-art-gallery','110'),
+('prism-booster-umbreon-espeon','prism-booster','Noctali et Mentali','https://www.pittpokeresearch.com/booster-pack-art-gallery','111'),
+('prism-booster-glaceon-leafeon','prism-booster','Givrali et Phyllali','https://www.pittpokeresearch.com/booster-pack-art-gallery','112'),
+('paldea-booster-pikachu','paldea-booster','Pikachu chromatique','https://www.pittpokeresearch.com/booster-pack-art-gallery','113'),
+('paldea-booster-ceruledge','paldea-booster','Malvalame chromatique','https://www.pittpokeresearch.com/booster-pack-art-gallery','114'),
+('paldea-booster-tinkaton','paldea-booster','Forgelina chromatique','https://www.pittpokeresearch.com/booster-pack-art-gallery','115'),
+('paldea-booster-dondozo','paldea-booster','Oyacata chromatique','https://www.pittpokeresearch.com/booster-pack-art-gallery','116'),
+('bolt-booster-zekrom','bolt-booster','Zekrom','https://www.pittpokeresearch.com/booster-pack-art-gallery','117'),
+('flare-booster-reshiram','flare-booster','Reshiram','https://www.pittpokeresearch.com/booster-pack-art-gallery','118')
+ON CONFLICT (id) DO NOTHING;
