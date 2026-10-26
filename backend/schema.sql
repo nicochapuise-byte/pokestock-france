@@ -18,3 +18,15 @@ CREATE TABLE IF NOT EXISTS public.stock_reports (
   created_at timestamptz NOT NULL DEFAULT now(),
   expires_at timestamptz NOT NULL DEFAULT (now() + interval '72 hours')
 );
+
+-- Un seul vote par membre et par signalement. La modification du choix reste possible.
+CREATE TABLE IF NOT EXISTS public.stock_votes (
+  report_id uuid NOT NULL REFERENCES public.stock_reports(id) ON DELETE CASCADE,
+  voter_user_id text NOT NULL,
+  verdict varchar(15) NOT NULL CHECK (verdict IN ('available', 'unavailable')),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (report_id, voter_user_id)
+);
+CREATE INDEX IF NOT EXISTS stock_votes_voter_idx
+  ON public.stock_votes (voter_user_id, updated_at DESC);
