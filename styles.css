@@ -343,3 +343,14 @@ button,input,select{font:inherit}button,a{transition:.2s ease}.topbar{height:72p
   .catalog-photo-review{grid-template-columns:78px 1fr}
   .catalog-photo-review img{width:78px;height:104px}
 }
+
+/* Espace administrateur dédié : ne plus surcharger la modale de modération.
+   Les anciens composants restent montés pour la rétrocompatibilité JavaScript. */
+#adminModal #adminCatalogMedia,
+#adminModal .catalog-moderate-pending {display:none!important}
+#adminModal .admin-photo-navigation{display:inline-flex;align-items:center;justify-content:center;text-align:center;margin:9px 0 18px;max-width:100%;white-space:normal;line-height:1.35}
+#adminModal #adminStatus{margin:11px 0}
+#adminModal #adminList{margin-top:12px}
+@media(max-width:680px){
+ #adminModal .admin-photo-navigation{width:100%;padding:13px 12px}
+}
