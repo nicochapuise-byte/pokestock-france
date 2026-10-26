@@ -31,6 +31,8 @@ function writeLocalReports(items){
   catch(e){ console.warn("Stockage local indisponible", e); return false; }
 }
 
+const API_BASE="https://br-nameless-math-b9dyokxp-pokestock.compute.c-7.eu-central-1.aws.neon.tech";
+let remoteReports=[];
 let reports = [...seedReports.map(r=>({...r,demo:true})), ...readLocalReports()];
 let selectedSeries = new Set();
 let photoData = "";
@@ -45,7 +47,7 @@ const $$ = s => [...document.querySelectorAll(s)];
 const seriesById = id => series.find(s=>s.id===id) || {name:"Autre",color:"#64748b"};
 
 function escapeHtml(value){return String(value??"").replace(/[&<>"\x27]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\x27":"&#39;"}[c]));}
-function safeImage(src){const value=String(src||"");return /^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/|^data:image\/(?:png|jpeg|webp);base64,/i.test(value)?value:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png";}
+function safeImage(src){const value=String(src||"");return /^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/|^https:\/\/[a-z0-9.-]+\.neon\.tech\/|^data:image\/(?:png|jpeg|webp);base64,/i.test(value)?value:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png";}
 function reportHours(r){return r.createdAt?Math.max(0,(Date.now()-Date.parse(r.createdAt))/3600000):(r.hours||0);}
 function ageClass(hours){ return hours<24?"fresh":hours<=72?"medium":"old"; }
 function ageText(hours){ return hours<24?(hours<1?"À l'instant":"Il y a "+hours+" h"):hours<=72?"Il y a "+Math.round(hours/24)+" j":"À vérifier"; }
@@ -215,7 +217,7 @@ function renderCards(items){
     const s=seriesById(r.series), age=ageClass(reportHours(r));
     return `<article class="stock-card">
       <div class="stock-image">
-        <span class="age-badge ${age}">${r.demo?"🧪 Exemple":"🕒 "+ageText(reportHours(r))}</span>
+        <span class="age-badge ${age}">${r.demo?"🧪 Exemple":r.status==="pending"?"🟠 Non vérifié":"🕒 "+ageText(reportHours(r))}</span>
         <img src="${safeImage(r.img)}" alt="Photo du produit">
       </div>
       <div class="stock-body">
@@ -339,6 +341,25 @@ function imageAsJpeg(file){
   });
 }
 
+
+async function loadCommunityReports(){
+  const msg=$("#communityStatus");
+  try{
+    const res=await fetch(API_BASE+"/reports",{signal:AbortSignal.timeout(10000)});
+    if(!res.ok)throw Error("HTTP "+res.status);
+    const data=await res.json();
+    if(!Array.isArray(data.reports))throw Error("Données invalides");
+    remoteReports=data.reports.filter(r=>r&&Number.isFinite(Number(r.lat))&&Number.isFinite(Number(r.lng)))
+      .map(r=>({...r,lat:Number(r.lat),lng:Number(r.lng),qty:Number(r.qty)||1}));
+    reports=[...remoteReports,...readLocalReports(),...seedReports.map(r=>({...r,demo:true}))];
+    msg.textContent="🌍 "+remoteReports.length+" signalement(s) communautaire(s) en cours de validité. 🧪 Les 6 exemples affichés sur la carte sont fictifs. « Non vérifié » signifie que le stock est déclaré par un membre, sans garantie de disponibilité.";
+    renderAll();
+  }catch(err){
+    console.warn("API PokéStock indisponible:",err);
+    msg.textContent="⚠️ Impossible de charger les stocks communautaires pour le moment. Les 6 exemples restent visibles. Actualise la page pour réessayer.";
+  }
+}
+
 function bindUI(){
   ["#openReportTop","#openReportHero","#openReportList"].forEach(id=>$(id).addEventListener("click",openModal));
   $$("[data-close-modal]").forEach(el=>el.addEventListener("click",closeModal));
@@ -396,19 +417,22 @@ function bindUI(){
     }
   });
 
-  $("#reportForm").addEventListener("submit",e=>{
+  $("#reportForm").addEventListener("submit",async e=>{
     e.preventDefault();
     const data=new FormData(e.currentTarget);
     if(!verifiedAddress){
       toast("Sélectionne une adresse vérifiée pour le magasin.");
-      $("#storeAddress").focus();
-      return;
+      $("#storeAddress").focus();return;
     }
-    if(!photoData){
-      toast("Ajoute une photo du produit en rayon.");return;
+    if(!photoData){toast("Ajoute une photo du produit en rayon.");return;}
+    const api=window.pokestockApi;
+    if(!api?.ready){toast("Initialisation de la connexion en cours. Réessaie.");return;}
+    const token=await api.getToken();
+    if(!token){
+      toast("Connecte-toi pour publier un signalement communautaire.");
+      api.openLogin();return;
     }
-    const report={
-      id:"local-"+Date.now(),
+    const payload={
       store:String(data.get("store")||"").trim().slice(0,140),
       city:String(data.get("city")||"").trim().slice(0,120),
       address:verifiedAddress.label,
@@ -416,23 +440,29 @@ function bindUI(){
       product:String(data.get("product")||"").trim().slice(0,200),
       price:data.get("price")?Number(data.get("price")):null,
       qty:Number(data.get("quantity"))||1,
-      lat:verifiedAddress.lat,lng:verifiedAddress.lng,
-      createdAt:new Date().toISOString(),hours:0,img:photoData
+      lat:verifiedAddress.lat,lng:verifiedAddress.lng,photo:photoData
     };
-    if(!report.store||!report.city||!report.product||!report.series){
+    if(!payload.store||!payload.city||!payload.product||!payload.series){
       toast("Complète tous les champs obligatoires.");return;
     }
-    const local=readLocalReports();
-    local.unshift(report);
-    if(!writeLocalReports(local)){
-      toast("Espace de stockage plein. Essaie une photo plus légère ou libère de l'espace.");return;
-    }
-    reports.unshift(report);
-    e.currentTarget.reset();photoData="";resetVerifiedAddress();
-    $("#photoPreview").textContent="🖼️ Aperçu de la photo";
-    closeModal();renderAll();
-    if(mapMode==="leaflet"&&map)map.flyTo([report.lat,report.lng],13);
-    toast("Signalement enregistré sur cet appareil !");
+    const submitBtn=$("#reportForm button[type=submit]");
+    submitBtn.disabled=true;submitBtn.textContent="⏳ Publication...";
+    try{
+      const response=await fetch(API_BASE+"/reports",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+        body:JSON.stringify(payload),signal:AbortSignal.timeout(25000)
+      });
+      const result=await response.json();
+      if(!response.ok)throw Error(result.error||"Erreur de publication ("+response.status+").");
+      e.currentTarget.reset();photoData="";resetVerifiedAddress();
+      $("#photoPreview").textContent="🖼️ Aperçu de la photo";
+      closeModal();
+      toast("📸 Signalement communautaire publié (non vérifié) !");
+      await loadCommunityReports();
+      if(mapMode==="leaflet"&&map)map.flyTo([payload.lat,payload.lng],13);
+    }catch(err){toast("Impossible de publier : "+(err.message||"Erreur de connexion"));}
+    finally{submitBtn.disabled=false;submitBtn.textContent="Publier le signalement";}
   });
 }
 
@@ -440,3 +470,4 @@ initMap();
 renderFilters();
 bindUI();
 renderAll();
+loadCommunityReports();
