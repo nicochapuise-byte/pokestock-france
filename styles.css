@@ -28,3 +28,15 @@ button,input,select{font:inherit}button,a{transition:.2s ease}.topbar{height:72p
 .fallback-pin:hover{transform:translate(-50%,-50%) scale(1.28)}
 .fallback-pin.me{width:24px;height:24px;background:#2968e8;border-color:#fff;box-shadow:0 0 0 6px rgba(41,104,232,.22),0 5px 14px rgba(22,32,64,.35)}
 .fallback-note{position:absolute;right:14px;bottom:14px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.9);font-size:11px;font-weight:800;color:#5c6882}
+
+/* Signalements : sélection d'adresse vérifiée et transparence de la démo */
+.demo-notice{padding:15px 18px;background:#fff7d7;border:1px solid #ffe59a;border-radius:14px;color:#6d5315;margin:0 0 20px;font-size:14px;line-height:1.55}
+.address-picker{display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:12px;border-radius:13px;background:#eef5ff;border:1px solid #dbe8ff}
+.address-picker .btn{align-self:flex-start}
+.address-picker select{max-width:100%;padding:11px;border:1px solid #cbd8f2;border-radius:11px;background:white}
+.address-picker p{margin:0;font-size:12px;line-height:1.5;color:#324b74}
+.address-picker .btn:disabled{opacity:.6;cursor:wait;transform:none}
+.proof-confirm{display:flex;align-items:flex-start;gap:10px;margin-top:15px;color:#354263;font-size:13px;line-height:1.5}
+.proof-confirm input{margin-top:3px;accent-color:#2968e8;width:18px;height:18px;flex-shrink:0}
+.stock-address{font-size:12px;color:#6d7587;line-height:1.35;margin:5px 0 0}
+@media(max-width:780px){.modal-card{padding:20px}.address-picker .btn{width:100%}}
