@@ -274,7 +274,7 @@ photoUi("catalogPendingPhotos").addEventListener("click",async event=>{
   finally{pendingReviewBusy=false;}
 });
 photoUi("catalogPendingRefresh").addEventListener("click",refreshPendingCatalogPhotos);
-photoUi("adminBtn").addEventListener("click",refreshPendingCatalogPhotos);
+// La photothèque possède désormais une page dédiée : aucun chargement photo au clic « Admin ».
 document.addEventListener("pokestock:catalogloaded",()=>{
   photoListOffset=0;renderCatalogPhotoCoverage();
   if(bulkQueue.length)assignBatchVariants();
