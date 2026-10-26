@@ -188,6 +188,7 @@
         <section class="catalog-media-bulk">
           <h4>📚 Ajouter plusieurs photographies</h4>
           <p>Prépare tes images nommées avec l'identifiant exact de la variante (ex. <code>151-upc-mew.jpg</code>). Les fichiers reconnus seront associés automatiquement ; vérifie toujours l'attribution avant l'envoi.</p>
+          <p><strong>Autorisation :</strong> les champs « Justificatif » et « Je confirme avoir le droit » ci-dessus s’appliquent aussi à cet import groupé.</p>
           <label><span>Choisir jusqu'à 25 photos</span><input id="catalogBulkFiles" type="file" accept="image/*" multiple></label>
           <div id="catalogBulkQueue" class="catalog-bulk-queue"></div>
           <label class="rights-check"><input id="catalogBulkOverwrite" type="checkbox"> Autoriser le remplacement de photographies existantes</label>
@@ -303,11 +304,11 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js?v=20261026-fullseries-v1"></script>
+  <script src="script.js?v=20261026-photo-v2"></script>
   <script src="community.js?v=20261026-popupfix-v2"></script>
   <script src="moderation.js?v=20261026-moderation-v1"></script>
-  <script src="catalog-ui.js?v=20261026-photo-v2"></script>
-  <script src="catalog-photo-workflow.js?v=20261026-photo-v2"></script>
+  <script src="catalog-ui.js?v=20261026-photo-v3"></script>
+  <script src="catalog-photo-workflow.js?v=20261026-photo-v3"></script>
   <script type="module" src="auth-ui.js?v=20261026-votes-v1"></script>
 </body>
 </html>
