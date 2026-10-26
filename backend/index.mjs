@@ -25,14 +25,14 @@ function signKey(date,region){
   let key=hmac("AWS4"+process.env.AWS_SECRET_ACCESS_KEY,date);
   key=hmac(key,region);key=hmac(key,"s3");return hmac(key,"aws4_request");
 }
-function awsBucketUrl(key){
+function awsBucketUrl(key,bucket="proofs"){
   const base=new URL(process.env.AWS_ENDPOINT_URL_S3);
-  base.pathname=base.pathname.replace(/\/$/,"")+"/proofs/"+key.split("/").map(encodeURIComponent).join("/");
+  base.pathname=base.pathname.replace(/\/$/,"")+"/"+encodeURIComponent(bucket)+"/"+key.split("/").map(encodeURIComponent).join("/");
   base.search="";return base;
 }
 function amzTime(date){return date.toISOString().replace(/[:-]|\.\d{3}/g,"");}
-async function uploadPhoto(bytes,key){
-  const url=awsBucketUrl(key),date=amzTime(new Date()),day=date.slice(0,8),region=process.env.AWS_REGION;
+async function uploadPhoto(bytes,key,bucket="proofs"){
+  const url=awsBucketUrl(key,bucket),date=amzTime(new Date()),day=date.slice(0,8),region=process.env.AWS_REGION;
   const hash=sha(bytes),scope=day+"/"+region+"/s3/aws4_request",signed="host;x-amz-content-sha256;x-amz-date";
   const canonical="PUT\n"+url.pathname+"\n\nhost:"+url.host+"\nx-amz-content-sha256:"+hash+"\nx-amz-date:"+date+"\n\n"+signed+"\n"+hash;
   const signature=createHmac("sha256",signKey(day,region)).update("AWS4-HMAC-SHA256\n"+date+"\n"+scope+"\n"+sha(canonical)).digest("hex");
@@ -40,8 +40,9 @@ async function uploadPhoto(bytes,key){
   const r=await fetch(url,{method:"PUT",headers:{"Content-Type":"image/jpeg","x-amz-date":date,"x-amz-content-sha256":hash,"Authorization":authorization},body:bytes});
   if(!r.ok)throw new Error("Le stockage de la photo a échoué ("+r.status+").");
 }
-function photoUrl(key){
-  const url=awsBucketUrl(key),date=amzTime(new Date()),day=date.slice(0,8),region=process.env.AWS_REGION;
+function photoUrl(key,bucket="proofs"){
+  if(!key)return null;
+  const url=awsBucketUrl(key,bucket),date=amzTime(new Date()),day=date.slice(0,8),region=process.env.AWS_REGION;
   const scope=day+"/"+region+"/s3/aws4_request";
   const params=new URLSearchParams({
     "X-Amz-Algorithm":"AWS4-HMAC-SHA256","X-Amz-Credential":process.env.AWS_ACCESS_KEY_ID+"/"+scope,
@@ -145,6 +146,44 @@ export default {
     try{
       if(url.pathname==="/"&&request.method==="GET")return json({name:"PokéStock API",ok:true},200,request);
 
+      if(url.pathname==="/catalog"&&request.method==="GET"){
+        const [seriesRows,productRows,variantRows]=await Promise.all([
+          sql("SELECT id,name,color,source_url AS source_url FROM public.catalog_series WHERE is_active=true ORDER BY display_order,name"),
+          sql("SELECT id,series_id,type_key,name,source_url FROM public.catalog_products WHERE is_active=true ORDER BY display_order,name"),
+          sql("SELECT v.id,v.product_id,v.variant_name,v.image_object_key,v.image_approved,v.source_url FROM public.catalog_variants v JOIN public.catalog_products p ON p.id=v.product_id JOIN public.catalog_series s ON s.id=p.series_id WHERE v.is_active=true AND p.is_active=true AND s.is_active=true ORDER BY v.display_order,v.variant_name")
+        ]);
+        return json({
+          series:seriesRows.map(r=>({id:r.id,name:r.name,color:r.color,sourceUrl:r.source_url})),
+          products:productRows.map(r=>({id:r.id,seriesId:r.series_id,type:r.type_key,name:r.name,sourceUrl:r.source_url})),
+          variants:variantRows.map(r=>({id:r.id,productId:r.product_id,name:r.variant_name,image:!!r.image_approved&&r.image_object_key?photoUrl(r.image_object_key,"catalog-images"):null,sourceUrl:r.source_url}))
+        },200,request);
+      }
+      const catalogImageMatch=/^\/admin\/catalog\/variants\/([a-z0-9-]{2,120})\/image$/.exec(url.pathname);
+      if(catalogImageMatch&&request.method==="POST"){
+        const user=await authenticate(request);
+        if(!user)return json({error:"Connexion nécessaire."},401,request);
+        if(!await isSiteAdmin(user))return json({error:"Accès administrateur nécessaire."},403,request);
+        const variantId=catalogImageMatch[1];
+        const raw=await request.text();
+        if(raw.length>1100000)return json({error:"Image trop volumineuse."},413,request);
+        let payload;
+        try{payload=JSON.parse(raw)}catch{return json({error:"Données invalides."},400,request);}
+        if(payload.rightsConfirmed!==true||!validText(payload.rightsNote,240))
+          return json({error:"Indique l'autorisation précise qui permet d'utiliser cette image."},400,request);
+        if(typeof payload.photo!=="string"||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(payload.photo))
+          return json({error:"Image JPEG obligatoire."},400,request);
+        const bytes=Buffer.from(payload.photo.split(",")[1],"base64");
+        if(bytes.length<1000||bytes.length>650000||bytes[0]!==0xff||bytes[1]!==0xd8)
+          return json({error:"Image incorrecte (650 Ko après compression maximum)."},400,request);
+        const variants=await sql("SELECT id FROM public.catalog_variants WHERE id=$1 AND is_active=true LIMIT 1",[variantId]);
+        if(!variants.length)return json({error:"Variante inconnue."},404,request);
+        const key="images/"+randomUUID()+".jpg";
+        await uploadPhoto(bytes,key,"catalog-images");
+        await sql("UPDATE public.catalog_variants SET image_object_key=$2,image_approved=true,image_license_note=$3 WHERE id=$1",
+          [variantId,key,payload.rightsNote.trim()]);
+        return json({ok:true,variantId,message:"Visuel ajouté au catalogue."},201,request);
+      }
+
       if(url.pathname==="/me/role"&&request.method==="GET"){
         const user=await authenticate(request);
         if(!user)return json({error:"Connexion nécessaire."},401,request);
@@ -210,8 +249,8 @@ export default {
         return json({ok:true,id,message:"Signalement supprimé de la carte et des disponibilités."},200,request);
       }
       if(url.pathname==="/reports"&&request.method==="GET"){
-        const rows=await sql("SELECT r.id,r.store_name,r.store_address,r.city,r.series_id,r.product_name,r.price_eur,r.quantity,r.latitude,r.longitude,r.photo_object_key,r.status,r.created_at,COALESCE(v.available_count,0)::int AS available_count,COALESCE(v.unavailable_count,0)::int AS unavailable_count FROM public.stock_reports r LEFT JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE verdict='available') AS available_count,COUNT(*) FILTER (WHERE verdict='unavailable') AS unavailable_count FROM public.stock_votes WHERE report_id=r.id) v ON TRUE WHERE r.status IN ('approved','pending') AND r.expires_at>now() AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) ORDER BY r.created_at DESC LIMIT 100");
-        return json({reports:rows.map(r=>({id:r.id,store:r.store_name,address:r.store_address,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,img:photoUrl(r.photo_object_key),votes:voteSummary(r.available_count,r.unavailable_count)}))},200,request);
+        const rows=await sql("SELECT r.id,r.store_name,r.store_address,r.city,r.series_id,r.product_name,r.price_eur,r.quantity,r.latitude,r.longitude,r.photo_object_key,r.catalog_variant_id,cv.variant_name,cv.image_object_key AS catalog_image_key,cv.image_approved,cp.source_url AS catalog_source_url,r.status,r.created_at,COALESCE(v.available_count,0)::int AS available_count,COALESCE(v.unavailable_count,0)::int AS unavailable_count FROM public.stock_reports r LEFT JOIN public.catalog_variants cv ON cv.id=r.catalog_variant_id LEFT JOIN public.catalog_products cp ON cp.id=cv.product_id LEFT JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE verdict='available') AS available_count,COUNT(*) FILTER (WHERE verdict='unavailable') AS unavailable_count FROM public.stock_votes WHERE report_id=r.id) v ON TRUE WHERE r.status IN ('approved','pending') AND r.expires_at>now() AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) ORDER BY r.created_at DESC LIMIT 100");
+        return json({reports:rows.map(r=>({id:r.id,store:r.store_name,address:r.store_address,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,img:r.catalog_image_key&&r.image_approved?photoUrl(r.catalog_image_key,"catalog-images"):null,catalogVariantId:r.catalog_variant_id,artSet:r.variant_name||null,catalogSourceUrl:r.catalog_source_url||null,proofProvided:!!r.photo_object_key,votes:voteSummary(r.available_count,r.unavailable_count)}))},200,request);
       }
       if(url.pathname==="/me/votes"&&request.method==="GET"){
         const user=await authenticate(request);
@@ -255,36 +294,52 @@ export default {
       if(url.pathname==="/reports"&&request.method==="POST"){
         const user=await authenticate(request);
         if(!user)return json({error:"Connecte-toi pour signaler un stock."},401,request);
-        if(Number(request.headers.get("content-length"))>1250000)return json({error:"Photo trop volumineuse."},413,request);
+        if(Number(request.headers.get("content-length"))>1250000)return json({error:"Requête trop volumineuse."},413,request);
         const raw=await request.text();
-        if(raw.length>1250000)return json({error:"Photo trop volumineuse."},413,request);
+        if(raw.length>1250000)return json({error:"Requête trop volumineuse."},413,request);
         let data;
         try{data=JSON.parse(raw)}catch{return json({error:"Données invalides."},400,request);}
-        if(!validText(data.store,140)||!validText(data.address,240)||!validText(data.city,120)||!validText(data.product,200)||!ALLOWED_SERIES.has(data.series)||!validCoordinates(Number(data.lat),Number(data.lng)))
-          return json({error:"Vérifie les informations du magasin et du produit."},400,request);
+        if(!validText(data.store,140)||!validText(data.address,240)||!validText(data.city,120)||!validCoordinates(Number(data.lat),Number(data.lng)))
+          return json({error:"Vérifie les informations du magasin et son adresse."},400,request);
+        if(typeof data.catalogVariantId!=="string"||!/^[a-z0-9-]{2,120}$/.test(data.catalogVariantId))
+          return json({error:"Sélectionne une série, un produit puis son art set dans le catalogue."},400,request);
+        const references=await sql(
+          "SELECT v.id,p.name AS product_name,s.id AS series_id FROM public.catalog_variants v JOIN public.catalog_products p ON p.id=v.product_id JOIN public.catalog_series s ON s.id=p.series_id WHERE v.id=$1 AND v.is_active AND p.is_active AND s.is_active LIMIT 1",
+          [data.catalogVariantId]
+        );
+        if(!references.length)return json({error:"Ce produit n'est plus disponible dans le catalogue."},404,request);
+        const ref=references[0];
         if(data.price!==null&&(typeof data.price!=="number"||data.price<0||data.price>10000))
           return json({error:"Prix invalide."},400,request);
-        if(!Number.isInteger(data.qty)||data.qty<1||data.qty>999)return json({error:"Quantité invalide."},400,request);
-        if(typeof data.photo!=="string"||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(data.photo))return json({error:"Photo JPEG obligatoire."},400,request);
-        const bytes=Buffer.from(data.photo.split(",")[1],"base64");
-        if(bytes.length<1000||bytes.length>700000||bytes[0]!==0xff||bytes[1]!==0xd8)return json({error:"Photo JPEG invalide ou trop volumineuse (700 Ko maximum après compression)."},400,request);
-        // Même membre + même adresse + même produit + même série : éviter les renvois
-        // involontaires pendant 24 h (sans bloquer les confirmations d'autres membres).
-        const duplicates=await sql(
-          "SELECT id FROM public.stock_reports WHERE user_id=$1 AND lower(btrim(store_address))=lower(btrim($2)) AND lower(btrim(product_name))=lower(btrim($3)) AND series_id=$4 AND created_at > now() - interval '24 hours' AND status IN ('pending','approved') ORDER BY created_at DESC LIMIT 1",
-          [user,data.address.trim(),data.product.trim(),data.series]
-        );
-        if(duplicates.length){
-          return json({error:"Tu as déjà signalé ce produit dans ce magasin au cours des dernières 24 heures.",duplicate:true,existingId:duplicates[0].id},409,request);
+        if(!Number.isInteger(data.qty)||data.qty<1||data.qty>999)
+          return json({error:"Quantité invalide."},400,request);
+        let proof=null;
+        if(data.photo!==undefined&&data.photo!==null&&data.photo!==""){
+          if(typeof data.photo!=="string"||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(data.photo))
+            return json({error:"La photo de preuve doit être un JPEG."},400,request);
+          proof=Buffer.from(data.photo.split(",")[1],"base64");
+          if(proof.length<1000||proof.length>700000||proof[0]!==0xff||proof[1]!==0xd8)
+            return json({error:"Photo de preuve invalide ou trop volumineuse (700 Ko maximum)."},400,request);
         }
+        const dup=await sql(
+          "SELECT id FROM public.stock_reports r WHERE r.user_id=$1 AND lower(btrim(r.store_address))=lower(btrim($2)) AND r.catalog_variant_id=$3 AND r.created_at>now()-interval '24 hours' AND r.status IN ('pending','approved') AND NOT EXISTS (SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) LIMIT 1",
+          [user,data.address.trim(),ref.id]
+        );
+        if(dup.length)return json({error:"Tu as déjà signalé cette variante dans ce magasin aujourd'hui.",duplicate:true,existingId:dup[0].id},409,request);
         const count=await sql("SELECT count(*)::int AS n FROM public.stock_reports WHERE user_id=$1 AND created_at>now()-interval '24 hours'",[user]);
         if(Number(count[0]?.n)>=5)return json({error:"Maximum 5 signalements par jour pour ce compte."},429,request);
         const addressOk=await validateAddress(data.address,data.city,Number(data.lat),Number(data.lng));
-        if(!addressOk)return json({error:"Adresse non confirmée : sélectionne une adresse exacte dans les résultats."},400,request);
-        const key="reports/"+randomUUID()+".jpg";
-        await uploadPhoto(bytes,key);
-        const rows=await sql("INSERT INTO public.stock_reports (user_id,store_name,store_address,city,series_id,product_name,price_eur,quantity,latitude,longitude,photo_object_key,status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending') RETURNING id,created_at",[user,data.store.trim(),data.address.trim(),data.city.trim(),data.series,data.product.trim(),data.price,data.qty,data.lat,data.lng,key]);
-        return json({ok:true,id:rows[0]?.id,status:"pending",message:"Signalement communautaire envoyé. Il sera affiché comme non vérifié."},201,request);
+        if(!addressOk)return json({error:"Adresse non confirmée : choisis une adresse exacte dans les résultats."},400,request);
+        let key=null;
+        if(proof){
+          key="reports/"+randomUUID()+".jpg";
+          await uploadPhoto(proof,key,"proofs");
+        }
+        const rows=await sql(
+          "INSERT INTO public.stock_reports (user_id,store_name,store_address,city,series_id,product_name,price_eur,quantity,latitude,longitude,photo_object_key,catalog_variant_id,status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'pending') RETURNING id,created_at",
+          [user,data.store.trim(),data.address.trim(),data.city.trim(),ref.series_id,ref.product_name,data.price,data.qty,data.lat,data.lng,key,ref.id]
+        );
+        return json({ok:true,id:rows[0]?.id,status:"pending",message:"Signalement enregistré avec la référence du catalogue. Photo de preuve privée facultative."},201,request);
       }
       return json({error:"Route introuvable"},404,request);
     }catch(error){
