@@ -8,12 +8,12 @@ let series = [
 ];
 
 const seedReports = [
-  {id:"a1",store:"Carrefour",city:"Paris",product:"Booster Écarlate & Violet",series:"ev",price:6.49,qty:12,lat:48.8566,lng:2.3522,hours:3,img:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png"},
-  {id:"a2",store:"Fnac Part-Dieu",city:"Lyon",product:"Collection 151",series:"151",price:34.99,qty:6,lat:45.7601,lng:4.8596,hours:8,img:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/151.png"},
-  {id:"a3",store:"Cultura",city:"Lille",product:"Coffret Évolutions Prismatiques",series:"prism",price:29.99,qty:4,lat:50.6292,lng:3.0573,hours:28,img:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/133.png"},
-  {id:"a4",store:"Micromania",city:"Bordeaux",product:"ETB Destinées de Paldea",series:"paldea",price:54.99,qty:3,lat:44.8378,lng:-0.5792,hours:55,img:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/906.png"},
-  {id:"a5",store:"Leclerc",city:"Marseille",product:"Tripack Foudre Noire",series:"blackwhite",price:17.99,qty:9,lat:43.2965,lng:5.3698,hours:90,img:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/643.png"},
-  {id:"a6",store:"JouéClub",city:"Nantes",product:"Mini Tin Méga-Évolution",series:"mega",price:12.99,qty:7,lat:47.2184,lng:-1.5536,hours:6,img:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/448.png"}
+  {id:"a1",sellerType:"professional",store:"Carrefour",city:"Paris",product:"Booster Écarlate & Violet",series:"ev",price:6.49,qty:12,lat:48.8566,lng:2.3522,hours:3,img:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png"},
+  {id:"a2",sellerType:"professional",store:"Fnac Part-Dieu",city:"Lyon",product:"Collection 151",series:"151",price:34.99,qty:6,lat:45.7601,lng:4.8596,hours:8,img:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/151.png"},
+  {id:"a3",sellerType:"professional",store:"Cultura",city:"Lille",product:"Coffret Évolutions Prismatiques",series:"prism",price:29.99,qty:4,lat:50.6292,lng:3.0573,hours:28,img:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/133.png"},
+  {id:"a4",sellerType:"professional",store:"Micromania",city:"Bordeaux",product:"ETB Destinées de Paldea",series:"paldea",price:54.99,qty:3,lat:44.8378,lng:-0.5792,hours:55,img:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/906.png"},
+  {id:"a5",sellerType:"professional",store:"Leclerc",city:"Marseille",product:"Tripack Foudre Noire",series:"blackwhite",price:17.99,qty:9,lat:43.2965,lng:5.3698,hours:90,img:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/643.png"},
+  {id:"a6",sellerType:"private",store:"Exemple de particulier",city:"Nantes",product:"Mini Tin Méga-Évolution",series:"mega",price:12.99,qty:7,lat:47.2184,lng:-1.5536,hours:6,img:"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/448.png"}
 ];
 
 const cityCoords = {
@@ -38,6 +38,7 @@ let reports = [...seedReports.map(r=>({...r,demo:true})), ...readLocalReports()]
 let selectedSeries = new Set();
 let showExamples = false;
 let onlyRecent = false;
+let sellerFilter = "all";
 let lastReportTrigger = null;
 let photoData = "";
 let verifiedAddress = null;
@@ -157,20 +158,19 @@ function initMap(){
   initFallbackMap();
 }
 
-function makeIcon(color){
-  return L.divIcon({
-    className:"pin-wrap",
-    html:'<div class="custom-pin" style="background:'+color+'"><i></i></div>',
-    iconSize:[34,34],iconAnchor:[17,34],popupAnchor:[0,-32]
-  });
+function sellerTypeOf(report){return report?.sellerType==='private'?'private':'professional';}
+function sellerMarkerGlyph(type){return type==='private'?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7.5" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v10h16V10M3 10l2-7h14l2 7M3 10c0 2 3 2 3 0 0 2 3 2 3 0 0 2 3 2 3 0 0 2 3 2 3 0 0 2 3 2 3 0 0 2 3 2 3 0M9 20v-6h6v6"/></svg>';}
+function sellerMarkerLabel(report){return (sellerTypeOf(report)==='private'?'Particulier · centre de la commune':'Professionnel')+' — '+report.product+' · '+report.city;}
+function makeIcon(color,type='professional'){
+  const sellerType=type==='private'?'private':'professional';
+  return L.divIcon({className:'pin-wrap',html:'<div class="custom-pin seller-pin seller-pin--'+sellerType+'" style="--pin-color:'+color+'">'+sellerMarkerGlyph(sellerType)+'</div>',iconSize:[36,36],iconAnchor:[18,36],popupAnchor:[0,-32]});
 }
-
 function filteredReports(){
   const q=$("#searchInput").value.trim().toLowerCase();
   return reports.filter(r=>{
     const seriesOk=!selectedSeries.size||selectedSeries.has(r.series);
     const qOk=!q||[r.store,r.city,r.product,seriesById(r.series).name].join(" ").toLowerCase().includes(q);
-    return seriesOk&&qOk&&(!r.demo||showExamples)&&(!onlyRecent||reportHours(r)<24);
+    return seriesOk&&qOk&&(sellerFilter==='all'||sellerTypeOf(r)===sellerFilter)&&(!r.demo||showExamples)&&(!onlyRecent||reportHours(r)<24);
   });
 }
 
@@ -259,7 +259,11 @@ function sellerProfileLink(report){
   if(report.demo||typeof report.sellerId!=='string'||!/^[a-f0-9]{64}$/.test(report.sellerId))return '';
   return '<a class="seller-profile-link" href="seller.html?id='+report.sellerId+'">Voir les produits du vendeur <span aria-hidden="true">→</span></a>';
 }
-function sellerDetails(report){return report.sellerType==='private'?'<span class="seller-label">Particulier · Centre de la commune, localisation approximative</span>':report.sellerType==='professional'?'<span class="seller-label">Professionnel</span>':'';}
+function sellerDetails(report){
+  if(!report.sellerType)return '';
+  const type=sellerTypeOf(report);
+  return '<span class="seller-label seller-label--'+type+'">'+sellerMarkerGlyph(type)+'<span><b>'+(type==='private'?'Particulier':'Professionnel')+'</b>'+(type==='private'?'<small>Centre de la commune · localisation approximative</small>':'')+'</span></span>';
+}
 function buildProductPopup(report, options={}){
   const title=escapeHtml(report.product||"Produit Pokémon");
   const store=escapeHtml(report.store||"Magasin non précisé");
@@ -311,7 +315,7 @@ function renderMap(items){
     markerLayer.clearLayers();
     items.forEach(r=>{
       const s=seriesById(r.series);
-      const marker=L.marker([r.lat,r.lng],{icon:makeIcon(s.color)})
+      const marker=L.marker([r.lat,r.lng],{icon:makeIcon(s.color,sellerTypeOf(r)),title:sellerMarkerLabel(r),alt:sellerMarkerLabel(r)})
         .bindPopup(buildProductPopup(r),{className:"pokestock-popup",maxWidth:288,minWidth:288,autoPan:true,autoPanPadding:[16,16],keepInView:true})
         .addTo(markerLayer);
       attachPopupImageFallback(marker);
@@ -321,7 +325,7 @@ function renderMap(items){
     if(holder){
       holder.innerHTML=items.map(r=>{
         const s=seriesById(r.series),p=projectToFallback(r.lat,r.lng);
-        return `<button class="fallback-pin" style="left:${p[0]}%;top:${p[1]}%;background:${s.color}" title="${escapeHtml(r.product)} — ${escapeHtml(r.store)}, ${escapeHtml(r.city)}" aria-label="${escapeHtml(r.product)}, ${escapeHtml(r.store)}, ${escapeHtml(r.city)}"></button>`;
+        return `<button class="fallback-pin seller-map-pin seller-pin--${sellerTypeOf(r)}" style="left:${p[0]}%;top:${p[1]}%;--pin-color:${r.ownerStockState==='unavailable'||r.votes?.state==='out_of_stock'?'#94a3b8':s.color}" title="${escapeHtml(sellerMarkerLabel(r))}" aria-label="${escapeHtml(sellerMarkerLabel(r))}">${sellerMarkerGlyph(sellerTypeOf(r))}</button>`;
       }).join("");
     }
   }
@@ -506,9 +510,11 @@ function bindUI(){
   document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
   $("#searchInput").addEventListener("input",renderAll);
   $("#seriesFilterSearch")?.addEventListener("input",renderFilters);
+  $$('[name="sellerFilter"]').forEach(input=>input.addEventListener('change',()=>{if(!input.checked)return;sellerFilter=input.value;renderAll();}));
   $("#clearFilters").addEventListener("click",()=>{
     selectedSeries.clear();
-    onlyRecent=false;
+    onlyRecent=false;sellerFilter="all";
+    $$('[name="sellerFilter"]').forEach(input=>input.checked=input.value==='all');
     $$("#seriesFilters input").forEach(i=>i.checked=false);
     $("#searchInput").value="";
     const seriesQuery=$("#seriesFilterSearch");

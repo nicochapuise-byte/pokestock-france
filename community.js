@@ -74,7 +74,7 @@ renderMap=function(items){
     if(!r?.votes)return;
     const state=communityStockStatus(r);
     const normal=seriesById(r.series).color;
-    pin.setIcon(makeIcon(state.css==="out-of-stock"?"#94a3b8":normal));
+    pin.setIcon(makeIcon(state.css==="out-of-stock"?"#94a3b8":normal,sellerTypeOf(r)));
     pin.setPopupContent(buildProductPopup(r,{status:state.text}));
   });
 };

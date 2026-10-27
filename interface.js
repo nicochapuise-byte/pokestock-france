@@ -59,7 +59,7 @@
   el('showExamples').addEventListener('change',event=>{showExamples=event.target.checked;renderAll();});
   document.querySelectorAll('[data-open-report]').forEach(button=>button.addEventListener('click',openModal));
   function refreshResults(){
-    const count=selectedSeries.size+(onlyRecent?1:0);
+    const count=selectedSeries.size+(onlyRecent?1:0)+(sellerFilter!=='all'?1:0);
     el('activeFilterCount').textContent=count;
     el('activeFilterCount').hidden=!count;
     el('recentOnly').setAttribute('aria-pressed',String(onlyRecent));
