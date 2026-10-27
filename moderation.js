@@ -35,12 +35,17 @@ async function moderationRequest(path,options={}){
   if(!response.ok)throw Error(result?.error||"Une erreur est survenue.");
   return result;
 }
+function updateAdminNavigation(allowed){
+  document.getElementById("adminBtn").hidden=!allowed;
+  document.querySelectorAll('.dashboard-link').forEach(link=>link.hidden=!allowed);
+}
 async function updateModerationPermissions(){
   const requestId=++modRequestSerial;
+  updateAdminNavigation(false);
   const api=window.pokestockApi;
   if(!api?.ready||!api.getUser()){
     ownedReportIds=new Set();userIsAdmin=false;modReports=[];
-    document.getElementById("adminBtn").hidden=true;
+    updateAdminNavigation(false);
     renderCards(filteredReports());
     closeAdminModal();
     return;
@@ -53,11 +58,11 @@ async function updateModerationPermissions(){
     if(requestId!==modRequestSerial)return;
     userIsAdmin=role?.isAdmin===true;
     ownedReportIds=new Set(Array.isArray(owned?.ids)?owned.ids:[]);
-    document.getElementById("adminBtn").hidden=!userIsAdmin;
+    updateAdminNavigation(userIsAdmin);
   }catch(error){
     if(requestId!==modRequestSerial)return;
     userIsAdmin=false;ownedReportIds=new Set();
-    document.getElementById("adminBtn").hidden=true;
+    updateAdminNavigation(false);
     console.warn("Impossible de vérifier les autorisations PokéStock",error);
   }
   renderCards(filteredReports());
