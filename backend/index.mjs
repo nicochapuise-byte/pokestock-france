@@ -561,7 +561,7 @@ export default {
       if(url.pathname==="/me/votes"&&request.method==="GET"){
         const user=await authenticate(request);
         if(!user)return json({error:"Connexion nécessaire."},401,request);
-        const votes=await sql("SELECT v.report_id,v.verdict FROM public.stock_votes v JOIN public.stock_reports r ON r.id=v.report_id WHERE v.voter_user_id=$1 AND r.expires_at>now() AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) ORDER BY v.updated_at DESC LIMIT 100",[user]);
+        const votes=await sql("SELECT v.report_id,v.verdict FROM public.stock_votes v JOIN public.stock_reports r ON r.id=v.report_id WHERE v.voter_user_id=$1 AND r.expires_at>now() AND v.updated_at>=r.last_seen_at AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) ORDER BY v.updated_at DESC LIMIT 100",[user]);
         return json({votes},200,request);
       }
       if(url.pathname==="/me/reputation"&&request.method==="GET"){
