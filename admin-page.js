@@ -116,6 +116,7 @@ function renderStats(){
   $("admVisualProgressLabel").textContent=(listings.length?"100":"0")+" % des fiches avec un visuel · "+withImages+" photos exactes, "+boosters+" illustrations indicatives de boosters, "+references+" fiche(s) de référence sans photo";
 }
 
+let overviewShowAll=false;
 function renderOverview(){
   const missing=listings.filter(e=>!e.image);
   const groups=new Map();
@@ -130,15 +131,46 @@ function renderOverview(){
   $("admIncompleteSeries").textContent=incomplete.length;
   $("admSeriesSummary").textContent=complete+" série(s) avec toutes leurs photos · "+empty+" sans article référencé";
   $("admMissingProducts").textContent=new Set(missing.map(e=>e.productId)).size;
+  $("admMissingVariants").textContent=missing.length+" photo(s) exacte(s) manquante(s), toutes variantes confondues";
+  renderPriorityList(incomplete);
+  $("admSnapshotTime").textContent="Catalogue actualisé le "+new Intl.DateTimeFormat("fr-FR",{dateStyle:"short",timeStyle:"short",timeZone:"Europe/Paris"}).format(new Date())+" (heure de Paris).";
+}
+function renderPriorityList(incomplete){
+  if(!incomplete){
+    const groups=new Map();
+    for(const entry of listings){
+      const id=entry.series?.id;if(!id)continue;
+      if(!groups.has(id))groups.set(id,{series:entry.series,total:0,missing:0});
+      const group=groups.get(id);group.total++;if(!entry.image)group.missing++;
+    }
+    incomplete=[...groups.values()].filter(g=>g.missing);
+  }
+  const normalize=text=>String(text||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr");
+  const needle=normalize($("admPrioritySearch").value.trim());
+  const matches=incomplete.filter(group=>!needle||normalize([group.series.name,group.series.code,group.series.block,...listings.filter(e=>e.series?.id===group.series.id&&!e.image).map(e=>e.product?.name+" "+e.name)].join(" ")).includes(needle));
+  const sort=$("admPrioritySort").value;
+  matches.sort(sort==="name"?(a,b)=>a.series.name.localeCompare(b.series.name,"fr"):sort==="recent"?(a,b)=>a.series.sort-b.series.sort:(a,b)=>b.missing-a.missing||a.series.sort-b.series.sort);
+  const visible=needle||overviewShowAll?matches:matches.slice(0,8);
+  const more=$("admPriorityMore");more.hidden=!!needle||matches.length<=8;
+  more.textContent=overviewShowAll?"Réduire aux 8 premières séries":"Voir les "+matches.length+" séries incomplètes";
+  more.setAttribute("aria-expanded",String(overviewShowAll));
+  $("admPriorityCount").textContent=visible.length+" / "+incomplete.length+" série(s) incomplète(s) affichée(s)";
   const root=$("admPriorityList");root.replaceChildren();
-  for(const group of incomplete.slice(0,8)){
+  for(const group of visible){
     const button=document.createElement("button");button.type="button";button.dataset.prioritySeries=group.series.id;
     const title=document.createElement("strong");title.textContent=(group.series.code?group.series.code+" · ":"")+group.series.name;
     const detail=document.createElement("span");detail.textContent=group.missing+" photo(s) manquante(s) / "+group.total+" variantes →";
-    button.append(title,detail);root.append(button);
+    const articles=document.createElement("small");
+    const products=new Map();
+    for(const entry of listings.filter(e=>e.series?.id===group.series.id&&!e.image)){
+      const key=entry.product?.id||entry.productId;
+      if(!products.has(key))products.set(key,{name:entry.product?.name||"Article inconnu",count:0});
+      products.get(key).count++;
+    }
+    articles.textContent=[...products.values()].map(p=>p.name+" ("+p.count+" variante"+(p.count>1?"s":"")+")").join(" · ");
+    button.append(title,detail,articles);root.append(button);
   }
-  if(!incomplete.length)root.textContent=listings.length?"Toutes les variantes référencées disposent d’une photo exacte.":"Aucune variante référencée. La couverture ne peut pas encore être évaluée.";
-  $("admSnapshotTime").textContent="Catalogue actualisé le "+new Intl.DateTimeFormat("fr-FR",{dateStyle:"short",timeStyle:"short",timeZone:"Europe/Paris"}).format(new Date())+" (heure de Paris).";
+  if(!matches.length)root.textContent=needle?"Aucune série incomplète ne correspond à cette recherche.":listings.length?"Toutes les variantes référencées disposent d’une photo exacte.":"Aucune variante référencée. La couverture ne peut pas encore être évaluée.";
 }
 async function loadOverviewProposals(){
   $("admOverviewPending").textContent="—";
@@ -622,6 +654,9 @@ function attachEvents(){
   for(const id of ["admSearch","admSeriesFilter","admCoverageFilter"]){
     $(id).addEventListener(id==="admSearch"?"input":"change",()=>{pageSize=28;renderGallery();});
   }
+  $("admPrioritySearch").addEventListener("input",()=>renderPriorityList());
+  $("admPrioritySort").addEventListener("change",()=>renderPriorityList());
+  $("admPriorityMore").addEventListener("click",()=>{overviewShowAll=!overviewShowAll;renderPriorityList();});
   $("admOverviewExport").addEventListener("click",csvMissing);
   $("admPriorityList").addEventListener("click",event=>{
     const button=event.target.closest("[data-priority-series]");if(!button)return;

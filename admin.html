@@ -6,7 +6,7 @@
 <meta name="description" content="PokéStock France : administration des photographies officielles ou autorisées du catalogue Pokémon.">
 <meta name="robots" content="noindex,nofollow">
 <title>Dashboard — PokéStock France</title>
-<link rel="stylesheet" href="admin-page.css?v=20261027-dashboard-v2">
+<link rel="stylesheet" href="admin-page.css?v=20261027-dashboard-v3">
 </head>
 <body>
 <header class="adm-header">
@@ -47,12 +47,18 @@
       <div class="adm-section-head"><div><h2>Vue d’ensemble</h2><p>Tous les outils pour gérer PokéStock France.</p></div></div>
       <div class="dashboard-summary" aria-label="Priorités du catalogue">
         <div><span>SÉRIES À COMPLÉTER</span><strong id="admIncompleteSeries">—</strong><small id="admSeriesSummary">Calcul depuis le catalogue</small></div>
-        <div><span>ARTICLES SANS PHOTO EXACTE</span><strong id="admMissingProducts">—</strong><small>Un article peut avoir plusieurs variantes</small></div>
+        <div><span>ARTICLES SANS PHOTO EXACTE</span><strong id="admMissingProducts">—</strong><small id="admMissingVariants">Un article peut avoir plusieurs variantes</small></div>
         <div><span>PHOTOS PROPOSÉES À VÉRIFIER</span><strong id="admOverviewPending">—</strong><small id="admOverviewPendingStatus">Chargement…</small></div>
       </div>
       <section class="dashboard-priorities" aria-labelledby="admPriorityTitle">
-        <div class="adm-section-head"><div><h3 id="admPriorityTitle">Les prochaines photos à trouver</h3><p>Les 8 séries avec le plus de variantes sans photographie exacte. Les illustrations indicatives restent à compléter.</p></div><button id="admOverviewExport" type="button" class="adm-quiet-button">Exporter tous les manquants (CSV)</button></div>
+        <div class="adm-section-head"><div><h3 id="admPriorityTitle">Les prochaines photos à trouver</h3><p>Retrouve les articles et variantes sans photographie exacte, série par série. Les illustrations indicatives restent à compléter.</p></div><button id="admOverviewExport" type="button" class="adm-quiet-button">Exporter tous les manquants (CSV)</button></div>
+        <div class="dashboard-priority-filters">
+          <label for="admPrioritySearch">Rechercher une série ou un article<input id="admPrioritySearch" type="search" placeholder="Neo, booster, ETB…" autocomplete="off"></label>
+          <label for="admPrioritySort">Trier les séries<select id="admPrioritySort"><option value="missing">Le plus de photos manquantes</option><option value="recent">Date de sortie (récentes en premier)</option><option value="name">Nom de la série</option></select></label>
+        </div>
+        <p id="admPriorityCount" class="adm-message" role="status"></p>
         <div id="admPriorityList" class="dashboard-priority-list"></div>
+        <button id="admPriorityMore" type="button" class="adm-quiet-button" aria-expanded="false" aria-controls="admPriorityList" hidden>Voir toutes les séries incomplètes</button>
         <p id="admSnapshotTime" class="adm-message" role="status"></p>
         <button id="admOverviewRefresh" type="button" class="adm-quiet-button">Actualiser les données</button>
       </section>
@@ -187,6 +193,6 @@
 </main>
 <footer class="adm-footer">PokéStock France · Gestion sécurisée des visuels · Les photographies de preuve des signalements restent privées.</footer>
 <script src="catalog-visuals.js?v=20261027-archive-v1"></script>
-<script src="admin-page.js?v=20261027-dashboard-v2"></script>
+<script src="admin-page.js?v=20261027-dashboard-v3"></script>
 </body>
 </html>
