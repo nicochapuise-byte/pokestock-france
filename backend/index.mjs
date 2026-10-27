@@ -207,12 +207,12 @@ function voteSummary(a,b){
 
 // Only public, active reports feed seller pages. Private identities and proof photos never leave this API.
 const SELLER_ID_SQL="encode(sha256(convert_to(CASE WHEN r.seller_type='private' THEN 'private:'||r.user_id ELSE 'professional:'||lower(btrim(r.store_name))||':'||lower(btrim(r.store_address))||':'||lower(btrim(r.city)) END,'UTF8')),'hex')";
-const PUBLIC_REPORT_FIELDS="r.id,r.store_name,r.store_address,r.seller_type,r.website_url,r.commune_code,r.city,r.series_id,r.product_name,r.price_eur,r.quantity,r.latitude,r.longitude,r.photo_object_key,r.catalog_variant_id,cv.variant_name,cv.image_object_key AS catalog_image_key,cv.image_approved,cp.source_url AS catalog_source_url,r.status,r.created_at,COALESCE(v.available_count,0)::int AS available_count,COALESCE(v.unavailable_count,0)::int AS unavailable_count";
-const PUBLIC_REPORT_JOINS=" FROM public.stock_reports r LEFT JOIN public.catalog_variants cv ON cv.id=r.catalog_variant_id LEFT JOIN public.catalog_products cp ON cp.id=cv.product_id LEFT JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE verdict='available') AS available_count,COUNT(*) FILTER (WHERE verdict='unavailable') AS unavailable_count FROM public.stock_votes WHERE report_id=r.id) v ON TRUE";
+const PUBLIC_REPORT_FIELDS="r.id,r.store_name,r.store_address,r.seller_type,r.website_url,r.commune_code,r.city,r.series_id,r.product_name,r.price_eur,r.quantity,r.latitude,r.longitude,r.photo_object_key,r.catalog_variant_id,cv.variant_name,cv.image_object_key AS catalog_image_key,cv.image_approved,cp.source_url AS catalog_source_url,r.status,r.created_at,r.last_seen_at,r.owner_stock_state,COALESCE(v.available_count,0)::int AS available_count,COALESCE(v.unavailable_count,0)::int AS unavailable_count";
+const PUBLIC_REPORT_JOINS=" FROM public.stock_reports r LEFT JOIN public.catalog_variants cv ON cv.id=r.catalog_variant_id LEFT JOIN public.catalog_products cp ON cp.id=cv.product_id LEFT JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE verdict='available') AS available_count,COUNT(*) FILTER (WHERE verdict='unavailable') AS unavailable_count FROM public.stock_votes WHERE report_id=r.id AND updated_at>=r.last_seen_at) v ON TRUE";
 const PUBLIC_REPORT_WHERE=" WHERE r.status IN ('approved','pending') AND r.expires_at>now() AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id)";
 const PRODUCT_KEY_SQL="COALESCE(r.catalog_variant_id,r.series_id||':'||r.product_name)";
 function publicReport(r){
-  return {id:r.id,sellerId:r.seller_id,store:r.seller_type==='private'?'Particulier':r.store_name,address:r.seller_type==='private'?null:r.store_address,sellerType:r.seller_type,websiteUrl:r.website_url,communeCode:r.commune_code,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,img:r.catalog_image_key&&r.image_approved?photoUrl(r.catalog_image_key,"catalog-images"):null,catalogVariantId:r.catalog_variant_id,artSet:r.variant_name||null,catalogSourceUrl:r.catalog_source_url||null,proofProvided:!!r.photo_object_key,votes:voteSummary(r.available_count,r.unavailable_count)};
+  return {id:r.id,sellerId:r.seller_id,store:r.seller_type==='private'?'Particulier':r.store_name,address:r.seller_type==='private'?null:r.store_address,sellerType:r.seller_type,websiteUrl:r.website_url,communeCode:r.commune_code,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,lastSeenAt:r.last_seen_at,ownerStockState:r.owner_stock_state,img:r.catalog_image_key&&r.image_approved?photoUrl(r.catalog_image_key,"catalog-images"):null,catalogVariantId:r.catalog_variant_id,artSet:r.variant_name||null,catalogSourceUrl:r.catalog_source_url||null,proofProvided:!!r.photo_object_key,votes:{...voteSummary(r.available_count,r.unavailable_count),...(r.owner_stock_state==='unavailable'?{state:'out_of_stock'}:{})}};
 }
 
 export default {
@@ -432,6 +432,50 @@ export default {
         const rows=await sql("SELECT r.id FROM public.stock_reports r WHERE r.user_id=$1 AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) ORDER BY r.created_at DESC LIMIT 250",[user]);
         return json({ids:rows.map(x=>x.id)},200,request);
       }
+      if(url.pathname==='/me/listings'&&request.method==='GET'){
+        const user=await authenticate(request);
+        if(!user)return json({error:'Connectez-vous pour retrouver vos signalements.'},401,request);
+        const filter=url.searchParams.get('filter')||'all';
+        const filters={all:'',active:" AND r.status IN ('pending','approved') AND r.expires_at>now() AND r.owner_stock_state='available'",unavailable:" AND r.status IN ('pending','approved') AND r.expires_at>now() AND r.owner_stock_state='unavailable'",expired:" AND (r.expires_at<=now() OR r.status='expired') AND r.status<>'rejected'"};
+        if(!Object.hasOwn(filters,filter))return json({error:'Filtre inconnu.'},400,request);
+        const offset=Math.min(10000,Math.max(0,Number.parseInt(url.searchParams.get('offset'),10)||0)),limit=20;
+        const scope=" WHERE r.user_id=$1 AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id)";
+        const [counts,rows]=await Promise.all([
+          sql("SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE r.status IN ('pending','approved') AND r.expires_at>now() AND r.owner_stock_state='available')::int AS active,COUNT(*) FILTER(WHERE r.status IN ('pending','approved') AND r.expires_at>now() AND r.owner_stock_state='unavailable')::int AS unavailable,COUNT(*) FILTER(WHERE (r.expires_at<=now() OR r.status='expired') AND r.status<>'rejected')::int AS expired FROM public.stock_reports r"+scope,[user]),
+          sql("SELECT "+PUBLIC_REPORT_FIELDS+",r.expires_at,(r.expires_at<=now() OR r.status='expired') AS is_expired,"+SELLER_ID_SQL+" AS seller_id"+PUBLIC_REPORT_JOINS+scope+filters[filter]+" ORDER BY r.last_seen_at DESC,r.id DESC LIMIT $2 OFFSET $3",[user,limit+1,offset])
+        ]);
+        return json({counts:counts[0]||{},reports:rows.slice(0,limit).map(r=>({...publicReport(r),expiresAt:r.expires_at,isExpired:r.is_expired,canManage:['pending','approved','expired'].includes(r.status)})),hasMore:rows.length>limit,nextOffset:offset+Math.min(rows.length,limit)},200,request);
+      }
+      const ownEdit=/^\/me\/reports\/([0-9a-f-]{36})$/.exec(url.pathname);
+      if(ownEdit&&request.method==='PATCH'){
+        const user=await authenticate(request);
+        if(!user)return json({error:'Connexion nécessaire.'},401,request);
+        const id=ownEdit[1];if(!isReportId(id))return json({error:'Identifiant invalide.'},400,request);
+        const raw=await request.text();if(raw.length>4500)return json({error:'Requête trop volumineuse.'},413,request);
+        let data;try{data=JSON.parse(raw);}catch{return json({error:'Données invalides.'},400,request);}
+        if(!data||typeof data!=='object'||!['details','confirm','unavailable'].includes(data.action))return json({error:'Action inconnue.'},400,request);
+        const allowed=data.action==='details'?['action','price','qty','websiteUrl']:['action'];
+        if(Object.keys(data).some(key=>!allowed.includes(key)))return json({error:'Seuls le prix, la quantité et le lien web peuvent être modifiés ici.'},400,request);
+        const before=await sql("SELECT id,status,price_eur AS price,quantity AS qty,website_url AS website_url,last_seen_at,owner_stock_state,expires_at FROM public.stock_reports r WHERE r.id=$1::uuid AND r.user_id=$2 AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) LIMIT 1",[id,user]);
+        if(!before.length)return json({error:'Signalement introuvable dans votre compte.'},404,request);
+        if(!['pending','approved','expired'].includes(before[0].status))return json({error:'Ce signalement a été refusé par la modération et ne peut pas être réactivé.'},409,request);
+        let rows;
+        const guard=" WHERE r.id=$1::uuid AND r.user_id=$2 AND r.status IN ('pending','approved','expired') AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) RETURNING r.id,r.expires_at,r.last_seen_at,r.owner_stock_state";
+        if(data.action==='details'){
+          if(data.price!==null&&(typeof data.price!=='number'||!Number.isFinite(data.price)||data.price<0||data.price>10000))return json({error:'Prix invalide.'},400,request);
+          if(!Number.isInteger(data.qty)||data.qty<1||data.qty>999)return json({error:'La quantité doit être comprise entre 1 et 999.'},400,request);
+          const website=normalizeWebsite(data.websiteUrl===undefined?before[0].website_url:data.websiteUrl);
+          if(website===false)return json({error:'Lien web invalide : utilisez une URL http ou https.'},400,request);
+          rows=await sql("UPDATE public.stock_reports r SET price_eur=$3,quantity=$4,website_url=$5"+guard,[id,user,data.price,data.qty,website]);
+        }else if(data.action==='confirm'){
+          rows=await sql("UPDATE public.stock_reports r SET owner_stock_state='available',last_seen_at=now(),expires_at=now()+interval '72 hours',status=CASE WHEN status='expired' THEN 'pending' ELSE status END"+guard,[id,user]);
+        }else{
+          rows=await sql("UPDATE public.stock_reports r SET owner_stock_state='unavailable',last_seen_at=now()"+guard,[id,user]);
+        }
+        if(!rows.length)return json({error:'Le signalement a changé ou a été retiré. Actualisez la liste.'},409,request);
+        try{await sql("INSERT INTO public.stock_report_edits(report_id,edited_by,old_values,new_values) VALUES($1::uuid,$2,$3::jsonb,$4::jsonb)",[id,user,JSON.stringify(before[0]),JSON.stringify({...data,...rows[0]})]);}catch(error){console.error('Owner edit audit unavailable:',error?.message);}
+        return json({ok:true,report:rows[0],message:data.action==='confirm'?'Disponibilité confirmée pour 72 heures. Les avis antérieurs restent dans l’historique et la communauté peut vérifier à nouveau.':data.action==='unavailable'?'Rupture enregistrée.':'Prix, quantité et lien enregistrés.'},200,request);
+      }
       if(url.pathname==="/admin/reports"&&request.method==="GET"){
         const user=await authenticate(request);
         if(!user)return json({error:"Connexion nécessaire."},401,request);
@@ -498,7 +542,7 @@ export default {
         return json({ok:true,id,message:"Signalement supprimé de la carte et des disponibilités."},200,request);
       }
       if(url.pathname==="/reports"&&request.method==="GET"){
-        const rows=await sql("SELECT "+PUBLIC_REPORT_FIELDS+","+SELLER_ID_SQL+" AS seller_id"+PUBLIC_REPORT_JOINS+PUBLIC_REPORT_WHERE+" ORDER BY r.created_at DESC LIMIT 100");
+        const rows=await sql("SELECT "+PUBLIC_REPORT_FIELDS+","+SELLER_ID_SQL+" AS seller_id"+PUBLIC_REPORT_JOINS+PUBLIC_REPORT_WHERE+" ORDER BY r.last_seen_at DESC,r.id DESC LIMIT 100");
         return json({reports:rows.map(publicReport)},200,request);
       }
       const sellerMatch=/^\/sellers\/([a-f0-9]{64})$/.exec(url.pathname);
@@ -507,11 +551,11 @@ export default {
         const limit=Math.min(48,Math.max(1,Number.parseInt(url.searchParams.get('limit'),10)||24));
         const offset=Math.min(10000,Math.max(0,Number.parseInt(url.searchParams.get('offset'),10)||0));
         const scope=PUBLIC_REPORT_WHERE+" AND "+SELLER_ID_SQL+"=$1";
-        const summary=await sql("SELECT COUNT(*)::int AS reports,COUNT(DISTINCT "+PRODUCT_KEY_SQL+")::int AS products,MAX(r.seller_type) AS seller_type,(array_agg(r.store_name ORDER BY r.created_at DESC,r.id DESC))[1] AS store_name,(array_agg(r.store_address ORDER BY r.created_at DESC,r.id DESC))[1] AS store_address,(array_agg(r.website_url ORDER BY r.created_at DESC,r.id DESC) FILTER(WHERE r.website_url IS NOT NULL))[1] AS website_url,array_agg(DISTINCT r.city ORDER BY r.city) AS cities,MAX(r.created_at) AS updated_at FROM public.stock_reports r"+scope,[sellerId]);
+        const summary=await sql("SELECT COUNT(*)::int AS reports,COUNT(DISTINCT "+PRODUCT_KEY_SQL+")::int AS products,MAX(r.seller_type) AS seller_type,(array_agg(r.store_name ORDER BY r.last_seen_at DESC,r.id DESC))[1] AS store_name,(array_agg(r.store_address ORDER BY r.last_seen_at DESC,r.id DESC))[1] AS store_address,(array_agg(r.website_url ORDER BY r.last_seen_at DESC,r.id DESC) FILTER(WHERE r.website_url IS NOT NULL))[1] AS website_url,array_agg(DISTINCT r.city ORDER BY r.city) AS cities,MAX(r.last_seen_at) AS updated_at FROM public.stock_reports r"+scope,[sellerId]);
         const seller=summary[0];
         if(!seller||!Number(seller.reports))return json({error:'Cette fiche ne contient aucun signalement actif.'},404,request);
         // Keep the latest sighting for each catalogue variant, without adding quantities across sightings.
-        const rows=await sql("SELECT * FROM (SELECT DISTINCT ON ("+PRODUCT_KEY_SQL+") "+PUBLIC_REPORT_FIELDS+","+SELLER_ID_SQL+" AS seller_id"+PUBLIC_REPORT_JOINS+scope+" ORDER BY "+PRODUCT_KEY_SQL+",r.created_at DESC,r.id DESC) items ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3",[sellerId,limit+1,offset]);
+        const rows=await sql("SELECT * FROM (SELECT DISTINCT ON ("+PRODUCT_KEY_SQL+") "+PUBLIC_REPORT_FIELDS+","+SELLER_ID_SQL+" AS seller_id"+PUBLIC_REPORT_JOINS+scope+" ORDER BY "+PRODUCT_KEY_SQL+",r.last_seen_at DESC,r.id DESC) items ORDER BY last_seen_at DESC,id DESC LIMIT $2 OFFSET $3",[sellerId,limit+1,offset]);
         return json({seller:{id:sellerId,type:seller.seller_type,name:seller.seller_type==='private'?'Particulier':seller.store_name,address:seller.seller_type==='private'?null:seller.store_address,websiteUrl:seller.website_url||null,cities:seller.cities||[],productCount:Number(seller.products),reportCount:Number(seller.reports),updatedAt:seller.updated_at},reports:rows.slice(0,limit).map(publicReport),hasMore:rows.length>limit,nextOffset:offset+Math.min(rows.length,limit)},200,request);
       }
       if(url.pathname==="/me/votes"&&request.method==="GET"){

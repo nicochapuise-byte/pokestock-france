@@ -3,7 +3,7 @@ export function normalizeWebsite(value){
   if(value===undefined||value===null||value==='')return null;
   if(typeof value!=='string'||value.length>2048)return false;
   try{const u=new URL(value.trim());
-    if(!['https:','http:'].includes(u.protocol)||u.username||u.password||!u.hostname.includes('.'))return false;
+    if(u.href.length>2048||!['https:','http:'].includes(u.protocol)||u.username||u.password||!u.hostname.includes('.'))return false;
     return u.href;
   }catch{return false;}
 }

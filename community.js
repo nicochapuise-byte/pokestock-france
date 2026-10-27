@@ -3,6 +3,7 @@ const stockVotesByMe={};
 const stockPendingVotes=new Set();
 const stockApiRoot="https://br-nameless-math-b9dyokxp-pokestock.compute.c-7.eu-central-1.aws.neon.tech";
 function communityStockStatus(report){
+  if(report?.ownerStockState==="unavailable")return {text:"Rupture indiquée par l’auteur",css:"out-of-stock"};
   const counts=report?.votes||{};
   if(counts.state==="confirmed")return {text:"Confirmé par la communauté",css:"confirmed"};
   if(counts.state==="out_of_stock")return {text:"Rupture signalée",css:"out-of-stock"};

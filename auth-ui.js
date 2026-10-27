@@ -56,6 +56,7 @@ function renderAuth(){
   $("#authPassword").closest("label").hidden=!!user;
   $("#authSubmit").hidden=!!user;
   $("#signOutBtn").hidden=!user;
+  $("#myReportsBtn").hidden=!user;
   $("#toggleAuthMode").hidden=!!user;
   if(!user){
     $("#authSubmit").textContent=signup?"Créer mon compte":"Se connecter";

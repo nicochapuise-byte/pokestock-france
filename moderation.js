@@ -88,6 +88,9 @@ function moderationCardControls(items){
     if(!owner&&!userIsAdmin)return;
     const area=document.createElement("div");
     area.className="moderation-card-buttons";
+    if(owner){
+      const manage=document.createElement('button');manage.type='button';manage.dataset.manageOwnReport=item.id;manage.textContent='Gérer mon signalement';area.append(manage);
+    }
     if(userIsAdmin){
       const edit=document.createElement("button");
       edit.type="button";edit.className="moderation-edit-button";
@@ -130,6 +133,7 @@ async function removeModerationReport(id){
   finally{modBusy=false;}
 }
 document.getElementById("stockGrid").addEventListener("click",event=>{
+  if(event.target.closest("[data-manage-own-report]")){window.pokestockMyReports?.open();return;}
   const remove=event.target.closest("[data-moderation-delete]");
   if(remove){removeModerationReport(remove.dataset.moderationDelete);return;}
   const edit=event.target.closest("[data-moderation-edit]");

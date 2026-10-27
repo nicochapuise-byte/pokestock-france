@@ -14,7 +14,7 @@
 <link rel="icon" type="image/svg+xml" href="assets/brand-mark.svg">
 <link rel="preload" as="image" href="assets/background-pokemon-cards.jpg">
 <link rel="stylesheet" href="photo-background.css?v=20261027-photo-v1">
-<link rel="stylesheet" href="navigation.css?v=20261027-profiles-v1">
+<link rel="stylesheet" href="navigation.css?v=20261027-my-reports-v1">
 </head>
 <body data-page="home">
   <img id="siteBackground" class="site-background" src="assets/background-pokemon-cards.jpg" width="3000" height="2019" alt="" aria-hidden="true" fetchpriority="high"><header class="topbar"><a class="brand" href="#accueil" aria-label="PokéStock France, accueil"><span class="ball-logo" aria-hidden="true"><i></i></span><span class="brand-name">PokéStock<small>FRANCE</small></span></a><nav class="navlinks" aria-label="Navigation principale"><a href="#accueil" data-page-link="home" class="is-active" aria-current="page">Accueil</a><a href="#carte" data-view="map">Carte</a><a href="#disponibilites" data-view="list">Disponibilités</a><a href="#fonctionnement" data-page-link="about">Le principe</a><a href="admin.html" class="dashboard-link" hidden>Dashboard</a></nav><div class="top-actions">
@@ -114,8 +114,28 @@
       <section id="communityReputation" class="reputation-panel" hidden aria-label="Ma réputation communautaire"></section>
       <button class="btn btn-red full" type="submit" id="authSubmit">Se connecter</button>
       <button class="btn btn-white full" type="button" id="toggleAuthMode">Créer un compte</button>
+      <button class="btn btn-red full" type="button" id="myReportsBtn" hidden>Mes signalements</button>
       <button class="btn btn-white full" type="button" id="signOutBtn" hidden>Se déconnecter</button>
     </form>
+  </div>
+
+  <div class="modal" id="myReportsModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-my-reports></div>
+    <section class="modal-card my-reports-card" role="dialog" aria-modal="true" aria-labelledby="myReportsTitle">
+      <button type="button" class="modal-close" data-close-my-reports aria-label="Fermer mes signalements">×</button>
+      <p class="eyebrow">MON ESPACE</p><h2 id="myReportsTitle">Mes signalements</h2>
+      <p class="modal-intro">Tenez vos observations à jour. Confirmer une disponibilité la prolonge de 72 heures ; modifier le prix ou le lien ne prolonge pas le stock.</p>
+      <nav class="owner-filters" aria-label="Filtrer mes signalements">
+        <button type="button" data-owner-filter="all" aria-pressed="true">Tous <b id="ownerCountTotal">—</b></button>
+        <button type="button" data-owner-filter="active" aria-pressed="false">En cours <b id="ownerCountActive">—</b></button>
+        <button type="button" data-owner-filter="unavailable" aria-pressed="false">Ruptures <b id="ownerCountUnavailable">—</b></button>
+        <button type="button" data-owner-filter="expired" aria-pressed="false">Expirés <b id="ownerCountExpired">—</b></button>
+      </nav>
+      <p id="myReportsStatus" class="owner-status" role="status" aria-live="polite"></p>
+      <div id="myReportsList" class="owner-report-list"></div>
+      <div id="myReportsEmpty" class="owner-empty" hidden><h3>Aucun signalement dans cette rubrique</h3><p>Vos publications apparaîtront ici pour que vous puissiez les gérer.</p><button id="ownerCreateReport" class="btn" type="button">Signaler un produit</button></div>
+      <div class="owner-list-actions"><button id="myReportsRetry" type="button" class="btn btn-white" hidden>Réessayer</button><button id="myReportsMore" type="button" class="btn btn-white" hidden>Afficher davantage</button></div>
+    </section>
   </div>
 
   <div class="modal" id="adminModal" aria-hidden="true">
@@ -284,13 +304,14 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js?v=20261027-profiles-v1"></script>
-  <script src="community.js?v=20261027-design-v1"></script>
-  <script src="moderation.js?v=20261027-admin-nav-v1"></script>
+  <script src="script.js?v=20261027-my-reports-v1"></script>
+  <script src="community.js?v=20261027-my-reports-v1"></script>
+  <script src="moderation.js?v=20261027-my-reports-v1"></script>
   <script src="catalog-visuals.js?v=20261027-archive-v1"></script>
   <script src="catalog-ui.js?v=20261027-design-v3"></script>
   <script src="catalog-photo-workflow.js?v=20261026-admintabs-v1"></script>
-  <script type="module" src="auth-ui.js?v=20261027-design-v1"></script>
+  <script type="module" src="auth-ui.js?v=20261027-my-reports-v1"></script>
+<script src="my-reports.js?v=20261027-my-reports-v1"></script>
 <script src="interface.js?v=20261027-sellers-v2"></script>
 </body>
 </html>

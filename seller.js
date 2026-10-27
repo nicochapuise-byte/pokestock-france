@@ -25,13 +25,13 @@
   }
   function renderProduct(report){
     const card=node('article','seller-product-card'),media=node('div','seller-product-media');
-    const state=report.votes?.state||'unverified',badge=node('span','seller-product-state '+state,state==='confirmed'?'Disponibilité confirmée':state==='out_of_stock'?'Rupture signalée':'À confirmer');
+    const state=report.votes?.state||'unverified',badge=node('span','seller-product-state '+state,state==='confirmed'?'Disponibilité confirmée':state==='out_of_stock'?(report.ownerStockState==='unavailable'?'Rupture indiquée par l’auteur':'Rupture signalée'):'À confirmer');
     if(state==='out_of_stock')badge.className='seller-product-state out-of-stock';
     const img=node('img');img.src=imageUrl(report.img);img.alt=report.img?'Visuel du produit '+report.product:'Illustration indicative du catalogue';img.loading='lazy';img.width=180;img.height=180;img.addEventListener('error',()=>{img.src='catalog-placeholder.svg';img.alt='Illustration indicative du catalogue';},{once:true});media.append(badge,img);
     const body=node('div','seller-product-body');body.append(node('h3','',report.product||'Produit Pokémon'));if(report.artSet)body.append(node('p','seller-product-art',report.artSet));body.append(node('p','',report.city||''));body.append(node('p','',fmt(report.qty||1)+' unité(s) observée(s)'));
     if(report.votes)body.append(node('p','',fmt(report.votes.available)+' confirmation(s) · '+fmt(report.votes.unavailable)+' rupture(s)'));
     if(!report.img)body.append(node('p','seller-product-image-note','Illustration indicative · photo exacte indisponible'));
-    const bottom=node('div','seller-product-bottom');const time=node('time','',age(report.createdAt));if(report.createdAt)time.dateTime=report.createdAt;time.title=dateText(report.createdAt);const price=report.price!==null&&report.price!==undefined&&Number.isFinite(Number(report.price))?new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(Number(report.price)):'Prix non précisé';bottom.append(time,node('strong','',price));body.append(bottom);card.append(media,body);return card;
+    const bottom=node('div','seller-product-bottom');const time=node('time','',age(report.lastSeenAt||report.createdAt));if(report.lastSeenAt||report.createdAt)time.dateTime=report.lastSeenAt||report.createdAt;time.title=dateText(report.lastSeenAt||report.createdAt);const price=report.price!==null&&report.price!==undefined&&Number.isFinite(Number(report.price))?new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(Number(report.price)):'Prix non précisé';bottom.append(time,node('strong','',price));body.append(bottom);card.append(media,body);return card;
   }
   async function load(reset=false){
     if(busy)return;busy=true;el('sellerMore').disabled=true;el('sellerRetry').disabled=true;

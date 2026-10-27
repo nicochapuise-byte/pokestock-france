@@ -52,7 +52,7 @@ const seriesById = id => series.find(s=>s.id===id) || {name:"Autre",color:"#6474
 
 function escapeHtml(value){return String(value??"").replace(/[&<>"\x27]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\x27":"&#39;"}[c]));}
 function safeImage(src){const value=String(src||"");return value==="catalog-upc151-chat.svg"||/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/|^https:\/\/[a-z0-9.-]+\.neon\.tech\/|^data:image\/(?:png|jpeg|webp);base64,/i.test(value)?value:"catalog-placeholder.svg";}
-function reportHours(r){return r.createdAt?Math.max(0,(Date.now()-Date.parse(r.createdAt))/3600000):(r.hours||0);}
+function reportHours(r){return (r.lastSeenAt||r.createdAt)?Math.max(0,(Date.now()-Date.parse(r.lastSeenAt||r.createdAt))/3600000):(r.hours||0);}
 function ageClass(hours){ return hours<24?"fresh":hours<=72?"medium":"old"; }
 function ageText(hours){ return hours<24?(hours<1?"À l'instant":"Il y a "+Math.floor(hours)+" h"):hours<=72?"Il y a "+Math.round(hours/24)+" j":"À vérifier"; }
 
