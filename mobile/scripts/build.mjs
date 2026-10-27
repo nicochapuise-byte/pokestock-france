@@ -7,7 +7,7 @@ const environments=JSON.parse(await readFile(resolve(mobile,'config/environments
 const envName=process.env.POKESTOCK_MOBILE_ENV||'development';
 const config=environments[envName];if(!config)throw Error('Unknown mobile environment');
 await rm(dest,{recursive:true,force:true});await mkdir(dest,{recursive:true});
-const pages=new Set(['index.html','seller.html']);
+const pages=new Set(['index.html','seller.html','suppression-compte.html']);
 for(const entry of await readdir(root,{withFileTypes:true})){
   if(!entry.isFile()||(!pages.has(entry.name)&&! /\.(js|css|svg)$/.test(entry.name)))continue;
   let text=await readFile(resolve(root,entry.name),'utf8');

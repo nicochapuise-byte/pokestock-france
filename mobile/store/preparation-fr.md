@@ -32,6 +32,10 @@ PokéStock est un projet communautaire indépendant. Les droits sur les marques 
 
 Les boutons caméra/photothèque et le retrait de la preuve sont intégrés. La caméra est sollicitée après un appui volontaire ; pas de sauvegarde automatique en photothèque ni de permission de stockage Android étendue. La preuve reste envoyée uniquement lors de la publication explicite, vers le stockage privé existant. Ces éléments sont couverts par des tests simulés ; ils doivent encore être vérifiés sur appareils réels.
 
+## Demandes de suppression — ajout 0.4.0
+
+Parcours de demande, confirmation, suivi et annulation intégrés ; file administrateur avec prise en charge. L’effacement définitif, le délai annoncé, les rétentions et la confirmation de fin restent à finaliser. Ne pas cocher la suppression de compte comme complètement opérationnelle dans les formulaires des stores sur la seule base de cette file.
+
 ## Critères pour passer de préparation à test privé
 
 - [ ] Authentification native fonctionnelle et session persistante ; déconnexion complète.

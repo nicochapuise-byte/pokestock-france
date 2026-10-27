@@ -15,6 +15,7 @@
 <link rel="preload" as="image" href="assets/background-pokemon-cards.jpg">
 <link rel="stylesheet" href="photo-background.css?v=20261027-photo-v1">
 <link rel="stylesheet" href="navigation.css?v=20261027-watches-v1">
+<link rel="stylesheet" href="account-deletion.css?v=20261027-deletion-v1">
 </head>
 <body data-page="home">
   <img id="siteBackground" class="site-background" src="assets/background-pokemon-cards.jpg" width="3000" height="2019" alt="" aria-hidden="true" fetchpriority="high"><header class="topbar"><a class="brand" href="#accueil" aria-label="PokéStock France, accueil"><span class="ball-logo" aria-hidden="true"><i></i></span><span class="brand-name">PokéStock<small>FRANCE</small></span></a><nav class="navlinks" aria-label="Navigation principale"><a href="#accueil" data-page-link="home" class="is-active" aria-current="page">Accueil</a><a href="#carte" data-view="map">Carte</a><a href="#disponibilites" data-view="list">Disponibilités</a><a href="#fonctionnement" data-page-link="about">Le principe</a><a href="admin.html" class="dashboard-link" hidden>Dashboard</a></nav><div class="top-actions">
@@ -105,7 +106,7 @@
 <b>La communauté vérifie</b><p>Les autres membres confirment la disponibilité ou signalent une rupture.</p>
 </div></article>
 </div></section></main><footer><a class="brand small" href="#accueil">PokéStock <span>France</span></a><p>Par des collectionneurs, pour des collectionneurs.</p>
-<small>Projet indépendant, non affilié à The Pokémon Company, Nintendo ou Game Freak.</small><p class="photo-credit">Photo : <a href="https://unsplash.com/photos/a-bunch-of-pokemon-cards-on-a-table-mGUs05ZMeec" target="_blank" rel="noopener noreferrer">Thimo Pedersen / Unsplash</a></p></footer><div class="modal" id="authModal" aria-hidden="true">
+<small>Projet indépendant, non affilié à The Pokémon Company, Nintendo ou Game Freak.</small><p class="photo-credit">Photo : <a href="https://unsplash.com/photos/a-bunch-of-pokemon-cards-on-a-table-mGUs05ZMeec" target="_blank" rel="noopener noreferrer">Thimo Pedersen / Unsplash</a></p><p><a href="suppression-compte.html">Suppression de compte</a></p></footer><div class="modal" id="authModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-auth></div>
     <form id="authForm" class="modal-card auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
       <button type="button" class="modal-close" data-close-auth aria-label="Fermer">×</button>
@@ -121,6 +122,7 @@
       <button class="btn btn-white full" type="button" id="toggleAuthMode">Créer un compte</button>
       <button class="btn btn-white full" type="button" id="watchOpenBtn" hidden>Favoris et alertes <b id="watchUnread" hidden></b></button>
       <button class="btn btn-red full" type="button" id="myReportsBtn" hidden>Mes signalements</button>
+      <button class="btn btn-white full" type="button" id="accountDeletionBtn" hidden>Supprimer mon compte</button>
       <button class="btn btn-white full" type="button" id="signOutBtn" hidden>Se déconnecter</button>
     </form>
   </div>
@@ -312,15 +314,17 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<div class="modal" id="accountDeletionModal" aria-hidden="true"><div class="modal-backdrop" data-close-account-deletion></div><section class="modal-card account-deletion-card" role="dialog" aria-modal="true" aria-labelledby="accountDeletionTitle"><button type="button" class="modal-close" data-close-account-deletion aria-label="Fermer la demande de suppression">×</button><p class="eyebrow">MON COMPTE</p><h2 id="accountDeletionTitle">Demander la suppression</h2><p id="accountDeletionOwner"></p><p class="deletion-notice">La demande concerne votre compte et ses données associées : signalements, preuves photo privées, favoris, alertes et contributions. Le traitement est manuel. Votre compte reste actif jusqu’à l’effacement.</p><p id="accountDeletionState"></p><p id="accountDeletionStatus" role="status" aria-live="polite"></p><form id="accountDeletionForm" hidden><label>Saisissez SUPPRIMER pour confirmer<input id="accountDeletionWord" type="text" required pattern="SUPPRIMER" autocomplete="off" spellcheck="false"></label><label class="deletion-check"><input id="accountDeletionConfirm" type="checkbox" required><span>Je demande la suppression de mon compte et de ses données associées. Je comprends que l’envoi de cette demande n’est pas un effacement immédiat.</span></label><button class="btn btn-red full" id="accountDeletionSend" type="submit">Envoyer ma demande de suppression</button></form><button class="btn btn-white" id="accountDeletionCancel" type="button" hidden>Annuler ma demande</button><button class="btn btn-white" id="accountDeletionRefresh" type="button">Actualiser l’état</button></section></div>
   <script src="script.js?v=20261027-watches-v1"></script>
   <script src="community.js?v=20261027-vendor-map-v1"></script>
   <script src="moderation.js?v=20261027-my-reports-v1"></script>
   <script src="catalog-visuals.js?v=20261027-archive-v1"></script>
   <script src="catalog-ui.js?v=20261027-design-v3"></script>
   <script src="catalog-photo-workflow.js?v=20261026-admintabs-v1"></script>
-  <script type="module" src="auth-ui.js?v=20261027-watches-v1"></script>
+  <script type="module" src="auth-ui.js?v=20261027-deletion-v1"></script>
 <script src="my-reports.js?v=20261027-my-reports-v1"></script>
 <script src="watches.js?v=20261027-watches-v1"></script>
 <script src="interface.js?v=20261027-vendor-map-v1"></script>
+<script src="account-deletion.js?v=20261027-deletion-v1"></script>
 </body>
 </html>

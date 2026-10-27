@@ -2,6 +2,8 @@
 // Les identifiants Postgres et S3 sont injectés par Neon, jamais exposés au navigateur.
 import { randomUUID, createHash, createHmac, createPublicKey, verify as verifySignature } from "node:crypto";
 
+import { handleAccountDeletion } from "./account-deletion.mjs";
+
 import { normalizeWebsite, resolveCommune } from "./seller-location.mjs";
 
 const SITE_ORIGIN="https://nicochapuise-byte.github.io";
@@ -220,6 +222,8 @@ export default {
     const url=new URL(request.url),headers=cors(request);
     if(request.method==="OPTIONS")return new Response(null,{status:204,headers});
     try{
+      const accountDeletion=await handleAccountDeletion(request,url,{authenticate,isSiteAdmin,sql,json});
+      if(accountDeletion)return accountDeletion;
       if(url.pathname==="/"&&request.method==="GET")return json({name:"PokéStock API",ok:true},200,request);
 
 

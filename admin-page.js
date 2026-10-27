@@ -31,7 +31,7 @@ async function token(){
     headers:{"Accept":"application/json"},cache:"no-store",
     signal:AbortSignal.timeout(14000)
   });
-  if(!res.ok)throw Error(res.status===401||res.status===403?"Connecte-toi d'abord sur PokéStock.":"Service d'authentification indisponible.");
+  if(!res.ok)throw Object.assign(Error(res.status===401||res.status===403?"Connecte-toi d'abord sur PokéStock.":"Service d'authentification indisponible."),{status:res.status});
   const data=await res.json();
   const next=typeof data?.token==="string"?data.token:data?.data?.token;
   if(!next||next.split(".").length!==3)throw Error("Session non validée : reconnecte-toi.");
@@ -52,10 +52,10 @@ async function api(path,opts={},retry=true){
       body:opts.body===undefined?undefined:JSON.stringify(opts.body),
       cache:"no-store",signal:AbortSignal.timeout(opts.long?30000:16000)
     });
-  }catch(err){throw Error(err?.name==="TimeoutError"?"Délai dépassé : vérifie ta connexion.":err?.message||"Service momentanément indisponible.");}
+  }catch(err){throw Object.assign(Error(err?.name==="TimeoutError"?"Délai dépassé : vérifie ta connexion.":err?.message||"Service momentanément indisponible."),{status:err.status});}
   if(res.status===401&&retry){jwt=null;jwtExpires=0;return api(path,opts,false);}
   let data;try{data=await res.json();}catch{throw Error("Réponse inattendue du serveur.");}
-  if(!res.ok)throw Error(data?.error||"Échec de l'opération.");
+  if(!res.ok)throw Object.assign(Error(data?.error||"Échec de l'opération."),{status:res.status});
   return data;
 }
 function showGate(message,allowed=false){
@@ -281,9 +281,10 @@ function selectPanel(panel){
     b.classList.toggle("is-active",active);
     if(active)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");
   }
-  const panels={overview:"admOverviewPanel",gallery:"admGalleryPanel",upload:"admUploadPanel",bulk:"admBulkPanel",cardex:"admCardexPanel",proposals:"admProposalsPanel"};
+  const panels={overview:"admOverviewPanel",gallery:"admGalleryPanel",upload:"admUploadPanel",bulk:"admBulkPanel",cardex:"admCardexPanel",proposals:"admProposalsPanel",deletions:"admDeletionsPanel"};
   for(const [key,id] of Object.entries(panels))$(id).hidden=key!==panel;
   if(panel==="proposals")refreshProposals();
+  if(panel==="deletions")loadDeletionQueue(true);
   if(window.innerWidth<=690){
     document.querySelector(".adm-tabs")?.scrollIntoView({behavior:"smooth",block:"start"});
   }
@@ -649,7 +650,45 @@ async function findBulkCardexPages(){
   }finally{bulkCardexBusy=false;$("admCardexBulkFind").disabled=false;}
 }
 
+let deletionBusy=false,deletionOffset=0;
+async function loadDeletionQueue(reset=false){
+ if(deletionBusy)return;deletionBusy=true;
+ if(reset){deletionOffset=0;$("admDeletionList").replaceChildren();}
+ $("admDeletionRefresh").disabled=true;$("admDeletionMore").disabled=true;
+ setMessage("admDeletionStatus","Chargement des demandes…");
+ try{
+  const data=await api("/admin/account-deletions?offset="+deletionOffset);
+  const list=$("admDeletionList");
+  for(const item of data.requests||[]){
+   const card=document.createElement("article");card.className="adm-deletion-card";
+   const name=document.createElement("strong");name.textContent=item.name||"Compte utilisateur";
+   const email=document.createElement("p");email.textContent=item.email||"Identité de connexion non trouvée : vérifier avant traitement";
+   const details=document.createElement("p");details.textContent=(item.status==="processing"?"Prise en charge":"À traiter")+" · Demande du "+formatDate(item.requested_at);
+   const reference=document.createElement("small");reference.textContent="Compte : "+item.user_id+" · Demande : "+item.id;
+   card.append(name,email,details,reference);
+   if(item.status==="requested"){
+    const button=document.createElement("button");button.type="button";button.className="adm-quiet-button";button.dataset.deletionStart=item.id;button.textContent="Prendre en charge";card.append(button);
+   }
+   list.append(card);
+  }
+  deletionOffset=data.nextOffset||0;$("admDeletionMore").hidden=!data.hasMore;
+  const counts=data.counts||{};setMessage("admDeletionStatus",(counts.requested||0)+" demande(s) à traiter · "+(counts.processing||0)+" prise(s) en charge. Aucun effacement automatique.");
+ }catch(error){
+  $("admDeletionMore").hidden=true;
+  if(error.status===401||error.status===403){$("admDeletionList").replaceChildren();showGate(error.message);}
+  setMessage("admDeletionStatus",error.message,true);
+ }finally{deletionBusy=false;$("admDeletionRefresh").disabled=false;$("admDeletionMore").disabled=false;}
+}
 function attachEvents(){
+  $("admDeletionRefresh").addEventListener("click",()=>loadDeletionQueue(true));
+  $("admDeletionMore").addEventListener("click",()=>loadDeletionQueue());
+  $("admDeletionList").addEventListener("click",async event=>{
+   const button=event.target.closest("[data-deletion-start]");if(!button||deletionBusy)return;
+   deletionBusy=true;button.disabled=true;
+   try{await api("/admin/account-deletions/"+encodeURIComponent(button.dataset.deletionStart),{method:"PATCH",body:{action:"start"}});deletionBusy=false;await loadDeletionQueue(true);}
+   catch(error){if(error.status===401||error.status===403){$("admDeletionList").replaceChildren();showGate(error.message);}setMessage("admDeletionStatus",error.message,true);button.disabled=false;}
+   finally{deletionBusy=false;}
+  });
   document.querySelectorAll("[data-panel]").forEach(b=>b.addEventListener("click",()=>selectPanel(b.dataset.panel)));
   for(const id of ["admSearch","admSeriesFilter","admCoverageFilter"]){
     $(id).addEventListener(id==="admSearch"?"input":"change",()=>{pageSize=28;renderGallery();});
@@ -756,7 +795,7 @@ async function init(){
     attachEvents();
     await reloadCatalog();
     const hash=location.hash.slice(1);
-    selectPanel(["gallery","upload","bulk","cardex","proposals"].includes(hash)?hash:"overview");
+    selectPanel(["gallery","upload","bulk","cardex","proposals","deletions"].includes(hash)?hash:"overview");
   }catch(error){showGate("🔒 "+(error.message||"Accès à l'administration indisponible"));}
 }
 init();

@@ -1,4 +1,4 @@
-# PokéStock — préparation Android et iOS (0.3.0)
+# PokéStock — préparation Android et iOS (0.4.0)
 
 État : socle natif et intégration d’authentification native générés avec Capacitor 8.5.3, **pas encore une version validée sur téléphone**. Le site public et les accès de production sont inchangés. Identifiant provisoire `fr.pokestock.app` : vérifier et réserver les identifiants définitifs avant la première soumission.
 
@@ -16,6 +16,14 @@
 - Connexion e-mail/mot de passe native via `@capgo/capacitor-neon` 8.1.0 (module communautaire présenté dans le guide Neon). Persistance de session gérée par le module, pas par localStorage.
 - Transport HTTP natif limité à l’hôte exact de l’API PokéStock, avec JWT et réponses/statuts conservés, redirections désactivées. Les images et requêtes tierces conservent leur transport habituel.
 - Aucun push, paiement ou suivi publicitaire ajouté.
+
+## Demandes de suppression — 0.4.0
+
+Un parcours « Mon compte → Supprimer mon compte » enregistre une demande authentifiée. L’utilisateur saisit SUPPRIMER, confirme, suit l’état et peut annuler avant prise en charge. Une page web externe `suppression-compte.html` mène au même parcours après connexion. Le Dashboard affiche une file administrateur avec une action de prise en charge.
+
+**La demande et la prise en charge ne réalisent pas l’effacement.** Les données et l’identité restent à traiter par l’opérateur ; le délai de traitement, la politique de rétention, la confirmation de fin et l’effacement définitif doivent encore être finalisés avant la soumission aux stores. Voir `../backend/account-deletion-operations.md`.
+
+L’application de test appelle la branche de développement ; le Dashboard public gère la production. Les demandes ne sont pas partagées entre ces branches. Aucun compte réel n’est supprimé pour tester ce parcours.
 
 ## Préparer et vérifier
 

@@ -6,7 +6,7 @@
 <meta name="description" content="PokéStock France : administration des photographies officielles ou autorisées du catalogue Pokémon.">
 <meta name="robots" content="noindex,nofollow">
 <title>Dashboard — PokéStock France</title>
-<link rel="stylesheet" href="admin-page.css?v=20261027-dashboard-v3">
+<link rel="stylesheet" href="admin-page.css?v=20261027-deletion-v1">
 </head>
 <body>
 <header class="adm-header">
@@ -41,6 +41,7 @@
       <button type="button" class="adm-tab" data-panel="bulk">📚 Import multiple</button>
       <button type="button" class="adm-tab" data-panel="cardex">🌐 Depuis PokéCardex</button>
       <button type="button" class="adm-tab" data-panel="proposals">👥 Photos proposées <span id="admPendingCount"></span></button>
+      <button type="button" class="adm-tab" data-panel="deletions">Comptes · Suppression</button>
       <a class="adm-tab adm-tab-link" href="index.html#administration">🗺️ Signalements ↗</a>
     </nav>
     <section id="admOverviewPanel" class="adm-panel">
@@ -63,6 +64,7 @@
         <button id="admOverviewRefresh" type="button" class="adm-quiet-button">Actualiser les données</button>
       </section>
       <div class="dashboard-tools">
+        <button type="button" data-panel="deletions"><strong>Demandes de suppression</strong><span>Consulter les demandes et prendre en charge leur traitement manuel.</span><small>Gérer les demandes →</small></button>
         <button type="button" data-panel="gallery"><strong>Photothèque</strong><span>Consulter les références, les photos et les éléments à compléter.</span><small>Ouvrir le catalogue →</small></button>
         <a href="index.html#administration"><strong>Signalements</strong><span>Vérifier, corriger et modérer les produits ajoutés par les membres.</span><small>Gérer les signalements →</small></a>
         <button type="button" data-panel="upload"><strong>Ajouter une photo</strong><span>Associer un nouveau visuel à un article et à sa variante exacte.</span><small>Ajouter un visuel →</small></button>
@@ -71,6 +73,7 @@
         <button type="button" data-panel="cardex"><strong>Depuis PokéCardex</strong><span>Rechercher les visuels disponibles pour les références du catalogue.</span><small>Rechercher un visuel →</small></button>
       </div>
     </section>
+    <section id="admDeletionsPanel" class="adm-panel" hidden><div class="adm-section-head"><div><h2>Demandes de suppression de compte</h2><p>Une demande ne constitue pas un effacement. La prise en charge indique uniquement le début du traitement manuel.</p></div><button class="adm-quiet-button" id="admDeletionRefresh" type="button">Actualiser</button></div><p class="adm-tip">Vérifiez le compte et la branche concernés, puis appliquez le protocole d’effacement des données et de l’identité. Aucun bouton de cet écran ne supprime un compte. <a href="https://github.com/nicochapuise-byte/pokestock-france/blob/main/backend/account-deletion-operations.md" target="_blank" rel="noopener noreferrer">Lire le protocole de traitement ↗</a></p><p id="admDeletionStatus" class="adm-message" role="status"></p><div id="admDeletionList" class="adm-deletion-list"></div><button id="admDeletionMore" class="adm-more" type="button" hidden>Afficher les demandes suivantes</button></section>
     <section id="admGalleryPanel" class="adm-panel" hidden>
       <div class="adm-section-head"><div><h2>Catalogue des articles</h2><p>La photographie validée devient l'image principale du produit pour tous les visiteurs.</p></div>
         <div class="adm-head-actions">
@@ -193,6 +196,6 @@
 </main>
 <footer class="adm-footer">PokéStock France · Gestion sécurisée des visuels · Les photographies de preuve des signalements restent privées.</footer>
 <script src="catalog-visuals.js?v=20261027-archive-v1"></script>
-<script src="admin-page.js?v=20261027-dashboard-v3"></script>
+<script src="admin-page.js?v=20261027-deletion-v1"></script>
 </body>
 </html>

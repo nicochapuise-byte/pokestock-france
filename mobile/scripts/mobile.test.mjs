@@ -134,3 +134,19 @@ test('clearing the generated preview prevents a late JPEG from restoring private
   const pending=w.pokestockNative.prepareProofPhoto(new File(['x'],'proof.jpg'));await w.pokestockNative.prepareProofPhoto(null);resolveImage('data:image/jpeg;base64,old');await pending;
   assert.equal(vm.runInContext('photoData',dom.getInternalVMContext()),'');assert.equal(w.document.querySelector('img'),null);w.close();
 });
+
+test('account deletion is an explicit manual request and clears private state on logout',async()=>{
+ const {JSDOM}=await import('jsdom');const vm=await import('node:vm');
+ const dom=new JSDOM(await readFile(resolve(root,'www/index.html'),'utf8'),{url:'https://localhost/index.html',runScripts:'outside-only'}),w=dom.window,d=w.document;w.AbortSignal=AbortSignal;
+ let current={id:'test-owner',email:'test@example.invalid'},request=null,posts=0,patches=0;
+ w.pokestockApi={getUser:()=>current,getToken:async()=>current?'test.jwt.token':null,openLogin:()=>{}};
+ w.fetch=async(url,options)=>{assert(String(url).endsWith('/me/account-deletion'));if(options.method==='POST'){posts++;assert.deepEqual(JSON.parse(options.body),{confirmation:'SUPPRIMER'});request={id:'request',status:'requested',requestedAt:'2026-10-27T12:00:00Z'};}if(options.method==='PATCH'){patches++;request.status='cancelled';}return {ok:true,json:async()=>({request,mode:'manual'})};};
+ try{
+  vm.runInContext(await readFile(resolve(root,'www/account-deletion.js'),'utf8'),dom.getInternalVMContext());
+  d.getElementById('accountDeletionBtn').click();await new Promise(r=>setTimeout(r,5));assert.equal(posts,0);assert.match(d.getElementById('accountDeletionOwner').textContent,/test@example/);
+  const send=()=>d.getElementById('accountDeletionForm').dispatchEvent(new w.Event('submit',{cancelable:true}));send();assert.equal(posts,0);
+  d.getElementById('accountDeletionWord').value='SUPPRIMER';d.getElementById('accountDeletionConfirm').checked=true;send();send();await new Promise(r=>setTimeout(r,5));assert.equal(posts,1);assert.match(d.getElementById('accountDeletionStatus').textContent,/traitement manuel/);
+  d.getElementById('accountDeletionCancel').click();await new Promise(r=>setTimeout(r,5));assert.equal(patches,1);assert.equal(d.getElementById('accountDeletionForm').hidden,false);
+  current=null;d.dispatchEvent(new w.Event('pokestock:authchanged'));assert.equal(d.getElementById('accountDeletionOwner').textContent,'');assert.equal(d.getElementById('accountDeletionState').textContent,'');assert.equal(d.getElementById('accountDeletionBtn').hidden,true);
+ }finally{w.close();}
+});
