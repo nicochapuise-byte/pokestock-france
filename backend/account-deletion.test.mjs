@@ -11,7 +11,7 @@ const ctx={authenticate:async request=>request.headers.get('authorization')?.rep
  if(query.startsWith('SELECT COUNT'))return [{requested:queueMode?26:1,processing:0}];
  if(query.startsWith('SELECT d.id')&&query.includes('identity_present'))return [{id,user_id:'10000000-0000-4000-8000-000000000001',status:'processing',identity_present:true}];
  if(query.startsWith('SELECT\n'))return [Object.fromEntries(COUNT_KEYS.map(key=>[key,0]))];
- if(query.startsWith("SELECT 'proofs'"))return [];
+ if(query.startsWith("SELECT objects.bucket"))return [];
  if(query.startsWith('SELECT d.id'))return queueMode?Array.from({length:26},(_,i)=>({id:'id'+i})):[];
  throw Error('Unexpected SQL '+query);
 }};

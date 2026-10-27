@@ -11,10 +11,21 @@ export const ERASURE_COUNTS_SQL=`SELECT
  (SELECT COUNT(*)::int FROM public.stock_report_removals d WHERE removed_by=$1 OR EXISTS(SELECT 1 FROM public.stock_reports r WHERE r.id=d.report_id AND r.user_id=$1)) AS removal_records,
  (SELECT COUNT(*)::int FROM public.catalog_photo_proposals WHERE reviewed_by=$1 AND proposed_by<>$1) AS review_attributions,
  (SELECT COUNT(*)::int FROM public.account_deletion_requests WHERE user_id=$1) AS deletion_requests,
- (SELECT COUNT(*)::int FROM public.stock_admins WHERE user_id=$1) AS admin_roles`;
-export const ERASURE_OBJECTS_SQL=`SELECT 'proofs'::text AS bucket,r.photo_object_key AS key,EXISTS(SELECT 1 FROM public.stock_reports other WHERE other.photo_object_key=r.photo_object_key AND other.user_id<>$1) AS shared FROM public.stock_reports r WHERE r.user_id=$1 AND r.photo_object_key IS NOT NULL
- UNION SELECT 'catalog-images'::text AS bucket,p.photo_object_key AS key,EXISTS(SELECT 1 FROM public.catalog_photo_proposals other WHERE other.photo_object_key=p.photo_object_key AND other.proposed_by<>$1) AS shared FROM public.catalog_photo_proposals p WHERE p.proposed_by=$1 ORDER BY bucket,key`;
-export const COUNT_KEYS=['reports','proof_photos','votes','watches','proposals','catalogue_references','edit_records','removal_records','review_attributions','deletion_requests','admin_roles'];
+ (SELECT COUNT(*)::int FROM public.stock_admins WHERE user_id=$1) AS admin_roles,
+ (SELECT COUNT(*)::int FROM public.account_operations WHERE user_id=$1) AS operation_records,
+ (SELECT COUNT(*)::int FROM public.account_operations WHERE user_id=$1 AND finished_at IS NULL) AS active_operations,
+ (SELECT COUNT(*)::int FROM public.account_uploads WHERE user_id=$1) AS upload_records`;
+export const ERASURE_OBJECTS_SQL=`SELECT objects.bucket,objects.key,
+ EXISTS(SELECT 1 FROM public.account_uploads u WHERE u.bucket=objects.bucket AND u.object_key=objects.key AND u.user_id<>$1)
+ OR (objects.bucket='proofs' AND EXISTS(SELECT 1 FROM public.stock_reports r WHERE r.photo_object_key=objects.key AND r.user_id<>$1))
+ OR (objects.bucket='catalog-images' AND EXISTS(SELECT 1 FROM public.catalog_photo_proposals p WHERE p.photo_object_key=objects.key AND p.proposed_by<>$1))
+ OR (objects.bucket='catalog-images' AND EXISTS(SELECT 1 FROM public.catalog_variants v WHERE v.image_object_key=objects.key) AND NOT EXISTS(SELECT 1 FROM public.catalog_photo_proposals p WHERE p.photo_object_key=objects.key AND p.proposed_by=$1)) AS shared
+ FROM (
+ SELECT 'proofs'::text AS bucket,photo_object_key AS key FROM public.stock_reports WHERE user_id=$1 AND photo_object_key IS NOT NULL
+ UNION SELECT 'catalog-images'::text AS bucket,photo_object_key AS key FROM public.catalog_photo_proposals WHERE proposed_by=$1
+ UNION SELECT bucket,object_key AS key FROM public.account_uploads WHERE user_id=$1
+ ) objects ORDER BY objects.bucket,objects.key`;
+export const COUNT_KEYS=['reports','proof_photos','votes','watches','proposals','catalogue_references','edit_records','removal_records','review_attributions','deletion_requests','admin_roles','operation_records','active_operations','upload_records'];
 function checkedCounts(row){
  if(!row||COUNT_KEYS.some(key=>!Object.hasOwn(row,key)||row[key]===null||row[key]===''||typeof row[key]==='boolean'||!Number.isSafeInteger(Number(row[key]))||Number(row[key])<0))throw Error('Inventaire incomplet.');
  return Object.fromEntries(COUNT_KEYS.map(key=>[key,Number(row[key])]));
@@ -31,6 +42,7 @@ export async function readErasurePlan(sql,requestId){
  if(typeof request.identity_present!=='boolean')throw Error('État d’identité indisponible.');
  const blocked=[];
  if(request.status!=='processing')blocked.push('La demande doit être prise en charge avant tout effacement.');
+ if(counts.active_operations)blocked.push('Des écritures du compte sont encore en cours. Actualisez après leur fin.');
  if(counts.admin_roles)blocked.push('Compte administrateur : transfert des responsabilités et vérification manuelle nécessaires.');
  for(const object of objects){
   if(!['proofs','catalog-images'].includes(object.bucket)||typeof object.key!=='string'||! /^[A-Za-z0-9_./-]{1,512}$/.test(object.key)||object.key.startsWith('/')||object.key.includes('..'))blocked.push('Une référence de fichier doit être vérifiée manuellement.');
@@ -81,6 +93,8 @@ export async function executeErasure(plan,adapters,{confirmation,fingerprint}={}
 export const ERASURE_ROWS_SQL=`WITH target AS MATERIALIZED (
  SELECT $1::text AS user_id WHERE NOT EXISTS(SELECT 1 FROM neon_auth."user" WHERE id::text=$1)
  AND NOT EXISTS(SELECT 1 FROM public.stock_admins WHERE user_id=$1)
+ AND EXISTS(SELECT 1 FROM public.account_erasure_control WHERE singleton=true AND blocked=true AND request_id=$2::uuid)
+ AND NOT EXISTS(SELECT 1 FROM public.account_operations WHERE finished_at IS NULL)
  AND EXISTS(SELECT 1 FROM public.account_deletion_requests WHERE user_id=$1 AND id=$2::uuid AND status='processing')
 ), owned_reports AS MATERIALIZED (
  SELECT id FROM public.stock_reports WHERE user_id IN(SELECT user_id FROM target)
@@ -104,6 +118,10 @@ export const ERASURE_ROWS_SQL=`WITH target AS MATERIALIZED (
  DELETE FROM public.catalog_photo_proposals WHERE proposed_by IN(SELECT user_id FROM target) RETURNING id
 ), erased_reports AS (
  DELETE FROM public.stock_reports WHERE user_id IN(SELECT user_id FROM target) RETURNING id
+), erased_uploads AS (
+ DELETE FROM public.account_uploads WHERE user_id IN(SELECT user_id FROM target) RETURNING operation_id
+), erased_operations AS (
+ DELETE FROM public.account_operations WHERE user_id IN(SELECT user_id FROM target) AND (SELECT COUNT(*) FROM erased_uploads)>=0 RETURNING id
 ), erased_requests AS (
  DELETE FROM public.account_deletion_requests WHERE user_id IN(SELECT user_id FROM target) RETURNING id
 ) SELECT EXISTS(SELECT 1 FROM target) AS executed,

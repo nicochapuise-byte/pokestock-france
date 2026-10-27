@@ -3,6 +3,7 @@
 import { randomUUID, createHash, createHmac, createPublicKey, verify as verifySignature } from "node:crypto";
 
 import { handleAccountDeletion } from "./account-deletion.mjs";
+import { createAccountOperations } from "./account-operations.mjs";
 
 import { normalizeWebsite, resolveCommune } from "./seller-location.mjs";
 
@@ -36,13 +37,16 @@ function awsBucketUrl(key,bucket="proofs"){
 }
 function amzTime(date){return date.toISOString().replace(/[:-]|\.\d{3}/g,"");}
 async function uploadPhoto(bytes,key,bucket="proofs",mime="image/jpeg"){
+  await accountOperations.registerUpload(bucket,key);
   const url=awsBucketUrl(key,bucket),date=amzTime(new Date()),day=date.slice(0,8),region=process.env.AWS_REGION;
   const hash=sha(bytes),scope=day+"/"+region+"/s3/aws4_request",signed="host;x-amz-content-sha256;x-amz-date";
   const canonical="PUT\n"+url.pathname+"\n\nhost:"+url.host+"\nx-amz-content-sha256:"+hash+"\nx-amz-date:"+date+"\n\n"+signed+"\n"+hash;
   const signature=createHmac("sha256",signKey(day,region)).update("AWS4-HMAC-SHA256\n"+date+"\n"+scope+"\n"+sha(canonical)).digest("hex");
   const authorization="AWS4-HMAC-SHA256 Credential="+process.env.AWS_ACCESS_KEY_ID+"/"+scope+", SignedHeaders="+signed+", Signature="+signature;
-  const r=await fetch(url,{method:"PUT",headers:{"Content-Type":mime,"x-amz-date":date,"x-amz-content-sha256":hash,"Authorization":authorization},body:bytes});
-  if(!r.ok)throw new Error("Le stockage de la photo a échoué ("+r.status+").");
+  try{
+    const r=await fetch(url,{method:"PUT",headers:{"Content-Type":mime,"x-amz-date":date,"x-amz-content-sha256":hash,"Authorization":authorization},body:bytes});
+    if(!r.ok)throw new Error("Le stockage de la photo a échoué ("+r.status+").");
+  }catch(error){accountOperations.markUncertain();throw error;}
 }
 function photoUrl(key,bucket="proofs"){
   if(!key)return null;
@@ -58,7 +62,7 @@ function photoUrl(key,bucket="proofs"){
   url.search=query+"&X-Amz-Signature="+signature;
   return url.toString();
 }
-async function sql(query,params=[]){
+async function rawSql(query,params=[]){
   if(!DB_URL)throw Error("DATABASE_URL absent");
   const host=new URL(DB_URL).hostname;
   // Neon SQL-over-HTTP utilise le proxy api.<region>.neon.tech, pas le hostname PostgreSQL.
@@ -71,6 +75,11 @@ async function sql(query,params=[]){
   const data=await r.json();
   if(!r.ok||data.message||data.error)throw Error("Échec de la requête Postgres");
   return data.rows||[];
+}
+const accountOperations=createAccountOperations(rawSql);
+async function sql(query,params=[]){
+  try{return await rawSql(query,params);}
+  catch(error){accountOperations.markUncertain();throw error;}
 }
 const decode=b=>Buffer.from(b.replace(/-/g,"+").replace(/_/g,"/"),"base64");
 let jwksCache={at:0,keys:[]};
@@ -107,7 +116,9 @@ async function authenticate(request){
   // A still-valid JWT must not recreate data after the Auth identity was erased.
   // Do not cache positive results: account existence is checked on every request.
   const rows=await sql('SELECT EXISTS(SELECT 1 FROM neon_auth."user" WHERE id::text=$1) AS present',[subject]);
-  return rows[0]?.present===true?subject:null;
+  if(rows[0]?.present!==true)return null;
+  await accountOperations.begin(request,subject);
+  return subject;
 }
 async function isSiteAdmin(userId){
   if(!userId)return false;
@@ -225,7 +236,7 @@ function publicReport(r){
   return {id:r.id,sellerId:r.seller_id,store:r.seller_type==='private'?'Particulier':r.store_name,address:r.seller_type==='private'?null:r.store_address,sellerType:r.seller_type,websiteUrl:r.website_url,communeCode:r.commune_code,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,lastSeenAt:r.last_seen_at,ownerStockState:r.owner_stock_state,img:r.catalog_image_key&&r.image_approved?photoUrl(r.catalog_image_key,"catalog-images"):null,catalogVariantId:r.catalog_variant_id,artSet:r.variant_name||null,catalogSourceUrl:r.catalog_source_url||null,proofProvided:!!r.photo_object_key,votes:{...voteSummary(r.available_count,r.unavailable_count),...(r.owner_stock_state==='unavailable'?{state:'out_of_stock'}:{})}};
 }
 
-export default {
+const handler={
   async fetch(request){
     const url=new URL(request.url),headers=cors(request);
     if(request.method==="OPTIONS")return new Response(null,{status:204,headers});
@@ -721,8 +732,15 @@ export default {
       }
       return json({error:"Route introuvable"},404,request);
     }catch(error){
+      if(error?.status===423)return json({error:error.message},423,request);
       console.error("PokéStock backend:",error?.message||"erreur");
       return json({error:"Service momentanément indisponible."},503,request);
     }
+  }
+};
+export default {
+  async fetch(request){
+    try{return await accountOperations.run(request,()=>handler.fetch(request));}
+    catch{return json({error:"Service momentanément indisponible."},503,request);}
   }
 };
