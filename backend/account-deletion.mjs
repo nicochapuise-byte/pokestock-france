@@ -1,3 +1,4 @@
+import {readErasurePlan,publicErasurePreview} from "./account-erasure.mjs";
 // This workflow records a user request. It never claims that a queued account is erased.
 const uuid=value=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 const ownRequest=row=>row?{id:row.id,status:row.status,requestedAt:row.requested_at,updatedAt:row.updated_at}:null;
@@ -9,10 +10,15 @@ export async function handleAccountDeletion(request,url,{authenticate,isSiteAdmi
  const own=url.pathname==='/me/account-deletion';
  const admin=url.pathname==='/admin/account-deletions';
  const match=/^\/admin\/account-deletions\/([^/]+)$/.exec(url.pathname);
- if(!own&&!admin&&!match)return null;
+ const preview=/^\/admin\/account-deletions\/([^/]+)\/preview$/.exec(url.pathname);
+ if(!own&&!admin&&!match&&!preview)return null;
  const user=await authenticate(request);
  if(!user)return json({error:'Connexion nécessaire.'},401,request);
  if(!own&&!await isSiteAdmin(user))return json({error:'Accès administrateur uniquement.'},403,request);
+ if(preview&&request.method==='GET'){
+  try{return json(publicErasurePreview(await readErasurePlan(sql,preview[1])),200,request);}
+  catch(error){if(error.status)return json({error:error.message},error.status,request);throw error;}
+ }
  if(own&&request.method==='GET'){
   const rows=await sql('SELECT id,status,requested_at,updated_at FROM public.account_deletion_requests WHERE user_id=$1 LIMIT 1',[user]);
   return json({request:ownRequest(rows[0]),mode:'manual'},200,request);

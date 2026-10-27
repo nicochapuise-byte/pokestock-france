@@ -32,3 +32,13 @@ Une suppression de ligne ne supprime pas son objet S3. Une suppression d’ident
 - Annuler une demande déjà prise en charge ou accéder à la file avec un compte non administrateur.
 
 Les tests ne doivent produire aucun effacement réel ni demande fictive durable en production. Tester les changements d’état dans un environnement isolé ou dans une transaction entièrement annulée.
+
+## Inventaire administrateur et moteur préparé
+
+Le bouton « Vérifier les données à effacer » appelle `GET /admin/account-deletions/:id/preview`. Il ne fait que des lectures et reste réservé aux administrateurs. Les clés de fichiers et URL privées ne sont pas retournées. Les comptes administrateurs, références de fichiers partagées et demandes non prises en charge sont signalés comme bloqués.
+
+`account-erasure.mjs` prépare un moteur sans route HTTP d’exécution. Ses adaptateurs réels ne sont pas encore branchés : API de suppression Neon Auth, verrou durable empêchant les nouvelles écritures et drainant celles en cours, suppression S3 avec vérification d’absence, reprise et reçu de fin. Un simple verrou en mémoire ne suffit pas. Les anciens JWT et les téléversements en cours doivent être traités avant activation.
+
+Le nettoyage SQL est limité au compte et à une demande en cours, refuse une identité encore présente ou un rôle administrateur. Les retraits effectués sur les signalements d’autres membres sont anonymisés pour conserver leur retrait. Les références de photos du catalogue sont détachées sans supprimer les produits.
+
+Validation actuelle : tests simulés des échecs partiels et reprises, inventaire SQL en lecture seule et planification SQL sans exécution. Aucun compte ni fichier réellement effacé. La validation de bout en bout doit utiliser uniquement un compte jetable dédié sur la branche de développement, après autorisation explicite de sa suppression irréversible. Les rétentions de sauvegardes restent à documenter.

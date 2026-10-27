@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "check": "node --test scripts/mobile.test.mjs ../backend/account-deletion.test.mjs",
+    "check": "node --test scripts/mobile.test.mjs ../backend/account-deletion.test.mjs ../backend/account-erasure.test.mjs",
     "sync": "npm run build && cap sync",
     "android": "npm run sync && cap open android",
     "ios": "npm run sync && cap open ios"

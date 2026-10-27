@@ -666,6 +666,8 @@ async function loadDeletionQueue(reset=false){
    const details=document.createElement("p");details.textContent=(item.status==="processing"?"Prise en charge":"À traiter")+" · Demande du "+formatDate(item.requested_at);
    const reference=document.createElement("small");reference.textContent="Compte : "+item.user_id+" · Demande : "+item.id;
    card.append(name,email,details,reference);
+   const preview=document.createElement("button");preview.type="button";preview.className="adm-quiet-button";preview.dataset.erasurePreview=item.id;preview.textContent="Vérifier les données à effacer";
+   const previewBox=document.createElement("div");previewBox.className="adm-erasure-preview";previewBox.hidden=true;card.append(preview,previewBox);
    if(item.status==="requested"){
     const button=document.createElement("button");button.type="button";button.className="adm-quiet-button";button.dataset.deletionStart=item.id;button.textContent="Prendre en charge";card.append(button);
    }
@@ -683,6 +685,21 @@ function attachEvents(){
   $("admDeletionRefresh").addEventListener("click",()=>loadDeletionQueue(true));
   $("admDeletionMore").addEventListener("click",()=>loadDeletionQueue());
   $("admDeletionList").addEventListener("click",async event=>{
+   const preview=event.target.closest("[data-erasure-preview]");
+   if(preview){
+    if(deletionBusy)return;deletionBusy=true;preview.disabled=true;
+    const box=preview.nextElementSibling;box.hidden=false;box.textContent="Calcul de l’inventaire…";
+    try{
+     const data=await api("/admin/account-deletions/"+encodeURIComponent(preview.dataset.erasurePreview)+"/preview");
+     box.replaceChildren();const title=document.createElement("strong");title.textContent="Inventaire en lecture seule — aucun effacement";box.append(title);
+     const identity=document.createElement("p");identity.textContent=data.identityPresent?"Identité de connexion encore présente.":"Identité de connexion non trouvée ; les données associées doivent encore être vérifiées.";box.append(identity);
+     const labels={reports:"Signalements",proof_photos:"Preuves photo privées",votes:"Votes concernés",watches:"Favoris et alertes",proposals:"Photos proposées",catalogue_references:"Visuels du catalogue à détacher",edit_records:"Historiques de modification",removal_records:"Historiques de retrait",review_attributions:"Attributions de validation",deletion_requests:"Demandes de suppression",admin_roles:"Rôles administrateur"};
+     const list=document.createElement("ul");for(const [key,label]of Object.entries(labels)){const item=document.createElement("li");item.textContent=label+" : "+(data.counts?.[key]||0);list.append(item);}box.append(list);
+     for(const text of data.blocked||[]){const item=document.createElement("p");item.textContent=text;box.append(item);}
+    }catch(error){box.textContent=error.message;if(error.status===401||error.status===403){$("admDeletionList").replaceChildren();showGate(error.message);}}
+    finally{deletionBusy=false;preview.disabled=false;}
+    return;
+   }
    const button=event.target.closest("[data-deletion-start]");if(!button||deletionBusy)return;
    deletionBusy=true;button.disabled=true;
    try{await api("/admin/account-deletions/"+encodeURIComponent(button.dataset.deletionStart),{method:"PATCH",body:{action:"start"}});deletionBusy=false;await loadDeletionQueue(true);}
