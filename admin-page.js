@@ -105,14 +105,51 @@ function renderStats(){
   $("admTotal").textContent=listings.length;
   $("admWithImage").textContent=withImages;
   $("admMissing").textContent=listings.length-withImages;
-  const percent=listings.length?Math.round(withImages/listings.length*100):0;
+  const percent=listings.length?Math.floor(withImages/listings.length*1000)/10:0;
   $("admProgress").value=percent;
   $("admProgressLabel").textContent=percent+" % avec photo exacte · "+withImages+" photo(s) validée(s) / "+listings.length+" variantes";
+  renderOverview();
   const visuals=listings.map(e=>PokestockVisuals.get(e,catalog.variants));
   const boosters=visuals.filter(v=>v.kind==="booster").length;
   const references=visuals.filter(v=>v.kind==="reference").length;
   $("admVisualProgress").value=listings.length?100:0;
   $("admVisualProgressLabel").textContent=(listings.length?"100":"0")+" % des fiches avec un visuel · "+withImages+" photos exactes, "+boosters+" illustrations indicatives de boosters, "+references+" fiche(s) de référence sans photo";
+}
+
+function renderOverview(){
+  const missing=listings.filter(e=>!e.image);
+  const groups=new Map();
+  for(const entry of listings){
+    const id=entry.series?.id;if(!id)continue;
+    if(!groups.has(id))groups.set(id,{series:entry.series,total:0,missing:0});
+    const group=groups.get(id);group.total++;if(!entry.image)group.missing++;
+  }
+  const incomplete=[...groups.values()].filter(g=>g.missing).sort((a,b)=>b.missing-a.missing||a.series.sort-b.series.sort);
+  const complete=[...groups.values()].filter(g=>!g.missing).length;
+  const empty=catalog.series.filter(s=>!groups.has(s.id)).length;
+  $("admIncompleteSeries").textContent=incomplete.length;
+  $("admSeriesSummary").textContent=complete+" série(s) avec toutes leurs photos · "+empty+" sans article référencé";
+  $("admMissingProducts").textContent=new Set(missing.map(e=>e.productId)).size;
+  const root=$("admPriorityList");root.replaceChildren();
+  for(const group of incomplete.slice(0,8)){
+    const button=document.createElement("button");button.type="button";button.dataset.prioritySeries=group.series.id;
+    const title=document.createElement("strong");title.textContent=(group.series.code?group.series.code+" · ":"")+group.series.name;
+    const detail=document.createElement("span");detail.textContent=group.missing+" photo(s) manquante(s) / "+group.total+" variantes →";
+    button.append(title,detail);root.append(button);
+  }
+  if(!incomplete.length)root.textContent=listings.length?"Toutes les variantes référencées disposent d’une photo exacte.":"Aucune variante référencée. La couverture ne peut pas encore être évaluée.";
+  $("admSnapshotTime").textContent="Catalogue actualisé le "+new Intl.DateTimeFormat("fr-FR",{dateStyle:"short",timeStyle:"short",timeZone:"Europe/Paris"}).format(new Date())+" (heure de Paris).";
+}
+async function loadOverviewProposals(){
+  $("admOverviewPending").textContent="—";
+  $("admOverviewPendingStatus").textContent="Chargement…";
+  try{
+    const data=await api("/admin/catalog/photo-proposals");
+    const count=Array.isArray(data.pending)?data.pending.length:0;
+    $("admOverviewPending").textContent=count>=100?"100+":count;
+    $("admOverviewPendingStatus").textContent=count?"À examiner dans Photos proposées":"Aucune proposition en attente";
+    $("admPendingCount").textContent=count?"("+(count>=100?"100+":count)+")":"";
+  }catch(error){$("admOverviewPendingStatus").textContent=error.message;}
 }
 
 let allSeriesCoverage=[];
@@ -341,6 +378,7 @@ async function reloadCatalog(){
     setSelected(selected);
   }
   await loadAllSeriesCoverage();
+  await loadOverviewProposals();
 }
 function batchClear(){
   for(const item of batch)if(item.previewUrl)URL.revokeObjectURL(item.previewUrl);
@@ -396,6 +434,8 @@ async function refreshProposals(){
   try{
     const data=await api("/admin/catalog/photo-proposals");
     const items=data.pending||[];
+    $("admOverviewPending").textContent=items.length>=100?"100+":items.length;
+    $("admOverviewPendingStatus").textContent=items.length?"À examiner dans Photos proposées":"Aucune proposition en attente";
     $("admPendingCount").textContent=items.length?"("+items.length+")":"";
     if(!items.length){setMessage("admProposalStatus","✅ Aucune photographie en attente.");return;}
     setMessage("admProposalStatus",items.length+" photo(s) à vérifier.");
@@ -582,6 +622,17 @@ function attachEvents(){
   for(const id of ["admSearch","admSeriesFilter","admCoverageFilter"]){
     $(id).addEventListener(id==="admSearch"?"input":"change",()=>{pageSize=28;renderGallery();});
   }
+  $("admOverviewExport").addEventListener("click",csvMissing);
+  $("admPriorityList").addEventListener("click",event=>{
+    const button=event.target.closest("[data-priority-series]");if(!button)return;
+    $("admSearch").value="";$("admSeriesFilter").value=button.dataset.prioritySeries;
+    $("admCoverageFilter").value="missing";pageSize=28;renderGallery();selectPanel("gallery");
+  });
+  $("admOverviewRefresh").addEventListener("click",async()=>{
+    const button=$("admOverviewRefresh");button.disabled=true;
+    try{await reloadCatalog();}catch(error){setMessage("admSnapshotTime","Actualisation impossible : "+error.message,true);}
+    finally{button.disabled=false;}
+  });
   $("admGalleryMore").addEventListener("click",()=>{pageSize+=28;renderGallery();});
   $("admExport").addEventListener("click",csvMissing);
   $("admCoverageSeriesSearch").addEventListener("input",renderAllSeriesCoverage);
