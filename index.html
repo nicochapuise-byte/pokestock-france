@@ -8,136 +8,97 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="styles.css?v=20261026-admintabs-v2">
+<html><head><link rel="stylesheet" href="interface.css?v=20261027-design-v1"></head></html>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="#accueil" aria-label="PokéStock France">
-      <span class="ball-logo" aria-hidden="true"><i></i></span>
-      <span>PokéStock <b>France</b></span>
-    </a>
-    <nav class="navlinks">
-      <a href="#carte">Carte</a>
-      <a href="#disponibilites">Disponibilités</a>
-      <a href="#fonctionnement">Comment ça marche ?</a>
-    </nav>
-    <div class="top-actions"><button class="btn btn-blue" id="adminBtn" type="button" hidden>🛡️ Admin</button><button class="btn btn-white" id="accountBtn" type="button">👤 Connexion</button><button class="btn btn-yellow" id="openReportTop">+ Signaler</button></div>
-  </header>
-
-  <main id="accueil">
-    <section class="hero">
-      <div class="hero-copy">
-        <span class="eyebrow">⚡ La chasse aux stocks commence ici</span>
-        <h1>Trouve les produits <span>Pokémon</span><br>disponibles près de chez toi.</h1>
-        <p>Une carte communautaire française pour repérer boosters, coffrets, ETB et collections signalés en magasin par d’autres passionnés.</p>
-        <div class="hero-actions">
-          <a class="btn btn-red" href="#carte">🗺️ Explorer la carte</a>
-          <button class="btn btn-white" id="openReportHero">📸 Signaler un produit</button>
-        </div>
-        <div class="hero-stats">
-          <div><b id="reportCount">0</b><span>signalements actifs</span></div>
-          <div><b id="cityCount">0</b><span>villes</span></div>
-          <div><b id="seriesCount">0</b><span>séries suivies</span></div>
-        </div>
-      </div>
-      <div class="hero-art" aria-hidden="true">
-        <div class="glow glow-1"></div>
-        <div class="glow glow-2"></div>
-        <div class="card-stack card-a">
-          <span class="mini-tag">En stock</span>
-          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png" alt="">
-          <strong>Booster Écarlate & Violet</strong>
-          <small>Carrefour • Paris</small>
-        </div>
-        <div class="card-stack card-b">
-          <span class="mini-tag blue">Nouveau</span>
-          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/151.png" alt="">
-          <strong>Collection 151</strong>
-          <small>Fnac • Lyon</small>
-        </div>
-      </div>
-    </section>
-
-    <section class="section map-section" id="carte">
-      <div class="section-title">
-        <div>
-          <span class="eyebrow dark">📍 Carte des stocks</span>
-          <h2>Que trouve-t-on près de chez toi ?</h2>
-        </div>
-        <button class="btn btn-blue" id="locateBtn">⌖ Me localiser</button>
-      </div>
-
-      <div class="finder">
-        <aside class="filters">
-          <label class="searchbox">
-            <span>🔎</span>
-            <input id="searchInput" type="search" placeholder="Ville, magasin, produit…">
-          </label>
-
-          <div class="filter-head">
-            <h3>Filtrer par série</h3>
-            <button id="clearFilters">Tout effacer</button>
-          </div>
-          <label class="series-filter-search"><span>🔎 Rechercher une extension</span>
-            <input id="seriesFilterSearch" type="search" placeholder="Ex. Évolution Céleste, EB07…">
-          </label>
-          <div id="seriesFilters" class="series-filters" aria-label="Filtres des extensions Pokémon par bloc"></div>
-
-          <div class="legend">
-            <h4>État du signalement</h4>
-            <p><i class="dot fresh"></i> Récent : moins de 24 h</p>
-            <p><i class="dot medium"></i> À vérifier : 1 à 3 jours</p>
-            <p><i class="dot old"></i> Ancien : plus de 3 jours</p>
-            <p class="status-help">✅ Confirmé : au moins 2 avis concordants.<br>❌ Rupture : au moins 2 avis concordants.<br>🟠 Sans consensus : non vérifié.</p>
-          </div>
-
-          <div class="community-box">
-            <b>📸 Preuve photo</b>
-            <p>Les signalements communautaires peuvent inclure une photo prise en magasin.</p>
-          </div>
-        </aside>
-
-        <div class="map-wrap">
-          <div id="map"></div>
-          <div class="map-chip">🇫🇷 France • <span id="visibleCount">0</span> points, dont exemples</div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="disponibilites">
-      <div class="section-title">
-        <div>
-          <span class="eyebrow dark">🔥 Signalements récents</span>
-          <h2>Dernières disponibilités</h2>
-        </div>
-        <button class="btn btn-red" id="openReportList">+ Ajouter un stock</button>
-      </div>
-      <p class="demo-notice" id="communityStatus">🧪 Les 6 exemples préchargés sont fictifs. Les vrais signalements partagés afficheront leur photo et seront marqués « non vérifiés » tant qu’ils ne sont pas confirmés.</p>
-      <div id="stockGrid" class="stock-grid"></div>
-      <p id="emptyState" class="empty-state" hidden>Aucun signalement ne correspond à tes filtres.</p>
-      <p class="vote-disclaimer">ℹ️ Les votes reflètent les observations des membres et ne garantissent jamais un stock en temps réel. Les auteurs ne peuvent pas voter sur leurs propres signalements.</p>
-    </section>
-
-    <section class="section how" id="fonctionnement">
-      <span class="eyebrow dark">✨ Simple et communautaire</span>
-      <h2>Trois étapes pour aider la communauté</h2>
-      <div class="steps">
-        <article><span>1</span><b>Repère</b><p>Tu vois un produit Pokémon en rayon.</p></article>
-        <article><span>2</span><b>Photographie</b><p>Ajoute une photo et les informations utiles.</p></article>
-        <article><span>3</span><b>Partage</b><p>Le signalement apparaît sur la carte pour les autres.</p></article>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="brand small"><span class="ball-logo"><i></i></span><span>PokéStock France</span></div>
-    <p>Projet communautaire non affilié à Nintendo, Game Freak ou The Pokémon Company.</p>
-  </footer>
-
-  <div class="modal" id="authModal" aria-hidden="true">
+  <header class="topbar"><a class="brand" href="#accueil" aria-label="PokéStock France, accueil"><span class="ball-logo" aria-hidden="true"><i></i></span><span class="brand-name">PokéStock<small>FRANCE</small></span></a><nav class="navlinks" aria-label="Navigation principale"><a href="#carte" data-view="map" class="is-active">La carte</a><a href="#disponibilites" data-view="list">Disponibilités</a><a href="#fonctionnement">Le principe</a></nav><div class="top-actions">
+<button class="btn btn-white" id="adminBtn" type="button" hidden>Administration</button><button class="btn btn-white" id="accountBtn" type="button">Mon compte</button><button class="btn btn-red" id="openReportTop" type="button"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span>Signaler un produit</span></button>
+</div></header><main id="accueil"><section class="hero section"><div class="hero-copy">
+<p class="eyebrow">LE STOCK SE PARTAGE.</p>
+<h1>Les produits Pokémon,<br><span>près de chez vous.</span>
+</h1>
+<p>Repérez les disponibilités en magasin.<br class="desktop-break"> Partagez vos trouvailles avec la communauté.</p>
+</div>
+<div class="hero-stats" aria-label="Activité de la communauté">
+<div>
+<b id="reportCount">0</b><span>signalements actifs</span>
+</div>
+<div>
+<b id="cityCount">0</b><span>villes représentées</span>
+</div>
+<div>
+<b id="seriesCount">0</b><span>séries au catalogue</span>
+</div>
+</div></section>
+<section class="section map-section" id="carte" aria-labelledby="mapTitle"><div class="section-title">
+<div>
+<h2 id="mapTitle">Explorer les disponibilités</h2>
+<p>Une piste pour votre prochaine trouvaille.</p>
+</div>
+<div class="view-switch" aria-label="Mode d’affichage">
+<button type="button" data-view="map" class="is-active" aria-pressed="true"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z"></path><path d="M9 3v15M15 6v15"></path></svg>Carte</button><button type="button" data-view="list" aria-pressed="false"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg>Liste</button>
+</div>
+</div>
+<div class="finder-toolbar">
+<label class="searchbox"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"></circle><path d="m16 16 5 5"></path></svg><input id="searchInput" type="search" aria-label="Rechercher une ville, un magasin ou un produit" placeholder="Ville, magasin ou produit…"></label><button class="toolbar-button" id="showFilters" aria-controls="finderFilters" aria-expanded="false" type="button"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"></path><circle cx="9" cy="7" r="2" fill="currentColor"></circle><circle cx="15" cy="17" r="2" fill="currentColor"></circle></svg><span>Filtres</span><b id="activeFilterCount" hidden>0</b></button><button class="toolbar-button recent-filter" id="recentOnly" aria-pressed="false" type="button"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Moins de 24 h</button><button class="toolbar-button locate-button" id="locateBtn" type="button"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg><span>Autour de moi</span></button>
+</div>
+<div class="finder">
+<aside class="filters" id="finderFilters" aria-label="Filtrer les disponibilités"><div class="filter-head">
+<h3>Affiner la recherche</h3>
+<button id="closeFilters" type="button" aria-label="Fermer les filtres"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"></path></svg></button>
+</div>
+<div class="filter-subhead">
+<span>Extensions Pokémon</span><button id="clearFilters" type="button">Réinitialiser</button>
+</div>
+<label class="series-filter-search"><span class="sr-only">Rechercher une extension</span><input id="seriesFilterSearch" type="search" placeholder="Nom ou code de la série"></label><div id="seriesFilters" class="series-filters" aria-label="Extensions classées par bloc"></div>
+<div class="legend">
+<h4>Quand le stock a-t-il été vu ?</h4>
+<p><i class="dot fresh"></i>Moins de 24 heures</p>
+<p><i class="dot medium"></i>Entre 1 et 3 jours</p>
+<p><i class="dot old"></i>Plus de 3 jours, à vérifier</p>
+</div>
+<label class="example-toggle"><input id="showExamples" type="checkbox"><span>Afficher les exemples fictifs<small>Pour découvrir le fonctionnement.</small></span></label></aside><div class="map-wrap">
+<div id="map" aria-label="Carte des disponibilités en France"></div>
+<div class="map-chip">
+<span class="map-live-dot"></span><span id="visibleCount">0</span> point(s) affiché(s)<span id="exampleCountLabel" hidden> · exemples inclus</span>
+</div>
+</div>
+</div>
+<button class="filter-backdrop" id="filterBackdrop" type="button" aria-label="Fermer les filtres" hidden></button><p class="map-footnote">Les disponibilités sont déclarées par les membres et peuvent évoluer. Vérifiez le signalement avant de vous déplacer.</p></section>
+<section class="section availability-section" id="disponibilites"><div class="section-title">
+<div>
+<p class="eyebrow">SUR LE TERRAIN</p>
+<h2>Les dernières trouvailles</h2>
+</div>
+<button class="text-button" id="openReportList" type="button">Partager une disponibilité <svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"></path></svg></button>
+</div>
+<p class="demo-notice" id="communityStatus" role="status">Chargement des signalements de la communauté…</p>
+<div id="stockGrid" class="stock-grid"></div>
+<div id="emptyState" class="empty-state" hidden>
+<svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg><h3>Le prochain point peut être le vôtre.</h3>
+<p>Aucune disponibilité ne correspond à cette recherche.<br>Essayez une autre ville ou partagez une trouvaille.</p>
+<button type="button" class="btn btn-red" data-open-report>Signaler un produit</button>
+</div>
+<p class="vote-disclaimer">Les avis des membres aident à vérifier les disponibilités. Ils ne garantissent pas le stock en temps réel.</p></section>
+<section class="section how" id="fonctionnement"><div class="how-heading">
+<p class="eyebrow">ENTRE COLLECTIONNEURS</p>
+<h2>Une trouvaille utile<br>à tout le monde.</h2>
+<button class="text-button" id="openReportHero" type="button">Contribuer à la carte <svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"></path></svg></button>
+</div>
+<div class="steps">
+<article><span>01</span><div>
+<b>Vous repérez</b><p>Un booster, un coffret ou une collection disponible dans un magasin.</p>
+</div></article><article><span>02</span><div>
+<b>Vous partagez</b><p>Choisissez l’article, indiquez le magasin et ajoutez les informations utiles.</p>
+</div></article><article><span>03</span><div>
+<b>La communauté vérifie</b><p>Les autres membres confirment la disponibilité ou signalent une rupture.</p>
+</div></article>
+</div></section></main><footer><a class="brand small" href="#accueil">PokéStock <span>France</span></a><p>Par des collectionneurs, pour des collectionneurs.</p>
+<small>Projet indépendant, non affilié à The Pokémon Company, Nintendo ou Game Freak.</small></footer><nav class="mobile-nav" aria-label="Navigation mobile"><button type="button" data-view="map" class="is-active" aria-pressed="true"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z"></path><path d="M9 3v15M15 6v15"></path></svg><span>Carte</span></button><button type="button" data-view="list" aria-pressed="false"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg><span>Disponibilités</span></button><button type="button" data-open-report class="mobile-report"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span>Signaler</span></button><button type="button" id="mobileAccount"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21v-2a8 8 0 0 1 16 0v2"></path></svg><span>Compte</span></button></nav><div class="modal" id="authModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-auth></div>
     <form id="authForm" class="modal-card auth-card">
       <button type="button" class="modal-close" data-close-auth aria-label="Fermer">×</button>
-      <span class="eyebrow dark">👤 Compte PokéStock</span>
+      <span class="eyebrow dark">Compte PokéStock</span>
       <h2 id="authTitle">Se connecter</h2>
       <p class="modal-intro">Un compte est nécessaire pour publier des photos et des signalements visibles par la communauté.</p>
       <label id="authNameWrap" hidden><span>Pseudo *</span><input id="authName" maxlength="50" autocomplete="nickname" placeholder="Pseudo public"></label>
@@ -155,51 +116,50 @@
     <div class="modal-backdrop" data-close-admin></div>
     <section class="modal-card admin-modal-card" role="dialog" aria-modal="true" aria-label="Administration PokéStock">
       <button type="button" class="modal-close" data-close-admin aria-label="Fermer">×</button>
-      <span class="eyebrow dark">🛡️ ADMINISTRATION</span>
+      <span class="eyebrow dark">ADMINISTRATION</span>
       <h2>Gestion des signalements</h2>
       <p class="modal-intro">Modifie ou supprime les signalements de boutiques. Le catalogue et les photos sont gérés dans une page séparée.</p>
-      <a class="btn btn-blue admin-photo-navigation" href="admin.html#gallery">🖼️ Ouvrir la photothèque des articles ↗</a>
-      <label class="admin-search-label">🔎 Rechercher un référencement
-        <input id="adminSearch" type="search" placeholder="Magasin, produit, ville…" autocomplete="off">
+      <a class="btn btn-blue admin-photo-navigation" href="admin.html#gallery">Ouvrir la photothèque des articles ↗</a>
+      <label class="admin-search-label">Rechercher un référencement<input id="adminSearch" type="search" placeholder="Magasin, produit, ville…" autocomplete="off">
       </label>
       <p id="adminStatus" class="admin-status" role="status"></p>
       <section class="admin-catalog-media" id="adminCatalogMedia">
-        <h3>🖼️ Images du catalogue</h3>
+        <h3>Images du catalogue</h3>
         <p>Ajoute une image seulement si tu détiens les droits ou une autorisation explicite permettant sa diffusion sur ce site. À défaut, nous affichons un visuel neutre.</p>
         <label><span>Rechercher une référence</span><input id="adminCatalogSearch" type="search" placeholder="Ex. booster 151, Noctali, ME06…"></label>
         <label><span>Référence / art set</span><select id="adminCatalogVariant"><option value="">Chargement du catalogue…</option></select></label>
         <label><span>Image JPEG/PNG à importer (10 Mo maximum)</span><input id="adminCatalogPhoto" type="file" accept="image/*"></label>
         <label><span>Justificatif de l'autorisation *</span><textarea id="adminCatalogRights" maxlength="240" placeholder="Ex. Photo originale prise par moi, droits d'utilisation du visuel accordés par..."></textarea></label>
         <label class="rights-check"><input id="adminCatalogRightsConfirm" type="checkbox"> Je confirme avoir le droit de publier cette image dans le catalogue.</label>
-        <button class="btn btn-blue" type="button" id="adminUploadCatalogPhoto">📤 Ajouter ce visuel</button>
+        <button class="btn btn-blue" type="button" id="adminUploadCatalogPhoto">Ajouter ce visuel</button>
         <p id="adminCatalogStatus" role="status" class="admin-status"></p>
         <div class="catalog-media-coverage">
-          <h4>📊 Couverture du catalogue</h4>
+          <h4>Couverture du catalogue</h4>
           <p id="catalogPhotoCoverage" aria-live="polite">Chargement des photographies du catalogue…</p>
           <progress id="catalogPhotoProgress" value="0" max="100"></progress>
           <label><span>Afficher les références</span><select id="catalogMediaFilter">
-            <option value="missing">📷 Sans photo (prioritaires)</option>
+            <option value="missing">Sans photo (prioritaires)</option>
             <option value="all">Toutes les variantes</option>
-            <option value="done">✅ Avec photo</option>
+            <option value="done">Avec photo</option>
           </select></label>
           <label><span>Rechercher</span><input id="catalogMediaSearch" type="search" placeholder="Ex. ETB, Méga-Lucario, 151"></label>
           <div id="catalogMediaMissingList" class="catalog-media-missing"></div>
           <button type="button" id="catalogMediaMore" class="btn btn-white" hidden>Afficher davantage</button>
-          <button type="button" id="catalogMediaExport" class="btn btn-white">📥 Exporter les photos manquantes (CSV)</button>
+          <button type="button" id="catalogMediaExport" class="btn btn-white">Exporter les photos manquantes (CSV)</button>
         </div>
         <section class="catalog-media-bulk">
-          <h4>📚 Ajouter plusieurs photographies</h4>
+          <h4>Ajouter plusieurs photographies</h4>
           <p>Prépare tes images nommées avec l'identifiant exact de la variante (ex. <code>151-upc-mew.jpg</code>). Les fichiers reconnus seront associés automatiquement ; vérifie toujours l'attribution avant l'envoi.</p>
           <p><strong>Autorisation :</strong> les champs « Justificatif » et « Je confirme avoir le droit » ci-dessus s’appliquent aussi à cet import groupé.</p>
           <label><span>Choisir jusqu'à 25 photos</span><input id="catalogBulkFiles" type="file" accept="image/*" multiple></label>
           <div id="catalogBulkQueue" class="catalog-bulk-queue"></div>
           <label class="rights-check"><input id="catalogBulkOverwrite" type="checkbox"> Autoriser le remplacement de photographies existantes</label>
-          <button type="button" class="btn btn-blue" id="catalogBulkUploadBtn" disabled>📤 Importer les photos sélectionnées</button>
+          <button type="button" class="btn btn-blue" id="catalogBulkUploadBtn" disabled>Importer les photos sélectionnées</button>
           <p id="catalogBulkStatus" class="admin-status" role="status"></p>
         </section>
       </section>
       <section class="catalog-moderate-pending">
-        <h3>🧑‍🤝‍🧑 Photos proposées par la communauté</h3>
+        <h3>Photos proposées par la communauté</h3>
         <p>Vérifie l'image, la référence et les droits avant de la rendre visible.</p>
         <div id="catalogPendingPhotos" class="catalog-pending-photos"></div>
         <p id="catalogPendingStatus" class="admin-status" role="status"></p>
@@ -208,7 +168,7 @@
 
       <div id="adminList" class="admin-report-list"></div>
       <form id="adminEditForm" class="admin-edit-form" hidden>
-        <h3>✏️ Modifier le référencement</h3>
+        <h3>Modifier le référencement</h3>
         <p id="adminEditingId" class="admin-edit-label"></p>
         <div class="form-grid">
           <label><span>Magasin *</span><input name="store" required maxlength="140"></label>
@@ -219,19 +179,19 @@
           <label><span>Quantité *</span><input name="qty" type="number" min="1" max="999" required></label>
           <label class="wide"><span>Adresse complète *</span><input name="address" required maxlength="240"></label>
           <div class="address-picker wide">
-            <button type="button" class="btn btn-blue" id="adminFindAddress">📍 Vérifier une nouvelle adresse</button>
+            <button type="button" class="btn btn-blue" id="adminFindAddress">Vérifier une nouvelle adresse</button>
             <select id="adminAddressOptions" hidden aria-label="Choisir la nouvelle adresse"></select>
             <p id="adminAddressStatus">Si tu modifies l’adresse ou la ville, utilise la recherche pour actualiser les coordonnées.</p>
           </div>
           <label class="wide"><span>Modération</span><select name="status">
-            <option value="pending">🟠 Non vérifié</option>
-            <option value="approved">✅ Approuvé</option>
-            <option value="rejected">⛔ Refusé (masqué du site)</option>
+            <option value="pending">Non vérifié</option>
+            <option value="approved">Approuvé</option>
+            <option value="rejected">Refusé (masqué du site)</option>
           </select></label>
         </div>
         <div class="admin-edit-actions">
           <button class="btn btn-white" type="button" id="adminCancelEdit">Annuler</button>
-          <button class="btn btn-red" type="submit" id="adminSaveEdit">💾 Enregistrer</button>
+          <button class="btn btn-red" type="submit" id="adminSaveEdit">Enregistrer</button>
         </div>
       </form>
     </section>
@@ -239,22 +199,24 @@
 
   <div class="modal" id="reportModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-modal></div>
-    <form class="modal-card" id="reportForm">
+    <form class="modal-card" id="reportForm" novalidate="novalidate">
       <button type="button" class="modal-close" data-close-modal aria-label="Fermer">×</button>
-      <span class="eyebrow dark">📸 Nouveau signalement</span>
+      <span class="eyebrow dark">Nouveau signalement</span>
       <h2>Signaler un produit</h2>
-      <p class="modal-intro">🌍 Pour publier un signalement visible par tous, connecte-toi à ton compte. Sélectionne un produit du catalogue et une adresse vérifiée. La preuve photo est facultative et privée. Les stocks signalés ne sont pas garantis.</p>
+      <p class="modal-intro">Un produit, un magasin, quelques informations. Votre photo de preuve est facultative et reste privée.</p>
 
-      <div class="form-grid">
-        <label><span>Magasin *</span><input name="store" required maxlength="140" placeholder="Ex. Carrefour Market"></label>
-        <label><span>Ville *</span><input name="city" id="storeCity" required maxlength="120" placeholder="Ex. Lille"></label>
-        <div class="catalog-picker wide">
-          <p class="catalog-intro">🎴 Choisis la référence exacte. L'image du catalogue remplacera la photo prise en magasin lorsque nous disposerons d'un visuel autorisé.</p>
+      <ol class="report-progress" aria-label="Étapes du signalement">
+<li><button type="button" data-report-step-target="0" aria-current="step"><span>1</span>Le produit</button></li>
+<li><button type="button" data-report-step-target="1"><span>2</span>Le magasin</button></li>
+<li><button type="button" data-report-step-target="2"><span>3</span>Confirmer</button></li>
+</ol>
+<section class="report-step" data-report-step="0" aria-label="Étape 1 : le produit"><div class="catalog-picker wide">
+          <p class="catalog-intro">Choisis la référence exacte. L'image du catalogue remplacera la photo prise en magasin lorsque nous disposerons d'un visuel autorisé.</p>
           <div class="catalog-picker-grid">
             <label><span>Extension / Série *</span>
-              <input id="catalogSeriesSearch" type="search" placeholder="🔎 Nom ou code : 151, ME03, Évolution..." autocomplete="off">
+              <input id="catalogSeriesSearch" type="search" placeholder="Nom ou code : 151, ME03, Évolution..." autocomplete="off">
               <select id="catalogSeries" required><option value="">Chargement du catalogue…</option></select>
-              <small>🎉 30ᵉ Anniversaire en premier, puis sorties récentes vers anciennes. 🔜 : extension à venir.</small>
+              <small>30ᵉ Anniversaire en premier, puis sorties récentes vers anciennes.  : extension à venir.</small>
             </label>
             <label><span>Type de produit *</span><select id="catalogType" required disabled><option value="">Choisir une série</option></select></label>
             <label><span>Article *</span><select id="catalogProduct" required disabled><option value="">Choisir un type</option></select></label>
@@ -262,18 +224,19 @@
           </div>
           <div id="catalogPreview" class="catalog-preview" aria-live="polite">
             <img id="catalogPreviewImage" src="catalog-placeholder.svg" alt="Visuel indicatif de catalogue">
-            <div><strong id="catalogPreviewTitle">Choisis une référence</strong>
+            <div>
+<strong id="catalogPreviewTitle">Choisis une référence</strong>
               <p id="catalogPreviewMessage">Les références sont documentées par leur fiche source. Les visuels protégés ne sont pas reproduits sans autorisation.</p>
-              <a id="catalogSourceLink" href="#" target="_blank" rel="noopener noreferrer" hidden>🔎 Voir la référence sur le site source</a>
+              <a id="catalogSourceLink" href="#" target="_blank" rel="noopener noreferrer" hidden>Voir la référence sur le site source</a>
             </div>
           </div>
           <details class="catalog-contribute" id="catalogContribute" hidden>
-            <summary>📸 Tu possèdes une photo de cette référence ? Propose-la au catalogue</summary>
+            <summary>Tu possèdes une photo de cette référence ? Propose-la au catalogue</summary>
             <p>Une photo prise par toi, centrée sur le produit, sans personnes ni informations personnelles. Elle restera privée tant qu'un administrateur n'aura pas vérifié sa publication.</p>
             <label><span>Photo de l'article (10 Mo max.)</span><input id="catalogUserPhoto" type="file" accept="image/*"></label>
             <label><span>Origine et droits de la photo *</span><input id="catalogUserRights" maxlength="240" placeholder="Ex. Photo prise par moi, droit de la partager"></label>
             <label class="rights-check"><input id="catalogUserConsent" type="checkbox"> J'ai pris cette photo ou j'ai obtenu les autorisations nécessaires à sa publication.</label>
-            <button type="button" id="catalogProposePhotoBtn" class="btn btn-blue">📤 Proposer ce visuel</button>
+            <button type="button" id="catalogProposePhotoBtn" class="btn btn-blue">Proposer ce visuel</button>
             <p id="catalogProposalStatus" class="catalog-proposal-status" role="status"></p>
           </details>
           <input type="hidden" name="catalogVariantId" id="catalogVariantId" value="">
@@ -282,36 +245,42 @@
             <input name="product" maxlength="200" readonly>
           </div>
         </div>
+        </section><section class="report-step" data-report-step="1" aria-label="Étape 2 : le magasin" hidden><div class="form-grid">
+<label><span>Magasin *</span><input name="store" required maxlength="140" placeholder="Ex. Carrefour Market"></label>
+        <label><span>Ville *</span><input name="city" id="storeCity" required maxlength="120" placeholder="Ex. Lille"></label>
         <label><span>Prix (€)</span><input name="price" type="number" min="0" step="0.01" placeholder="29.99"></label>
         <label><span>Quantité vue</span><input name="quantity" type="number" min="1" max="999" value="1"></label>
         <label class="wide"><span>Adresse complète du magasin *</span><input name="address" id="storeAddress" required maxlength="240" placeholder="Ex. 12 rue Nationale, Lille" autocomplete="street-address"></label>
         <div class="address-picker wide">
-          <button type="button" class="btn btn-blue" id="verifyAddress">📍 Rechercher l'adresse</button>
+          <button type="button" class="btn btn-blue" id="verifyAddress">Rechercher l'adresse</button>
           <select id="addressResult" aria-label="Choisir l'adresse exacte du magasin" hidden></select>
           <p id="addressStatus" role="status">Recherche l'adresse, puis sélectionne le résultat correspondant à ton magasin.</p>
         </div>
-        <label class="wide"><span>📸 Photo de preuve en magasin (facultative, 10 Mo maximum)</span><input name="photo" id="photoInput" type="file" accept="image/*"></label>
+        </div></section><section class="report-step" data-report-step="2" aria-label="Étape 3 : confirmer" hidden><div class="form-grid">
+<label class="wide"><span>Photo de preuve en magasin (facultative, 10 Mo maximum)</span><input name="photo" id="photoInput" type="file" accept="image/*"></label>
         <p class="wide catalog-help">La photo prise en magasin reste privée et n'est pas affichée publiquement. Le catalogue fournit le visuel du produit lorsqu'une image autorisée est disponible.</p>
-        <div class="photo-preview wide" id="photoPreview"><span>🖼️ Aperçu de la photo</span></div>
+        <div class="photo-preview wide" id="photoPreview"><span>Aperçu de la photo</span></div>
       </div>
-
-      <input type="hidden" name="lat" id="reportLat">
+<label class="proof-confirm"><input id="proofConfirm" type="checkbox" required> Je confirme avoir vu ce produit en magasin. Si j’ajoute une preuve photo, je dispose de l’autorisation nécessaire pour la transmettre à l’équipe.</label>
+      <p class="coord-help">Le point sur la carte sera placé à l’adresse validée du magasin, jamais à ta position personnelle. Ne photographie pas les personnes présentes en rayon.</p>
+      </section><input type="hidden" name="lat" id="reportLat">
       <input type="hidden" name="lng" id="reportLng">
-      <label class="proof-confirm"><input id="proofConfirm" type="checkbox" required> Je confirme avoir vu ce produit en magasin. Si j’ajoute une preuve photo, je dispose de l’autorisation nécessaire pour la transmettre à l’équipe.</label>
-      <p class="coord-help">📍 Le point sur la carte sera placé à l’adresse validée du magasin, jamais à ta position personnelle. Ne photographie pas les personnes présentes en rayon.</p>
-      <button class="btn btn-red full" type="submit">Publier le signalement</button>
-    </form>
+      <div class="report-actions">
+<button class="btn btn-white" id="reportPrevious" type="button" hidden>Retour</button><button class="btn btn-red" id="reportNext" type="button">Continuer</button><button class="btn btn-red" type="submit" id="publishReport" hidden="hidden">Publier le signalement</button>
+    </div>
+</form>
   </div>
 
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js?v=20261026-dates-v2"></script>
-  <script src="community.js?v=20261026-popupfix-v2"></script>
+  <script src="script.js?v=20261027-design-v1"></script>
+  <script src="community.js?v=20261027-design-v1"></script>
   <script src="moderation.js?v=20261026-admintabs-v1"></script>
   <script src="catalog-visuals.js?v=20261027-archive-v1"></script>
   <script src="catalog-ui.js?v=20261027-archive-v1"></script>
   <script src="catalog-photo-workflow.js?v=20261026-admintabs-v1"></script>
-  <script type="module" src="auth-ui.js?v=20261026-admintabs-v1"></script>
+  <script type="module" src="auth-ui.js?v=20261027-design-v1"></script>
+<html><head><script src="interface.js?v=20261027-design-v1"></script></head></html>
 </body>
 </html>

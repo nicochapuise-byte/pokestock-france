@@ -47,7 +47,7 @@ window.pokestockApi=api;
 function status(text){$("#authStatus").textContent=text;}
 function renderAuth(){
   const user=currentUser;
-  $("#accountBtn").textContent=user?"👤 "+(user.name||"Mon compte"):"👤 Connexion";
+  $("#accountBtn").textContent=user?(user.name||"Mon compte"):"Connexion";
   $("#authTitle").textContent=user?"Mon compte":signup?"Créer un compte":"Se connecter";
   $("#authNameWrap").hidden=!signup||!!user;
   $("#authEmail").disabled=!!user;

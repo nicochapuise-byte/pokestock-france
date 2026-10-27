@@ -4,9 +4,9 @@ const stockPendingVotes=new Set();
 const stockApiRoot="https://br-nameless-math-b9dyokxp-pokestock.compute.c-7.eu-central-1.aws.neon.tech";
 function communityStockStatus(report){
   const counts=report?.votes||{};
-  if(counts.state==="confirmed")return {text:"✅ Confirmé par la communauté",css:"confirmed"};
-  if(counts.state==="out_of_stock")return {text:"❌ Rupture signalée",css:"out-of-stock"};
-  return {text:"🟠 Non vérifié",css:"unverified"};
+  if(counts.state==="confirmed")return {text:"Confirmé par la communauté",css:"confirmed"};
+  if(counts.state==="out_of_stock")return {text:"Rupture signalée",css:"out-of-stock"};
+  return {text:"À confirmer",css:"unverified"};
 }
 function redrawCommunityCards(items){
   const cards=document.querySelectorAll("#stockGrid .stock-card");
@@ -25,14 +25,14 @@ function redrawCommunityCards(items){
     const summary=document.createElement("div");
     summary.className="community-vote-summary";
     const line=document.createElement("p");
-    line.textContent="✅ "+yes+" confirmation(s) · ❌ "+no+" rupture(s)";
+    line.textContent=yes+" confirmation(s) · "+no+" rupture(s)";
     summary.appendChild(line);
     const buttons=document.createElement("div");
     buttons.className="community-vote-buttons";
     const own=stockVotesByMe[r.id]||"";
     for(const [choice,title,cls] of [
-      ["available","✅ Disponible","yes"],
-      ["unavailable","❌ Rupture de stock","no"]
+      ["available","Disponible","yes"],
+      ["unavailable","Rupture de stock","no"]
     ]){
       const b=document.createElement("button");
       b.type="button";
@@ -82,7 +82,7 @@ loadCommunityReports=async function(){
   const result=await originalCommunityLoad();
   const status=document.getElementById("communityStatus");
   if(status&&remoteReports.length){
-    status.textContent="🌍 "+remoteReports.length+" signalement(s) communautaire(s) actifs. Deux votes indépendants et majoritaires sont requis pour confirmer une disponibilité ou une rupture. 🧪 Les six exemples sont fictifs. Les votes ne garantissent pas le stock.";
+    status.textContent=remoteReports.length+" signalement(s) actif(s). Une disponibilité est confirmée par au moins deux avis indépendants et majoritaires.";
   }
   return result;
 };

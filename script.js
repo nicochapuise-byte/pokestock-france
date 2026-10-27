@@ -35,6 +35,9 @@ const API_BASE="https://br-nameless-math-b9dyokxp-pokestock.compute.c-7.eu-centr
 let remoteReports=[];
 let reports = [...seedReports.map(r=>({...r,demo:true})), ...readLocalReports()];
 let selectedSeries = new Set();
+let showExamples = false;
+let onlyRecent = false;
+let lastReportTrigger = null;
 let photoData = "";
 let verifiedAddress = null;
 let addressMatches = [];
@@ -50,7 +53,7 @@ function escapeHtml(value){return String(value??"").replace(/[&<>"\x27]/g,c=>({"
 function safeImage(src){const value=String(src||"");return value==="catalog-upc151-chat.svg"||/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/|^https:\/\/[a-z0-9.-]+\.neon\.tech\/|^data:image\/(?:png|jpeg|webp);base64,/i.test(value)?value:"catalog-placeholder.svg";}
 function reportHours(r){return r.createdAt?Math.max(0,(Date.now()-Date.parse(r.createdAt))/3600000):(r.hours||0);}
 function ageClass(hours){ return hours<24?"fresh":hours<=72?"medium":"old"; }
-function ageText(hours){ return hours<24?(hours<1?"À l'instant":"Il y a "+hours+" h"):hours<=72?"Il y a "+Math.round(hours/24)+" j":"À vérifier"; }
+function ageText(hours){ return hours<24?(hours<1?"À l'instant":"Il y a "+Math.floor(hours)+" h"):hours<=72?"Il y a "+Math.round(hours/24)+" j":"À vérifier"; }
 
 function initFallbackMap(){
   const el = document.getElementById("map");
@@ -165,7 +168,7 @@ function filteredReports(){
   return reports.filter(r=>{
     const seriesOk=!selectedSeries.size||selectedSeries.has(r.series);
     const qOk=!q||[r.store,r.city,r.product,seriesById(r.series).name].join(" ").toLowerCase().includes(q);
-    return seriesOk&&qOk;
+    return seriesOk&&qOk&&(!r.demo||showExamples)&&(!onlyRecent||reportHours(r)<24);
   });
 }
 
@@ -205,7 +208,7 @@ function renderFilters(){
       });
       const dot=document.createElement("i");dot.className="series-swatch";dot.style.background=entry.color;
       const text=document.createElement("span");
-      text.textContent=(entry.id==="me30"?"🎉 ":"")+entry.name+(entry.code?" · "+entry.code:"")+(entry.releaseDate?" · "+entry.releaseDate.slice(0,10).split("-").reverse().join("/"):"");
+      text.textContent=entry.name+(entry.code?" · "+entry.code:"");
       label.append(checkbox,dot,text);
       holder.appendChild(label);
     });
@@ -250,16 +253,16 @@ function buildProductPopup(report, options={}){
   const city=escapeHtml(report.city||"");
   const artSet=report.artSet?escapeHtml(report.artSet):"";
   const status=escapeHtml(options.status||(
-    report.demo?"🧪 Exemple fictif":report.votes?.state==="confirmed"?"✅ Confirmé par des membres":
-    report.votes?.state==="out_of_stock"?"❌ Rupture signalée":"🟠 Non vérifié"
+    report.demo?"Exemple fictif":report.votes?.state==="confirmed"?"Confirmé par des membres":
+    report.votes?.state==="out_of_stock"?"Rupture signalée":"À confirmer"
   ));
   const image=popupProductPhoto(report);
   const realProductPhoto=image!=="catalog-placeholder.svg"&&!report.demo;
-  const caption=realProductPhoto?"📸 Photo du produit":report.demo?"Illustration de démonstration":"Visuel indicatif";
+  const caption=realProductPhoto?"Photo du produit":report.demo?"Illustration de démonstration":"Visuel indicatif";
   const amount=report.price!==null&&report.price!==undefined&&report.price!==""&&Number.isFinite(Number(report.price))
-    ?Number(report.price).toFixed(2)+" €":"Prix non indiqué";
+    ?new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(Number(report.price)):"Prix non indiqué";
   const counts=report.votes?
-    '<span class="popup-stock-votes">✅ '+(Number(report.votes.available)||0)+' · ❌ '+(Number(report.votes.unavailable)||0)+'</span>':"";
+    '<span class="popup-stock-votes">'+(Number(report.votes.available)||0)+' confirmation(s) · '+(Number(report.votes.unavailable)||0)+' rupture(s)</span>':"";
   return '<div class="popup-product-card">'+
     '<div class="popup-product-photo">'+
       '<img class="popup-product-image" src="'+escapeHtml(image)+'" alt="'+(realProductPhoto?"Photo du coffret : ":"Illustration pour ")+title+'" loading="eager">'+
@@ -267,8 +270,8 @@ function buildProductPopup(report, options={}){
     '</div>'+
     '<div class="popup-product-details">'+
       '<h3 class="popup-product-title">'+title+'</h3>'+
-      (artSet?'<span class="popup-product-artset">🎨 '+artSet+'</span>':"")+
-      '<p class="popup-product-store">📍 '+store+' · '+city+'</p>'+
+      (artSet?'<span class="popup-product-artset">'+artSet+'</span>':"")+
+      '<p class="popup-product-store">'+store+' · '+city+'</p>'+
       '<div class="popup-product-info"><span class="popup-product-status">'+status+'</span>'+counts+'</div>'+
       '<div class="popup-product-bottom"><span>'+escapeHtml(ageText(reportHours(report)))+'</span><b>'+escapeHtml(amount)+'</b></div>'+
       '<p class="popup-product-disclaimer">Stock déclaré par un membre ; disponibilité non garantie.</p>'+
@@ -318,14 +321,14 @@ function renderCards(items){
     const s=seriesById(r.series), age=ageClass(reportHours(r));
     return `<article class="stock-card">
       <div class="stock-image">
-        <span class="age-badge ${age}">${r.demo?"🧪 Exemple":r.status==="pending"?"🟠 Non vérifié":"🕒 "+ageText(reportHours(r))}</span>
+        <span class="age-badge ${age}">${r.demo?"Exemple fictif":r.status==="pending"?"À confirmer":ageText(reportHours(r))}</span>
         <img src="${popupProductPhoto(r)}" alt="Image du produit ou visuel de référence">
       </div>
       <div class="stock-body">
         <span class="stock-series" style="color:${s.color}">${escapeHtml(s.name)}</span>
-        <h3>${escapeHtml(r.product)}</h3>${r.artSet?`<p class="stock-artset">🎨 Art set : ${escapeHtml(r.artSet)}</p>`:""}
-        <p class="stock-place">📍 ${escapeHtml(r.store)} • ${escapeHtml(r.city)}</p>${r.address?`<p class="stock-address">${escapeHtml(r.address)}</p>`:""}
-        <div class="stock-meta"><span>Stock aperçu : <b>${r.qty||1}</b></span><b>${r.price?Number(r.price).toFixed(2)+" €":"—"}</b></div>
+        <h3>${escapeHtml(r.product)}</h3>${r.artSet?`<p class="stock-artset">${escapeHtml(r.artSet)}</p>`:""}
+        <p class="stock-place">${escapeHtml(r.store)} <span>· ${escapeHtml(r.city)}</span></p>${r.address?`<p class="stock-address">${escapeHtml(r.address)}</p>`:""}
+        <div class="stock-meta"><span>${r.qty||1} unité(s) aperçue(s)</span><b>${r.price!=null?new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(Number(r.price)):"Prix non renseigné"}</b></div>
       </div>
     </article>`;
   }).join("");
@@ -334,7 +337,7 @@ function renderCards(items){
 
 function updateStats(){
   $("#reportCount").textContent=reports.filter(r=>!r.demo).length;
-  $("#cityCount").textContent=new Set(reports.map(r=>r.city.toLowerCase())).size;
+  $("#cityCount").textContent=new Set(reports.filter(r=>!r.demo).map(r=>r.city.toLowerCase())).size;
   $("#seriesCount").textContent=series.length;
 }
 
@@ -343,17 +346,22 @@ function renderAll(){
   renderMap(items);
   renderCards(items);
   updateStats();
+  document.dispatchEvent(new CustomEvent("pokestock:results",{detail:{count:items.length,filters:selectedSeries.size,recent:onlyRecent,examples:showExamples}}));
 }
 
 function openModal(){
+  lastReportTrigger=document.activeElement;
   $("#reportModal").classList.add("open");
   $("#reportModal").setAttribute("aria-hidden","false");
   document.body.style.overflow="hidden";
+  document.dispatchEvent(new Event("pokestock:reportopen"));
+  requestAnimationFrame(()=>$("#catalogSeriesSearch")?.focus());
 }
 function closeModal(){
   $("#reportModal").classList.remove("open");
   $("#reportModal").setAttribute("aria-hidden","true");
   document.body.style.overflow="";
+  lastReportTrigger?.focus();
 }
 function toast(message){
   const el=$("#toast");el.textContent=message;el.classList.add("show");
@@ -453,11 +461,11 @@ async function loadCommunityReports(){
     remoteReports=data.reports.filter(r=>r&&Number.isFinite(Number(r.lat))&&Number.isFinite(Number(r.lng)))
       .map(r=>({...r,lat:Number(r.lat),lng:Number(r.lng),qty:Number(r.qty)||1}));
     reports=[...remoteReports,...readLocalReports(),...seedReports.map(r=>({...r,demo:true}))];
-    msg.textContent="🌍 "+remoteReports.length+" signalement(s) communautaire(s) en cours de validité. 🧪 Les 6 exemples affichés sur la carte sont fictifs. « Non vérifié » signifie que le stock est déclaré par un membre, sans garantie de disponibilité.";
+    msg.textContent=remoteReports.length+" signalement(s) communautaire(s) en cours de validité. Une disponibilité déclarée reste à confirmer avant de vous déplacer.";
     renderAll();
   }catch(err){
     console.warn("API PokéStock indisponible:",err);
-    msg.textContent="⚠️ Impossible de charger les stocks communautaires pour le moment. Les 6 exemples restent visibles. Actualise la page pour réessayer.";
+    msg.textContent="Les signalements ne se chargent pas pour le moment. Actualisez la page pour réessayer. Les exemples fictifs sont accessibles dans les filtres.";
   }
 }
 
@@ -469,6 +477,7 @@ function bindUI(){
   $("#seriesFilterSearch")?.addEventListener("input",renderFilters);
   $("#clearFilters").addEventListener("click",()=>{
     selectedSeries.clear();
+    onlyRecent=false;
     $$("#seriesFilters input").forEach(i=>i.checked=false);
     $("#searchInput").value="";
     const seriesQuery=$("#seriesFilterSearch");
