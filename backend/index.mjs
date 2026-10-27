@@ -2,6 +2,8 @@
 // Les identifiants Postgres et S3 sont injectés par Neon, jamais exposés au navigateur.
 import { randomUUID, createHash, createHmac, createPublicKey, verify as verifySignature } from "node:crypto";
 
+import { normalizeWebsite, resolveCommune } from "./seller-location.mjs";
+
 const SITE_ORIGIN="https://nicochapuise-byte.github.io";
 const ALLOWED_SERIES=new Set(["ev","151","prism","paldea","blackwhite","mega"]);
 const DB_URL=process.env.DATABASE_URL;
@@ -425,9 +427,9 @@ export default {
         if(!user)return json({error:"Connexion nécessaire."},401,request);
         if(!await isSiteAdmin(user))return json({error:"Accès réservé à l'administration."},403,request);
         const rows=await sql(
-          "SELECT r.id,r.store_name AS store,r.store_address AS address,r.city,r.series_id AS series,r.product_name AS product,r.price_eur AS price,r.quantity AS qty,r.latitude AS lat,r.longitude AS lng,r.status,r.photo_object_key AS proof_key,r.created_at AS created_at, d.removed_at AS removed_at FROM public.stock_reports r LEFT JOIN public.stock_report_removals d ON d.report_id=r.id ORDER BY r.created_at DESC LIMIT 150"
+          "SELECT r.id,r.store_name AS store,r.store_address AS address,r.seller_type AS seller_type,r.website_url AS website_url,r.commune_code AS commune_code,r.city,r.series_id AS series,r.product_name AS product,r.price_eur AS price,r.quantity AS qty,r.latitude AS lat,r.longitude AS lng,r.status,r.photo_object_key AS proof_key,r.created_at AS created_at, d.removed_at AS removed_at FROM public.stock_reports r LEFT JOIN public.stock_report_removals d ON d.report_id=r.id ORDER BY r.created_at DESC LIMIT 150"
         );
-        return json({reports:rows.map(({proof_key,...row})=>({...row,proofImage:proof_key?photoUrl(proof_key,"proofs"):null}))},200,request);
+        return json({reports:rows.map(({proof_key,...row})=>({...row,sellerType:row.seller_type,websiteUrl:row.website_url,communeCode:row.commune_code,proofImage:proof_key?photoUrl(proof_key,"proofs"):null}))},200,request);
       }
       const adminEdit=/^\/admin\/reports\/([0-9a-f-]{36})$/.exec(url.pathname);
       if(adminEdit&&request.method==="PATCH"){
@@ -436,21 +438,31 @@ export default {
         if(!await isSiteAdmin(user))return json({error:"Accès réservé à l'administration."},403,request);
         const id=adminEdit[1];
         if(!isReportId(id))return json({error:"Identifiant invalide."},400,request);
-        const before=await sql("SELECT store_name AS store,store_address AS address,city,series_id AS series,product_name AS product,price_eur AS price,quantity AS qty,latitude AS lat,longitude AS lng,status FROM public.stock_reports WHERE id=$1::uuid LIMIT 1",[id]);
+        const before=await sql("SELECT seller_type,website_url,commune_code,store_name AS store,store_address AS address,city,series_id AS series,product_name AS product,price_eur AS price,quantity AS qty,latitude AS lat,longitude AS lng,status FROM public.stock_reports WHERE id=$1::uuid LIMIT 1",[id]);
         if(!before.length)return json({error:"Signalement introuvable."},404,request);
         const raw=await request.text();
         if(raw.length>5000)return json({error:"Requête trop volumineuse."},413,request);
         let payload;
         try{payload=JSON.parse(raw)}catch{return json({error:"Données incorrectes."},400,request);}
+        const sellerType=before[0].seller_type||'professional';
+        let commune=null;
+        if(sellerType==='private'){
+          const code=payload.communeCode||before[0].commune_code;
+          commune=await resolveCommune(code);
+          if(!commune||(!payload.communeCode&&payload.city!==before[0].city))return json({error:"Sélectionnez une commune valide pour ce particulier."},400,request);
+          Object.assign(payload,commune);
+        }
+        const websiteUrl=sellerType==='private'?null:normalizeWebsite(payload.websiteUrl===undefined?before[0].website_url:payload.websiteUrl);
+        if(websiteUrl===false)return json({error:"Lien de boutique invalide : utilisez une URL http ou https."},400,request);
         const updated=editedValues(payload);
         if(!updated)return json({error:"Vérifie les champs, le statut et les coordonnées."},400,request);
         const seriesRows=await sql("SELECT id FROM public.catalog_series WHERE id=$1 AND is_active=true LIMIT 1",[updated.series]);
         if(!seriesRows.length)return json({error:"Extension inconnue."},400,request);
-        const verified=await validateAddress(updated.address,updated.city,updated.lat,updated.lng);
+        const verified=sellerType==='private'?!!commune:await validateAddress(updated.address,updated.city,updated.lat,updated.lng);
         if(!verified)return json({error:"Adresse invalide. Choisis une adresse vérifiée."},400,request);
         await sql(
-          "UPDATE public.stock_reports SET catalog_variant_id=CASE WHEN series_id=$5 AND product_name=$6 THEN catalog_variant_id ELSE NULL END, store_name=$2,store_address=$3,city=$4,series_id=$5,product_name=$6,price_eur=$7,quantity=$8,latitude=$9,longitude=$10,status=$11 WHERE id=$1::uuid",
-          [id,updated.store,updated.address,updated.city,updated.series,updated.product,updated.price,updated.qty,updated.lat,updated.lng,updated.status]
+          "UPDATE public.stock_reports SET catalog_variant_id=CASE WHEN series_id=$5 AND product_name=$6 THEN catalog_variant_id ELSE NULL END, store_name=$2,store_address=$3,city=$4,series_id=$5,product_name=$6,price_eur=$7,quantity=$8,latitude=$9,longitude=$10,status=$11,website_url=$12,commune_code=$13 WHERE id=$1::uuid",
+          [id,updated.store,updated.address,updated.city,updated.series,updated.product,updated.price,updated.qty,updated.lat,updated.lng,updated.status,websiteUrl,commune?.communeCode||null]
         );
         try{
           await sql("INSERT INTO public.stock_report_edits(report_id,edited_by,old_values,new_values) VALUES ($1::uuid,$2,$3::jsonb,$4::jsonb)",
@@ -476,8 +488,8 @@ export default {
         return json({ok:true,id,message:"Signalement supprimé de la carte et des disponibilités."},200,request);
       }
       if(url.pathname==="/reports"&&request.method==="GET"){
-        const rows=await sql("SELECT r.id,r.store_name,r.store_address,r.city,r.series_id,r.product_name,r.price_eur,r.quantity,r.latitude,r.longitude,r.photo_object_key,r.catalog_variant_id,cv.variant_name,cv.image_object_key AS catalog_image_key,cv.image_approved,cp.source_url AS catalog_source_url,r.status,r.created_at,COALESCE(v.available_count,0)::int AS available_count,COALESCE(v.unavailable_count,0)::int AS unavailable_count FROM public.stock_reports r LEFT JOIN public.catalog_variants cv ON cv.id=r.catalog_variant_id LEFT JOIN public.catalog_products cp ON cp.id=cv.product_id LEFT JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE verdict='available') AS available_count,COUNT(*) FILTER (WHERE verdict='unavailable') AS unavailable_count FROM public.stock_votes WHERE report_id=r.id) v ON TRUE WHERE r.status IN ('approved','pending') AND r.expires_at>now() AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) ORDER BY r.created_at DESC LIMIT 100");
-        return json({reports:rows.map(r=>({id:r.id,store:r.store_name,address:r.store_address,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,img:r.catalog_image_key&&r.image_approved?photoUrl(r.catalog_image_key,"catalog-images"):null,catalogVariantId:r.catalog_variant_id,artSet:r.variant_name||null,catalogSourceUrl:r.catalog_source_url||null,proofProvided:!!r.photo_object_key,votes:voteSummary(r.available_count,r.unavailable_count)}))},200,request);
+        const rows=await sql("SELECT r.id,r.store_name,r.store_address,r.seller_type,r.website_url,r.commune_code,r.city,r.series_id,r.product_name,r.price_eur,r.quantity,r.latitude,r.longitude,r.photo_object_key,r.catalog_variant_id,cv.variant_name,cv.image_object_key AS catalog_image_key,cv.image_approved,cp.source_url AS catalog_source_url,r.status,r.created_at,COALESCE(v.available_count,0)::int AS available_count,COALESCE(v.unavailable_count,0)::int AS unavailable_count FROM public.stock_reports r LEFT JOIN public.catalog_variants cv ON cv.id=r.catalog_variant_id LEFT JOIN public.catalog_products cp ON cp.id=cv.product_id LEFT JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE verdict='available') AS available_count,COUNT(*) FILTER (WHERE verdict='unavailable') AS unavailable_count FROM public.stock_votes WHERE report_id=r.id) v ON TRUE WHERE r.status IN ('approved','pending') AND r.expires_at>now() AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) ORDER BY r.created_at DESC LIMIT 100");
+        return json({reports:rows.map(r=>({id:r.id,store:r.seller_type==='private'?'Particulier':r.store_name,address:r.seller_type==='private'?null:r.store_address,sellerType:r.seller_type,websiteUrl:r.seller_type==='private'?null:r.website_url,communeCode:r.commune_code,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,img:r.catalog_image_key&&r.image_approved?photoUrl(r.catalog_image_key,"catalog-images"):null,catalogVariantId:r.catalog_variant_id,artSet:r.variant_name||null,catalogSourceUrl:r.catalog_source_url||null,proofProvided:!!r.photo_object_key,votes:voteSummary(r.available_count,r.unavailable_count)}))},200,request);
       }
       if(url.pathname==="/me/votes"&&request.method==="GET"){
         const user=await authenticate(request);
@@ -526,8 +538,20 @@ export default {
         if(raw.length>1250000)return json({error:"Requête trop volumineuse."},413,request);
         let data;
         try{data=JSON.parse(raw)}catch{return json({error:"Données invalides."},400,request);}
+        // Legacy clients without a type remain professional; the new form requires a choice.
+        const sellerType=data.sellerType===undefined?'professional':data.sellerType;
+        if(!['professional','private'].includes(sellerType))return json({error:"Choisissez Professionnel ou Particulier."},400,request);
+        let commune=null;
+        if(sellerType==='private'){
+          commune=await resolveCommune(data.communeCode);
+          if(!commune)return json({error:"Sélectionnez une commune valide. Aucune adresse personnelle n'est acceptée."},400,request);
+          // Discard supplied street, free-text identity and precise location before persistence.
+          Object.assign(data,commune);
+        }
+        const websiteUrl=sellerType==='private'?null:normalizeWebsite(data.websiteUrl);
+        if(websiteUrl===false)return json({error:"Lien de boutique invalide : utilisez une URL http ou https."},400,request);
         if(!validText(data.store,140)||!validText(data.address,240)||!validText(data.city,120)||!validCoordinates(Number(data.lat),Number(data.lng)))
-          return json({error:"Vérifie les informations du magasin et son adresse."},400,request);
+          return json({error:"Vérifiez la boutique, sa commune et son adresse."},400,request);
         if(typeof data.catalogVariantId!=="string"||!/^[a-z0-9-]{2,120}$/.test(data.catalogVariantId))
           return json({error:"Sélectionne une série, un produit puis son art set dans le catalogue."},400,request);
         const references=await sql(
@@ -555,7 +579,7 @@ export default {
         if(dup.length)return json({error:"Tu as déjà signalé cette variante dans ce magasin aujourd'hui.",duplicate:true,existingId:dup[0].id},409,request);
         const count=await sql("SELECT count(*)::int AS n FROM public.stock_reports WHERE user_id=$1 AND created_at>now()-interval '24 hours'",[user]);
         if(Number(count[0]?.n)>=5)return json({error:"Maximum 5 signalements par jour pour ce compte."},429,request);
-        const addressOk=await validateAddress(data.address,data.city,Number(data.lat),Number(data.lng));
+        const addressOk=sellerType==='private'?!!commune:await validateAddress(data.address,data.city,Number(data.lat),Number(data.lng));
         if(!addressOk)return json({error:"Adresse non confirmée : choisis une adresse exacte dans les résultats."},400,request);
         let key=null;
         if(proof){
@@ -563,8 +587,8 @@ export default {
           await uploadPhoto(proof,key,"proofs");
         }
         const rows=await sql(
-          "INSERT INTO public.stock_reports (user_id,store_name,store_address,city,series_id,product_name,price_eur,quantity,latitude,longitude,photo_object_key,catalog_variant_id,status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'pending') RETURNING id,created_at",
-          [user,data.store.trim(),data.address.trim(),data.city.trim(),ref.series_id,ref.product_name,data.price,data.qty,data.lat,data.lng,key,ref.id]
+          "INSERT INTO public.stock_reports (user_id,store_name,store_address,city,series_id,product_name,price_eur,quantity,latitude,longitude,photo_object_key,catalog_variant_id,seller_type,website_url,commune_code,status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'pending') RETURNING id,created_at",
+          [user,data.store.trim(),data.address.trim(),data.city.trim(),ref.series_id,ref.product_name,data.price,data.qty,data.lat,data.lng,key,ref.id,sellerType,websiteUrl,commune?.communeCode||null]
         );
         return json({ok:true,id:rows[0]?.id,status:"pending",message:"Signalement enregistré avec la référence du catalogue. Photo de preuve privée facultative."},201,request);
       }

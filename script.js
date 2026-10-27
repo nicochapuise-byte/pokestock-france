@@ -249,6 +249,13 @@ function popupProductPhoto(report){
   const url=safeImage(report.img);
   return url||"catalog-placeholder.svg";
 }
+function sellerWebsiteLink(report){
+  if(report.sellerType==='private'||!report.websiteUrl)return '';
+  try{const url=new URL(report.websiteUrl);if(!['https:','http:'].includes(url.protocol)||url.username||url.password)return '';
+    return '<a class="seller-website" href="'+escapeHtml(url.href)+'" target="_blank" rel="noopener noreferrer">Site de la boutique ↗</a>';
+  }catch{return '';}
+}
+function sellerDetails(report){return report.sellerType==='private'?'<span class="seller-label">Particulier · Centre de la commune, localisation approximative</span>':report.sellerType==='professional'?'<span class="seller-label">Professionnel</span>':'';}
 function buildProductPopup(report, options={}){
   const title=escapeHtml(report.product||"Produit Pokémon");
   const store=escapeHtml(report.store||"Magasin non précisé");
@@ -273,7 +280,7 @@ function buildProductPopup(report, options={}){
     '<div class="popup-product-details">'+
       '<h3 class="popup-product-title">'+title+'</h3>'+
       (artSet?'<span class="popup-product-artset">'+artSet+'</span>':"")+
-      '<p class="popup-product-store">'+store+' · '+city+'</p>'+
+      '<p class="popup-product-store">'+(report.sellerType==='private'?'Particulier':store)+' · '+city+'</p>'+sellerDetails(report)+sellerWebsiteLink(report)+
       '<div class="popup-product-info"><span class="popup-product-status">'+status+'</span>'+counts+'</div>'+
       '<div class="popup-product-bottom"><span>'+escapeHtml(ageText(reportHours(report)))+'</span><b>'+escapeHtml(amount)+'</b></div>'+
       '<p class="popup-product-disclaimer">Stock déclaré par un membre ; disponibilité non garantie.</p>'+
@@ -329,7 +336,7 @@ function renderCards(items){
       <div class="stock-body">
         <span class="stock-series" style="color:${s.color}">${escapeHtml(s.name)}</span>
         <h3>${escapeHtml(r.product)}</h3>${r.artSet?`<p class="stock-artset">${escapeHtml(r.artSet)}</p>`:""}
-        <p class="stock-place">${escapeHtml(r.store)} <span>· ${escapeHtml(r.city)}</span></p>${r.address?`<p class="stock-address">${escapeHtml(r.address)}</p>`:""}
+        <p class="stock-place">${escapeHtml(r.sellerType==='private'?'Particulier':r.store)} <span>· ${escapeHtml(r.city)}</span></p>${sellerDetails(r)}${sellerWebsiteLink(r)}${r.sellerType!=='private'&&r.address?`<p class="stock-address">${escapeHtml(r.address)}</p>`:""}
         <div class="stock-meta"><span>${r.qty||1} unité(s) aperçue(s)</span><b>${r.price!=null?new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(Number(r.price)):"Prix non renseigné"}</b></div>
       </div>
     </article>`;
@@ -379,13 +386,27 @@ function approximateCoordinates(city){
 }
 
 
+function isPrivateSeller(){return $("#sellerType").value==="private";}
+let addressSearchSerial=0;
 function resetVerifiedAddress(){
-  verifiedAddress=null;
-  $("#reportLat").value="";
-  $("#reportLng").value="";
-  $("#addressResult").hidden=true;
-  $("#addressResult").replaceChildren();
-  $("#addressStatus").textContent="Recherche l'adresse, puis sélectionne le résultat correspondant au magasin.";
+  addressSearchSerial++;
+  verifiedAddress=null;addressMatches=[];
+  $("#reportLat").value="";$("#reportLng").value="";$("#reportCommuneCode").value="";
+  $("#addressResult").hidden=true;$("#addressResult").replaceChildren();
+  $("#addressStatus").textContent=isPrivateSeller()?"Recherchez puis sélectionnez votre commune. Aucune adresse personnelle n’est demandée.":"Recherchez puis sélectionnez l’adresse de la boutique.";
+}
+function updateSellerFields(){
+  const privateSeller=isPrivateSeller();
+  for(const id of ['storeNameField','storeAddressField','storeWebsiteField'])$("#"+id).hidden=privateSeller;
+  for(const name of ['store','address','websiteUrl']){
+    const field=$("#reportForm [name="+name+"]");field.disabled=privateSeller;
+    if(name!=='websiteUrl')field.required=!privateSeller;
+    if(privateSeller)field.value='';
+  }
+  $("#sellerPrivacyNote").hidden=!privateSeller;
+  $("#verifyAddress").textContent=privateSeller?'Rechercher la commune':'Rechercher l’adresse';
+  $("#addressResult").setAttribute('aria-label',privateSeller?'Choisir la commune':'Choisir l’adresse de la boutique');
+  resetVerifiedAddress();
 }
 function getAddressFeature(feature){
   const coords=feature?.geometry?.coordinates,props=feature?.properties||{};
@@ -395,39 +416,38 @@ function getAddressFeature(feature){
   return {lat:lat,lng:lon,label:String(props.label||props.name||""),city:String(props.city||""),score:Number(props.score||0)};
 }
 async function searchStoreAddress(){
+  const privateSeller=isPrivateSeller();
   const address=$("#storeAddress").value.trim(),city=$("#storeCity").value.trim();
   const button=$("#verifyAddress"),results=$("#addressResult"),status=$("#addressStatus");
-  resetVerifiedAddress();
-  if(address.length<5||city.length<2){
-    status.textContent="Indique l'adresse complète et la ville avant de rechercher.";return;
-  }
-  button.disabled=true;button.textContent="⏳ Recherche...";
+  resetVerifiedAddress();const serial=addressSearchSerial;
+  if(!$("#sellerType").value){status.textContent="Choisissez d’abord Professionnel ou Particulier.";return;}
+  if(city.length<2||(!privateSeller&&address.length<5)){status.textContent=privateSeller?"Indiquez le nom de votre commune.":"Indiquez l’adresse complète de la boutique et la commune.";return;}
+  button.disabled=true;button.textContent="Recherche…";
   try{
-    const query=encodeURIComponent(address+" "+city);
-    const response=await fetch("https://data.geopf.fr/geocodage/search/?q="+query+"&limit=5",{headers:{Accept:"application/json"}});
-    if(!response.ok)throw new Error("Service de géocodage indisponible ("+response.status+").");
-    const data=await response.json();
-    addressMatches=(data.features||[]).map(getAddressFeature).filter(Boolean).filter(x=>x.label);
-    if(!addressMatches.length){
-      status.textContent="Aucune adresse trouvée. Précise la rue, le numéro et la commune.";return;
-    }
-    results.add(new Option("Sélectionne l'adresse exacte parmi les résultats", ""));
-    addressMatches.forEach((result,i)=>results.add(new Option(result.label,String(i))));
-    results.hidden=false;
-    status.textContent="Sélectionne l'adresse du magasin dans la liste pour placer le point.";
-  }catch(err){
-    status.textContent="Impossible de vérifier cette adresse pour le moment. "+err.message;
-  }finally{button.disabled=false;button.textContent="📍 Rechercher l'adresse";}
+    const endpoint=privateSeller?"https://geo.api.gouv.fr/communes?nom="+encodeURIComponent(city)+"&fields=nom,code,centre,codeDepartement&boost=population&limit=8":"https://data.geopf.fr/geocodage/search/?q="+encodeURIComponent(address+" "+city)+"&limit=5";
+    const response=await fetch(endpoint,{headers:{Accept:"application/json"},signal:AbortSignal.timeout(10000)});
+    if(!response.ok)throw Error("Service de localisation indisponible.");
+    const data=await response.json();if(serial!==addressSearchSerial)return;
+    addressMatches=privateSeller?(Array.isArray(data)?data:[]).map(c=>({city:c.nom,label:c.nom+' ('+c.codeDepartement+')',communeCode:c.code,lat:c.centre?.coordinates?.[1],lng:c.centre?.coordinates?.[0],sellerType:'private'})).filter(c=>Number.isFinite(c.lat)&&Number.isFinite(c.lng)&&c.lat>=41&&c.lat<=52&&c.lng>=-6&&c.lng<=10):(data.features||[]).map(getAddressFeature).filter(Boolean).filter(x=>x.label).map(c=>({...c,sellerType:'professional'}));
+    if(!addressMatches.length){status.textContent=privateSeller?"Aucune commune trouvée. Vérifiez son nom.":"Aucune adresse trouvée. Précisez le numéro, la rue et la commune.";return;}
+    results.add(new Option(privateSeller?"Sélectionnez votre commune":"Sélectionnez l’adresse de la boutique", ""));
+    addressMatches.forEach((result,i)=>results.add(new Option(result.label,String(i))));results.hidden=false;
+    status.textContent=privateSeller?"Sélectionnez la commune. Le point sera placé à son centre.":"Sélectionnez l’adresse exacte de la boutique.";
+  }catch(err){if(serial===addressSearchSerial)status.textContent="Impossible de vérifier la localisation. "+err.message;}
+  finally{button.disabled=false;button.textContent=isPrivateSeller()?"Rechercher la commune":"Rechercher l’adresse";}
 }
 function chooseStoreAddress(){
   const index=$("#addressResult").value;
   verifiedAddress=index===""?null:addressMatches[Number(index)]||null;
   if(verifiedAddress){
-    $("#reportLat").value=verifiedAddress.lat;
-    $("#reportLng").value=verifiedAddress.lng;
-    $("#storeAddress").value=verifiedAddress.label;
+    $("#reportLat").value=verifiedAddress.lat;$("#reportLng").value=verifiedAddress.lng;
+    $("#reportCommuneCode").value=verifiedAddress.communeCode||'';
+    if(!isPrivateSeller())$("#storeAddress").value=verifiedAddress.label;
     if(verifiedAddress.city)$("#storeCity").value=verifiedAddress.city;
-    $("#addressStatus").textContent="✅ Adresse validée : "+verifiedAddress.label;
+    $("#addressStatus").textContent=isPrivateSeller()?"Commune validée : "+verifiedAddress.label+". Localisation approximative au centre de la commune.":"Adresse validée : "+verifiedAddress.label;
+  }else{
+    $("#reportLat").value='';$("#reportLng").value='';$("#reportCommuneCode").value='';
+    $("#addressStatus").textContent='Sélectionnez un résultat pour valider la localisation.';
   }
 }
 function imageAsJpeg(file){
@@ -514,6 +534,9 @@ function bindUI(){
     },()=>toast("Autorise la localisation, ou ouvre le site via HTTPS/localhost pour cette fonction."));
   });
 
+  $("#sellerType").addEventListener("change",updateSellerFields);
+  document.addEventListener("pokestock:reportreset",updateSellerFields);
+  updateSellerFields();
   $("#verifyAddress").addEventListener("click",searchStoreAddress);
   $("#addressResult").addEventListener("change",chooseStoreAddress);
   $("#storeAddress").addEventListener("input",resetVerifiedAddress);
@@ -545,8 +568,8 @@ function bindUI(){
     if(submitBtn.disabled)return;
     const data=new FormData(form);
     if(!verifiedAddress){
-      toast("Sélectionne une adresse vérifiée pour le magasin.");
-      $("#storeAddress").focus();return;
+      toast(isPrivateSeller()?"Sélectionnez votre commune.":"Sélectionnez l’adresse vérifiée de la boutique.");
+      $(isPrivateSeller()?"#storeCity":"#storeAddress").focus();return;
     }
     // Photo preuve privée facultative : le visuel public vient du catalogue.
     submitBtn.disabled=true;
@@ -565,16 +588,19 @@ function bindUI(){
       }
       const payload={
         catalogVariantId:String(data.get("catalogVariantId")||""),
-        store:String(data.get("store")||"").trim().slice(0,140),
+        sellerType:String(data.get("sellerType")||""),
+        communeCode:isPrivateSeller()?verifiedAddress.communeCode:null,
+        websiteUrl:isPrivateSeller()?null:String(data.get("websiteUrl")||"").trim(),
+        store:isPrivateSeller()?"Particulier":String(data.get("store")||"").trim().slice(0,140),
         city:String(data.get("city")||"").trim().slice(0,120),
-        address:verifiedAddress.label,
+        address:isPrivateSeller()?null:verifiedAddress.label,
         series:String(data.get("series")||""),
         product:String(data.get("product")||"").trim().slice(0,200),
         price:data.get("price")?Number(data.get("price")):null,
         qty:Number(data.get("quantity"))||1,
         lat:verifiedAddress.lat,lng:verifiedAddress.lng,photo:photoData
       };
-      if(!payload.catalogVariantId||!payload.store||!payload.city){
+      if(!payload.sellerType||!payload.catalogVariantId||!payload.store||!payload.city){
         toast("Sélectionne une série, un article, un art set et complète les informations du magasin.");return;
       }
       const response=await fetch(API_BASE+"/reports",{
@@ -598,7 +624,7 @@ function bindUI(){
       $("#photoPreview").textContent="🖼️ Aperçu de la photo";
       closeModal();
       toast("✅ Signalement enregistré ! Stock non vérifié.");
-      if(mapMode==="leaflet"&&map)map.flyTo([payload.lat,payload.lng],13);
+      if(mapMode==="leaflet"&&map)map.flyTo([payload.lat,payload.lng],payload.sellerType==="private"?11:13);
       loadCommunityReports().catch(err=>console.warn("Affichage communautaire:",err));
     }catch(err){
       toast("Impossible de publier : "+(err.message||"Erreur de connexion"));

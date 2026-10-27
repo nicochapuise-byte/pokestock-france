@@ -14,7 +14,7 @@
 <link rel="icon" type="image/svg+xml" href="assets/brand-mark.svg">
 <link rel="preload" as="image" href="assets/background-pokemon-cards.jpg">
 <link rel="stylesheet" href="photo-background.css?v=20261027-photo-v1">
-<link rel="stylesheet" href="navigation.css?v=20261027-tabs-v2">
+<link rel="stylesheet" href="navigation.css?v=20261027-sellers-v1">
 </head>
 <body data-page="home">
   <img id="siteBackground" class="site-background" src="assets/background-pokemon-cards.jpg" width="3000" height="2019" alt="" aria-hidden="true" fetchpriority="high"><header class="topbar"><a class="brand" href="#accueil" aria-label="PokéStock France, accueil"><span class="ball-logo" aria-hidden="true"><i></i></span><span class="brand-name">PokéStock<small>FRANCE</small></span></a><nav class="navlinks" aria-label="Navigation principale"><a href="#accueil" data-page-link="home" class="is-active" aria-current="page">Accueil</a><a href="#carte" data-view="map">Carte</a><a href="#disponibilites" data-view="list">Disponibilités</a><a href="#fonctionnement" data-page-link="about">Le principe</a><a href="admin.html" class="dashboard-link">Dashboard</a></nav><div class="top-actions">
@@ -175,15 +175,15 @@
       <div id="adminList" class="admin-report-list"></div>
       <form id="adminEditForm" class="admin-edit-form" hidden>
         <h3>Modifier le référencement</h3>
-        <p id="adminEditingId" class="admin-edit-label"></p>
+        <p id="adminEditingId" class="admin-edit-label"></p><p id="adminSellerType" class="seller-label"></p>
         <div class="form-grid">
-          <label><span>Magasin *</span><input name="store" required maxlength="140"></label>
+          <label id="adminStoreNameField"><span>Boutique *</span><input name="store" required maxlength="140"></label>
           <label><span>Ville *</span><input name="city" required maxlength="120"></label>
           <label><span>Série *</span><select name="series" required></select></label>
           <label><span>Produit *</span><input name="product" required maxlength="200"></label>
           <label><span>Prix (€)</span><input name="price" type="number" step="0.01" min="0"></label>
           <label><span>Quantité *</span><input name="qty" type="number" min="1" max="999" required></label>
-          <label class="wide"><span>Adresse complète *</span><input name="address" required maxlength="240"></label>
+          <label class="wide" id="adminStreetField"><span>Adresse de la boutique *</span><input name="address" required maxlength="240"></label><label class="wide" id="adminWebsiteField"><span>Site web de la boutique</span><input name="websiteUrl" type="url" maxlength="2048" placeholder="https://www.votre-boutique.fr"></label>
           <div class="address-picker wide">
             <button type="button" class="btn btn-blue" id="adminFindAddress">Vérifier une nouvelle adresse</button>
             <select id="adminAddressOptions" hidden aria-label="Choisir la nouvelle adresse"></select>
@@ -209,11 +209,11 @@
       <button type="button" class="modal-close" data-close-modal aria-label="Fermer">×</button>
       <span class="eyebrow dark">Nouveau signalement</span>
       <h2 id="reportTitle">Signaler un produit</h2>
-      <p class="modal-intro">Un produit, un magasin, quelques informations. Votre photo de preuve est facultative et reste privée.</p>
+      <p class="modal-intro">Un produit, un vendeur, quelques informations. Votre photo de preuve est facultative et reste privée.</p>
 
       <ol class="report-progress" aria-label="Étapes du signalement">
 <li><button type="button" data-report-step-target="0" aria-current="step"><span>1</span>Le produit</button></li>
-<li><button type="button" data-report-step-target="1"><span>2</span>Le magasin</button></li>
+<li><button type="button" data-report-step-target="1"><span>2</span>Le vendeur</button></li>
 <li><button type="button" data-report-step-target="2"><span>3</span>Confirmer</button></li>
 </ol>
 <section class="report-step" data-report-step="0" aria-label="Étape 1 : le produit"><div class="catalog-picker wide">
@@ -251,24 +251,28 @@
             <input name="product" maxlength="200" readonly>
           </div>
         </div>
-        </section><section class="report-step" data-report-step="1" aria-label="Étape 2 : le magasin" hidden><div class="form-grid">
-<label><span>Magasin *</span><input name="store" required maxlength="140" placeholder="Ex. Carrefour Market"></label>
-        <label><span>Ville *</span><input name="city" id="storeCity" required maxlength="120" placeholder="Ex. Lille"></label>
+        </section><section class="report-step" data-report-step="1" aria-label="Étape 2 : le vendeur" hidden><div class="form-grid">
+<label class="wide seller-type-field"><span>Type de vendeur *</span><select name="sellerType" id="sellerType" required><option value="">Choisir le type de vendeur</option><option value="professional">Professionnel</option><option value="private">Particulier</option></select></label>
+<p class="wide seller-privacy-note" id="sellerPrivacyNote" hidden>Ne communiquez jamais votre adresse personnelle. Seule la commune sera enregistrée et le point indiquera son centre, sans localiser votre domicile.</p>
+<label id="storeNameField"><span>Nom de la boutique *</span><input name="store" required maxlength="140" placeholder="Ex. Carrefour Market"></label>
+        <label><span>Commune *</span><input name="city" id="storeCity" required maxlength="120" placeholder="Ex. Lille" autocomplete="off"></label>
         <label><span>Prix (€)</span><input name="price" type="number" min="0" step="0.01" placeholder="29.99"></label>
         <label><span>Quantité vue</span><input name="quantity" type="number" min="1" max="999" value="1"></label>
-        <label class="wide"><span>Adresse complète du magasin *</span><input name="address" id="storeAddress" required maxlength="240" placeholder="Ex. 12 rue Nationale, Lille" autocomplete="street-address"></label>
-        <div class="address-picker wide">
+        <label class="wide" id="storeAddressField"><span>Adresse complète de la boutique *</span><input name="address" id="storeAddress" required maxlength="240" placeholder="Ex. 12 rue Nationale, Lille" autocomplete="street-address"></label>
+        <label class="wide" id="storeWebsiteField"><span>Site web de la boutique (facultatif)</span><input name="websiteUrl" id="storeWebsite" type="url" maxlength="2048" placeholder="https://www.votre-boutique.fr" autocomplete="url"></label>
+<input type="hidden" name="communeCode" id="reportCommuneCode">
+<div class="address-picker wide">
           <button type="button" class="btn btn-blue" id="verifyAddress">Rechercher l'adresse</button>
           <select id="addressResult" aria-label="Choisir l'adresse exacte du magasin" hidden></select>
           <p id="addressStatus" role="status">Recherche l'adresse, puis sélectionne le résultat correspondant à ton magasin.</p>
         </div>
         </div></section><section class="report-step" data-report-step="2" aria-label="Étape 3 : confirmer" hidden><div class="form-grid">
-<label class="wide"><span>Photo de preuve en magasin (facultative, 10 Mo maximum)</span><input name="photo" id="photoInput" type="file" accept="image/*"></label>
+<label class="wide"><span>Photo de preuve (facultative, 10 Mo maximum)</span><input name="photo" id="photoInput" type="file" accept="image/*"></label>
         <p class="wide catalog-help">La photo prise en magasin reste privée et n'est pas affichée publiquement. Le catalogue fournit le visuel du produit lorsqu'une image autorisée est disponible.</p>
         <div class="photo-preview wide" id="photoPreview"><span>Aperçu de la photo</span></div>
       </div>
-<label class="proof-confirm"><input id="proofConfirm" type="checkbox" required> Je confirme avoir vu ce produit en magasin. Si j’ajoute une preuve photo, je dispose de l’autorisation nécessaire pour la transmettre à l’équipe.</label>
-      <p class="coord-help">Le point sur la carte sera placé à l’adresse validée du magasin, jamais à ta position personnelle. Ne photographie pas les personnes présentes en rayon.</p>
+<label class="proof-confirm"><input id="proofConfirm" type="checkbox" required> Je confirme la présence de ce produit chez le vendeur indiqué. Si j’ajoute une preuve photo, je dispose de l’autorisation nécessaire pour la transmettre à l’équipe.</label>
+      <p class="coord-help">Pour un professionnel, le point correspond à la boutique. Pour un particulier, il correspond uniquement au centre de la commune. Ne photographiez ni personnes, ni adresse ou document personnel.</p>
       </section><input type="hidden" name="lat" id="reportLat">
       <input type="hidden" name="lng" id="reportLng">
       <div class="report-actions">
@@ -280,13 +284,13 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js?v=20261027-tabs-v1"></script>
+  <script src="script.js?v=20261027-sellers-v1"></script>
   <script src="community.js?v=20261027-design-v1"></script>
-  <script src="moderation.js?v=20261026-admintabs-v1"></script>
+  <script src="moderation.js?v=20261027-sellers-v1"></script>
   <script src="catalog-visuals.js?v=20261027-archive-v1"></script>
   <script src="catalog-ui.js?v=20261027-design-v3"></script>
   <script src="catalog-photo-workflow.js?v=20261026-admintabs-v1"></script>
   <script type="module" src="auth-ui.js?v=20261027-design-v1"></script>
-<script src="interface.js?v=20261027-tabs-v3"></script>
+<script src="interface.js?v=20261027-sellers-v1"></script>
 </body>
 </html>

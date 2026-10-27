@@ -6,6 +6,7 @@ let userIsAdmin=false;
 let modReports=[];
 let modEditId=null;
 let modCoords=null;
+let modSellerType="professional",modCommuneCode=null;
 let modAddressCandidates=[];
 let modRequestSerial=0;
 let modBusy=false;
@@ -220,7 +221,7 @@ modList.addEventListener("click",async e=>{
 });
 const getModInput=name=>modForm.elements.namedItem(name);
 function formAdminCoordinatesReset(){
-  modCoords=null;
+  modCoords=null;modCommuneCode=null;
   document.getElementById("adminAddressStatus").textContent="Adresse modifiée : recherche puis sélectionne une adresse exacte pour enregistrer.";
   document.getElementById("adminAddressOptions").hidden=true;
   document.getElementById("adminAddressOptions").replaceChildren();
@@ -230,6 +231,13 @@ function editAdminReport(id){
   const report=modReports.find(r=>r.id===id&&!r.removed_at);
   if(!report){toast("Référencement introuvable. Recharge l'administration.");return;}
   modEditId=id;
+  modSellerType=report.sellerType||'professional';modCommuneCode=report.communeCode||null;
+  const privateSeller=modSellerType==='private';
+  document.getElementById('adminSellerType').textContent=privateSeller?'Particulier · commune uniquement, aucune adresse personnelle':'Professionnel';
+  for(const id of ['adminStoreNameField','adminStreetField','adminWebsiteField'])document.getElementById(id).hidden=privateSeller;
+  for(const name of ['store','address','websiteUrl'])getModInput(name).disabled=privateSeller;
+  getModInput('websiteUrl').value=report.websiteUrl||'';
+  document.getElementById('adminFindAddress').textContent=privateSeller?'Vérifier la commune':'Vérifier une nouvelle adresse';
   for(const key of ["store","city","series","product","qty","address","status"]){
     const el=getModInput(key);if(el)el.value=report[key]??"";
   }
@@ -251,15 +259,15 @@ document.getElementById("adminFindAddress").addEventListener("click",async()=>{
   const address=getModInput("address").value.trim(),city=getModInput("city").value.trim();
   const status=document.getElementById("adminAddressStatus");
   const pick=document.getElementById("adminAddressOptions");
-  if(address.length<5||city.length<2){status.textContent="Renseigne d'abord une adresse complète et une ville.";return;}
+  if((modSellerType!=="private"&&address.length<5)||city.length<2){status.textContent="Renseigne d'abord une adresse complète et une ville.";return;}
   const btn=document.getElementById("adminFindAddress");
   btn.disabled=true;status.textContent="⏳ Recherche de l'adresse...";
   try{
-    const endpoint="https://data.geopf.fr/geocodage/search/?q="+encodeURIComponent(address+" "+city)+"&limit=5";
+    const endpoint=modSellerType==="private"?"https://geo.api.gouv.fr/communes?nom="+encodeURIComponent(city)+"&fields=nom,code,centre,codeDepartement&boost=population&limit=8":"https://data.geopf.fr/geocodage/search/?q="+encodeURIComponent(address+" "+city)+"&limit=5";
     const response=await fetch(endpoint,{signal:AbortSignal.timeout(10000)});
     if(!response.ok)throw Error("Service d'adresses indisponible.");
     const data=await response.json();
-    modAddressMatches=(data.features||[]).map(getAddressFeature).filter(Boolean).filter(x=>x.label);
+    modAddressMatches=modSellerType==='private'?(Array.isArray(data)?data:[]).map(c=>({city:c.nom,label:c.nom+' ('+c.codeDepartement+')',communeCode:c.code,lat:c.centre?.coordinates?.[1],lng:c.centre?.coordinates?.[0]})).filter(c=>Number.isFinite(c.lat)&&Number.isFinite(c.lng)):(data.features||[]).map(getAddressFeature).filter(Boolean).filter(x=>x.label);
     pick.replaceChildren();
     if(!modAddressMatches.length){status.textContent="Aucune adresse trouvée. Vérifie la rue et la commune.";return;}
     pick.add(new Option("Choisir l'adresse validée", ""));
@@ -272,7 +280,7 @@ document.getElementById("adminAddressOptions").addEventListener("change",e=>{
   const index=e.target.value;
   const found=index===""?null:modAddressMatches[Number(index)];
   if(!found){modCoords=null;return;}
-  modCoords={lat:found.lat,lng:found.lng};
+  modCoords={lat:found.lat,lng:found.lng};modCommuneCode=found.communeCode||null;
   getModInput("address").value=found.label;
   if(found.city)getModInput("city").value=found.city;
   document.getElementById("adminAddressStatus").textContent="✅ Adresse vérifiée : "+found.label;
@@ -286,6 +294,7 @@ modForm.addEventListener("submit",async e=>{
   payload.qty=Number(getModInput("qty").value);
   payload.price=getModInput("price").value===""?null:Number(getModInput("price").value);
   payload.lat=modCoords.lat;payload.lng=modCoords.lng;
+  payload.communeCode=modCommuneCode;payload.websiteUrl=modSellerType==='private'?null:getModInput('websiteUrl').value.trim();
   const save=document.getElementById("adminSaveEdit");
   modBusy=true;save.disabled=true;save.textContent="⏳ Enregistrement...";
   try{

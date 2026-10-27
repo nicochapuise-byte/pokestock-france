@@ -80,7 +80,7 @@
     const invalid=controls.find(field=>!field.checkValidity());
     if(invalid){setStep(index,false);invalid.reportValidity();return false;}
     if(index===0&&!el('catalogVariantId').value){setStep(0);toast('Choisissez un article et sa variante dans le catalogue.');return false;}
-    if(index===1&&!verifiedAddress){setStep(1,false);el('verifyAddress').focus();toast('Recherchez puis sélectionnez l’adresse du magasin.');return false;}
+    if(index===1&&!verifiedAddress){setStep(1,false);el('verifyAddress').focus();toast(isPrivateSeller()?'Recherchez puis sélectionnez votre commune.':'Recherchez puis sélectionnez l’adresse de la boutique.');return false;}
     return true;
   }
   el('reportNext').addEventListener('click',()=>{if(validateStep(step))setStep(step+1);});
