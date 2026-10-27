@@ -33,6 +33,7 @@ function writeLocalReports(items){
 
 const API_BASE="https://br-nameless-math-b9dyokxp-pokestock.compute.c-7.eu-central-1.aws.neon.tech";
 let remoteReports=[];
+let communityLoadState="loading";
 let reports = [...seedReports.map(r=>({...r,demo:true})), ...readLocalReports()];
 let selectedSeries = new Set();
 let showExamples = false;
@@ -337,7 +338,9 @@ function renderCards(items){
 }
 
 function updateStats(){
-  $("#reportCount").textContent=reports.filter(r=>!r.demo).length;
+  $("#reportCount").textContent=communityLoadState==="ready"?new Intl.NumberFormat('fr-FR').format(remoteReports.length):"—";
+  const counterStatus=$("#reportCountStatus");
+  if(counterStatus)counterStatus.textContent=communityLoadState==="ready"?"Signalements actifs · hors exemples fictifs":communityLoadState==="error"?"Compteur indisponible · actualisez la page":"Chargement des signalements…";
   $("#cityCount").textContent=new Set(reports.filter(r=>!r.demo).map(r=>r.city.toLowerCase())).size;
   $("#seriesCount").textContent=series.length;
 }
@@ -461,10 +464,12 @@ async function loadCommunityReports(){
     if(!Array.isArray(data.reports))throw Error("Données invalides");
     remoteReports=data.reports.filter(r=>r&&Number.isFinite(Number(r.lat))&&Number.isFinite(Number(r.lng)))
       .map(r=>({...r,lat:Number(r.lat),lng:Number(r.lng),qty:Number(r.qty)||1}));
+    communityLoadState="ready";
     reports=[...remoteReports,...readLocalReports(),...seedReports.map(r=>({...r,demo:true}))];
     msg.textContent=remoteReports.length+" signalement(s) communautaire(s) en cours de validité. Une disponibilité déclarée reste à confirmer avant de vous déplacer.";
     renderAll();
   }catch(err){
+    communityLoadState="error";updateStats();
     console.warn("API PokéStock indisponible:",err);
     msg.textContent="Les signalements ne se chargent pas pour le moment. Actualisez la page pour réessayer. Les exemples fictifs sont accessibles dans les filtres.";
   }

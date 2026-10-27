@@ -5,19 +5,19 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="PokéStock France : administration des photographies officielles ou autorisées du catalogue Pokémon.">
 <meta name="robots" content="noindex,nofollow">
-<title>Administration du catalogue — PokéStock France</title>
-<link rel="stylesheet" href="admin-page.css?v=20261026-photo-frame-v3">
+<title>Dashboard — PokéStock France</title>
+<link rel="stylesheet" href="admin-page.css?v=20261027-dashboard-v1">
 </head>
 <body>
 <header class="adm-header">
   <a class="adm-brand" href="index.html"><span class="adm-ball" aria-hidden="true"></span>PokéStock <b>France</b></a>
-  <a class="adm-back" href="index.html">← Retour à la carte</a>
+  <a class="adm-back" href="index.html">← Retour au site</a>
 </header>
 <main class="adm-layout">
   <section class="adm-intro">
     <div><span class="adm-eyebrow">🛡️ ESPACE ADMINISTRATEUR</span>
-      <h1>Photothèque des <em>articles Pokémon</em></h1>
-      <p>Choisis une série et un art set, ajoute une photo, puis utilise-la automatiquement sur la carte et lors de la création des signalements.</p>
+      <h1>Dashboard <em>PokéStock</em></h1>
+      <p>Pilote le catalogue, les photos et les signalements de la communauté depuis ton espace administrateur.</p>
     </div>
     <span class="adm-lock">🔒 Accès sécurisé</span>
   </section>
@@ -35,14 +35,26 @@
     <div class="adm-progress"><span id="admVisualProgressLabel">Visuels disponibles sur les fiches</span><progress id="admVisualProgress" max="100" value="0"></progress></div>
     <div class="adm-progress"><span id="admProgressLabel">Photos exactes des produits</span><progress id="admProgress" max="100" value="0"></progress></div>
     <nav class="adm-tabs" aria-label="Rubriques administrateur">
-      <button type="button" class="adm-tab is-active" data-panel="gallery" aria-current="page">🖼️ Photothèque</button>
+      <button type="button" class="adm-tab is-active" data-panel="overview" aria-current="page">Dashboard</button>
+      <button type="button" class="adm-tab" data-panel="gallery">🖼️ Photothèque</button>
       <button type="button" class="adm-tab" data-panel="upload">➕ Ajouter une photo</button>
       <button type="button" class="adm-tab" data-panel="bulk">📚 Import multiple</button>
       <button type="button" class="adm-tab" data-panel="cardex">🌐 Depuis PokéCardex</button>
       <button type="button" class="adm-tab" data-panel="proposals">👥 Photos proposées <span id="admPendingCount"></span></button>
       <a class="adm-tab adm-tab-link" href="index.html#administration">🗺️ Signalements ↗</a>
     </nav>
-    <section id="admGalleryPanel" class="adm-panel">
+    <section id="admOverviewPanel" class="adm-panel">
+      <div class="adm-section-head"><div><h2>Vue d’ensemble</h2><p>Tous les outils pour gérer PokéStock France.</p></div></div>
+      <div class="dashboard-tools">
+        <button type="button" data-panel="gallery"><strong>Photothèque</strong><span>Consulter les références, les photos et les éléments à compléter.</span><small>Ouvrir le catalogue →</small></button>
+        <a href="index.html#administration"><strong>Signalements</strong><span>Vérifier, corriger et modérer les produits ajoutés par les membres.</span><small>Gérer les signalements →</small></a>
+        <button type="button" data-panel="upload"><strong>Ajouter une photo</strong><span>Associer un nouveau visuel à un article et à sa variante exacte.</span><small>Ajouter un visuel →</small></button>
+        <button type="button" data-panel="bulk"><strong>Imports multiples</strong><span>Importer un lot de photographies et vérifier leurs associations.</span><small>Préparer un import →</small></button>
+        <button type="button" data-panel="proposals"><strong>Photos proposées</strong><span>Examiner les contributions avant leur publication au catalogue.</span><small>Vérifier les propositions →</small></button>
+        <button type="button" data-panel="cardex"><strong>Depuis PokéCardex</strong><span>Rechercher les visuels disponibles pour les références du catalogue.</span><small>Rechercher un visuel →</small></button>
+      </div>
+    </section>
+    <section id="admGalleryPanel" class="adm-panel" hidden>
       <div class="adm-section-head"><div><h2>Catalogue des articles</h2><p>La photographie validée devient l'image principale du produit pour tous les visiteurs.</p></div>
         <div class="adm-head-actions">
           <button type="button" class="adm-primary adm-quick-button" id="admQuickUpload">➕ Ajouter une photo</button>
@@ -164,6 +176,6 @@
 </main>
 <footer class="adm-footer">PokéStock France · Gestion sécurisée des visuels · Les photographies de preuve des signalements restent privées.</footer>
 <script src="catalog-visuals.js?v=20261027-archive-v1"></script>
-<script src="admin-page.js?v=20261027-archive-v1"></script>
+<script src="admin-page.js?v=20261027-dashboard-v1"></script>
 </body>
 </html>

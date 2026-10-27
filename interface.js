@@ -7,18 +7,37 @@
   let filtersOpen=!mobile(),step=0,lastFilterFocus=null;
   const steps=[...document.querySelectorAll('[data-report-step]')];
   const stepButtons=[...document.querySelectorAll('[data-report-step-target]')];
-  function setView(view,scroll=true){
-    document.body.dataset.view=view;
-    document.querySelectorAll('[data-view]').forEach(button=>{
-      const active=button.dataset.view===view;
+  const pages={home:['.hero','.catalog-strip','#fonctionnement'],map:['#carte'],list:['#carte','#disponibilites'],about:['#fonctionnement']};
+  const pageHashes={home:'#accueil',map:'#carte',list:'#disponibilites',about:'#fonctionnement'};
+  function setPage(page,updateHistory=true,scroll=true){
+    if(!pages[page])page='home';
+    document.body.dataset.page=page;
+    document.body.dataset.view=page==='list'?'list':'map';
+    document.querySelectorAll('.hero,.catalog-strip,#carte,#disponibilites,#fonctionnement').forEach(section=>{
+      section.hidden=!pages[page].some(selector=>section.matches(selector));
+    });
+    document.querySelectorAll('[data-view],[data-page-link]').forEach(button=>{
+      const target=button.dataset.pageLink||button.dataset.view;
+      const active=target===page;
       button.classList.toggle('is-active',active);
       if(button.tagName==='BUTTON')button.setAttribute('aria-pressed',String(active));
       else if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
     });
     setFilters(false,false);
-    if(scroll)el('carte').scrollIntoView({behavior:'smooth',block:'start'});
+    if(updateHistory&&location.hash!==pageHashes[page])history.pushState(null,'',pageHashes[page]);
+    if(scroll)window.scrollTo({top:0,behavior:'auto'});
     requestAnimationFrame(()=>{if(mapMode==='leaflet'&&map)map.invalidateSize();});
   }
+  function setView(view,scroll=true){setPage(view,true,scroll);}
+  function restorePage(){
+    const page=Object.keys(pageHashes).find(key=>pageHashes[key]===location.hash)||'home';
+    setPage(page,false,false);
+  }
+  document.querySelectorAll('[data-page-link],a[href="#accueil"],a[href="#fonctionnement"]').forEach(link=>link.addEventListener('click',event=>{
+    event.preventDefault();setPage(link.dataset.pageLink||(link.hash==='#fonctionnement'?'about':'home'));
+  }));
+  window.addEventListener('popstate',restorePage);
+  window.addEventListener('hashchange',restorePage);
   function setFilters(open,focus=true){
     filtersOpen=open;
     document.body.classList.toggle('filters-open',open);
@@ -39,7 +58,6 @@
   el('recentOnly').addEventListener('click',()=>{onlyRecent=!onlyRecent;renderAll();});
   el('showExamples').addEventListener('change',event=>{showExamples=event.target.checked;renderAll();});
   document.querySelectorAll('[data-open-report]').forEach(button=>button.addEventListener('click',openModal));
-  el('mobileAccount').addEventListener('click',()=>el('accountBtn').click());
   function refreshResults(){
     const count=selectedSeries.size+(onlyRecent?1:0);
     el('activeFilterCount').textContent=count;
@@ -98,5 +116,5 @@
   function updateCatalogCount(){const count=document.querySelector('.strip-count');if(count)count.hidden=!catalogReady;}
   document.addEventListener('pokestock:catalogloaded',updateCatalogCount);
   updateCatalogCount();
-  document.body.dataset.view='map';setFilters(filtersOpen,false);setStep(0,false);refreshResults();
+  restorePage();setStep(0,false);refreshResults();
 })();

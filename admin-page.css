@@ -219,3 +219,6 @@
 @media(max-width:690px){
   .adm-photo{height:160px}
 }
+
+/* Dashboard: access to existing protected administration tools. */
+.dashboard-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:24px}.dashboard-tools>a,.dashboard-tools>button{display:flex;flex-direction:column;gap:12px;align-items:flex-start;text-align:left;border:1px solid #dbe4f5;border-radius:14px;padding:24px;background:#f5f8ff;color:#213258;font:inherit;min-width:0}.dashboard-tools strong{font-size:18px}.dashboard-tools span{font-size:13px;color:#61708d;line-height:1.65}.dashboard-tools small{font-size:12px;font-weight:750;color:#345ee8;margin-top:auto}.dashboard-tools>a:hover,.dashboard-tools>button:hover{border-color:#345ee8;background:#edf2ff}.dashboard-tools>:focus-visible{outline:3px solid #345ee8;outline-offset:3px}@media(max-width:900px){.dashboard-tools{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:550px){.dashboard-tools{grid-template-columns:1fr}.dashboard-tools>a,.dashboard-tools>button{padding:20px}}

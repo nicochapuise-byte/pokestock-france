@@ -212,7 +212,7 @@ function selectPanel(panel){
     b.classList.toggle("is-active",active);
     if(active)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");
   }
-  const panels={gallery:"admGalleryPanel",upload:"admUploadPanel",bulk:"admBulkPanel",cardex:"admCardexPanel",proposals:"admProposalsPanel"};
+  const panels={overview:"admOverviewPanel",gallery:"admGalleryPanel",upload:"admUploadPanel",bulk:"admBulkPanel",cardex:"admCardexPanel",proposals:"admProposalsPanel"};
   for(const [key,id] of Object.entries(panels))$(id).hidden=key!==panel;
   if(panel==="proposals")refreshProposals();
   if(window.innerWidth<=690){
@@ -670,7 +670,7 @@ async function init(){
     attachEvents();
     await reloadCatalog();
     const hash=location.hash.slice(1);
-    if(["gallery","upload","bulk","cardex","proposals"].includes(hash))selectPanel(hash);
+    selectPanel(["gallery","upload","bulk","cardex","proposals"].includes(hash)?hash:"overview");
   }catch(error){showGate("🔒 "+(error.message||"Accès à l'administration indisponible"));}
 }
 init();

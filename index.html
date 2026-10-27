@@ -12,11 +12,12 @@
 <link rel="stylesheet" href="identity.css?v=20261027-color-v2">
 <meta name="theme-color" content="#0b162c">
 <link rel="icon" type="image/svg+xml" href="assets/brand-mark.svg">
-<html><head><link rel="preload" as="image" href="assets/background-pokemon-cards.jpg"></head></html>
-<html><head><link rel="stylesheet" href="photo-background.css?v=20261027-photo-v1"></head></html>
+<link rel="preload" as="image" href="assets/background-pokemon-cards.jpg">
+<link rel="stylesheet" href="photo-background.css?v=20261027-photo-v1">
+<link rel="stylesheet" href="navigation.css?v=20261027-tabs-v1">
 </head>
-<body>
-  <img id="siteBackground" class="site-background" src="assets/background-pokemon-cards.jpg" width="3000" height="2019" alt="" aria-hidden="true" fetchpriority="high"><header class="topbar"><a class="brand" href="#accueil" aria-label="PokéStock France, accueil"><span class="ball-logo" aria-hidden="true"><i></i></span><span class="brand-name">PokéStock<small>FRANCE</small></span></a><nav class="navlinks" aria-label="Navigation principale"><a href="#carte" data-view="map" class="is-active">La carte</a><a href="#disponibilites" data-view="list">Disponibilités</a><a href="#fonctionnement">Le principe</a></nav><div class="top-actions">
+<body data-page="home">
+  <img id="siteBackground" class="site-background" src="assets/background-pokemon-cards.jpg" width="3000" height="2019" alt="" aria-hidden="true" fetchpriority="high"><header class="topbar"><a class="brand" href="#accueil" aria-label="PokéStock France, accueil"><span class="ball-logo" aria-hidden="true"><i></i></span><span class="brand-name">PokéStock<small>FRANCE</small></span></a><nav class="navlinks" aria-label="Navigation principale"><a href="#accueil" data-page-link="home" class="is-active" aria-current="page">Accueil</a><a href="#carte" data-view="map">Carte</a><a href="#disponibilites" data-view="list">Disponibilités</a><a href="#fonctionnement" data-page-link="about">Le principe</a><a href="admin.html" class="dashboard-link">Dashboard</a></nav><div class="top-actions">
 <button class="btn btn-white" id="adminBtn" type="button" hidden>Administration</button><button class="btn btn-white" id="accountBtn" type="button">Mon compte</button><button class="btn btn-red" id="openReportTop" type="button"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span>Signaler un produit</span></button>
 </div></header><main id="accueil"><section class="hero section"><div class="hero-copy">
 <p class="eyebrow hero-kicker"><span></span>LE RENDEZ-VOUS DES COLLECTIONNEURS</p>
@@ -34,9 +35,7 @@
 <span class="strip-description">Du Set de Base aux dernières sorties,<br>retrouvez vos références sur une seule carte.</span><div class="strip-count" hidden="hidden">
 <b id="seriesCount">—</b><span>séries au catalogue</span>
 </div>
-<div hidden>
-<b id="reportCount">0</b><b id="cityCount">0</b>
-</div></section><section class="section map-section" id="carte" aria-labelledby="mapTitle"><div class="section-title">
+<div class="community-count" aria-live="polite"><b id="reportCount">—</b><span>produits signalés sur la carte<small id="reportCountStatus">Chargement des signalements…</small></span></div><div hidden><b id="cityCount">0</b></div></section><section class="section map-section" id="carte" aria-labelledby="mapTitle"><div class="section-title">
 <div>
 <p class="eyebrow map-eyebrow">LA CARTE AUX TROUVAILLES</p>
 <h2 id="mapTitle">Explorer les disponibilités</h2>
@@ -101,7 +100,7 @@
 <b>La communauté vérifie</b><p>Les autres membres confirment la disponibilité ou signalent une rupture.</p>
 </div></article>
 </div></section></main><footer><a class="brand small" href="#accueil">PokéStock <span>France</span></a><p>Par des collectionneurs, pour des collectionneurs.</p>
-<small>Projet indépendant, non affilié à The Pokémon Company, Nintendo ou Game Freak.</small><p class="photo-credit">Photo : <a href="https://unsplash.com/photos/a-bunch-of-pokemon-cards-on-a-table-mGUs05ZMeec" target="_blank" rel="noopener noreferrer">Thimo Pedersen / Unsplash</a></p></footer><nav class="mobile-nav" aria-label="Navigation mobile"><button type="button" data-view="map" class="is-active" aria-pressed="true"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z"></path><path d="M9 3v15M15 6v15"></path></svg><span>Carte</span></button><button type="button" data-view="list" aria-pressed="false"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg><span>Disponibilités</span></button><button type="button" data-open-report class="mobile-report"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span>Signaler</span></button><button type="button" id="mobileAccount"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21v-2a8 8 0 0 1 16 0v2"></path></svg><span>Compte</span></button></nav><div class="modal" id="authModal" aria-hidden="true">
+<small>Projet indépendant, non affilié à The Pokémon Company, Nintendo ou Game Freak.</small><p class="photo-credit">Photo : <a href="https://unsplash.com/photos/a-bunch-of-pokemon-cards-on-a-table-mGUs05ZMeec" target="_blank" rel="noopener noreferrer">Thimo Pedersen / Unsplash</a></p></footer><div class="modal" id="authModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-auth></div>
     <form id="authForm" class="modal-card auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
       <button type="button" class="modal-close" data-close-auth aria-label="Fermer">×</button>
@@ -281,13 +280,13 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js?v=20261027-design-v3"></script>
+  <script src="script.js?v=20261027-tabs-v1"></script>
   <script src="community.js?v=20261027-design-v1"></script>
   <script src="moderation.js?v=20261026-admintabs-v1"></script>
   <script src="catalog-visuals.js?v=20261027-archive-v1"></script>
   <script src="catalog-ui.js?v=20261027-design-v3"></script>
   <script src="catalog-photo-workflow.js?v=20261026-admintabs-v1"></script>
   <script type="module" src="auth-ui.js?v=20261027-design-v1"></script>
-<script src="interface.js?v=20261027-color-v2"></script>
+<script src="interface.js?v=20261027-tabs-v1"></script>
 </body>
 </html>
