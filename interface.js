@@ -7,7 +7,7 @@
   let filtersOpen=!mobile(),step=0,lastFilterFocus=null;
   const steps=[...document.querySelectorAll('[data-report-step]')];
   const stepButtons=[...document.querySelectorAll('[data-report-step-target]')];
-  const pages={home:['.hero','.catalog-strip','#fonctionnement'],map:['#carte'],list:['#carte','#disponibilites'],about:['#fonctionnement']};
+  const pages={home:['.hero','.catalog-strip'],map:['#carte'],list:['#carte','#disponibilites'],about:['#fonctionnement']};
   const pageHashes={home:'#accueil',map:'#carte',list:'#disponibilites',about:'#fonctionnement'};
   function setPage(page,updateHistory=true,scroll=true){
     if(!pages[page])page='home';
