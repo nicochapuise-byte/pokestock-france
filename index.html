@@ -9,29 +9,34 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="styles.css?v=20261026-admintabs-v2">
 <link rel="stylesheet" href="interface.css?v=20261027-design-v3">
+<link rel="stylesheet" href="identity.css?v=20261027-color-v1">
+<html><head><meta name="theme-color" content="#173483"></head></html>
+<html><head><link rel="icon" type="image/svg+xml" href="assets/brand-mark.svg"></head></html>
 </head>
 <body>
   <header class="topbar"><a class="brand" href="#accueil" aria-label="PokéStock France, accueil"><span class="ball-logo" aria-hidden="true"><i></i></span><span class="brand-name">PokéStock<small>FRANCE</small></span></a><nav class="navlinks" aria-label="Navigation principale"><a href="#carte" data-view="map" class="is-active">La carte</a><a href="#disponibilites" data-view="list">Disponibilités</a><a href="#fonctionnement">Le principe</a></nav><div class="top-actions">
 <button class="btn btn-white" id="adminBtn" type="button" hidden>Administration</button><button class="btn btn-white" id="accountBtn" type="button">Mon compte</button><button class="btn btn-red" id="openReportTop" type="button"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span>Signaler un produit</span></button>
 </div></header><main id="accueil"><section class="hero section"><div class="hero-copy">
-<p class="eyebrow">LE STOCK SE PARTAGE.</p>
-<h1>Les produits Pokémon,<br><span>près de chez vous.</span>
+<p class="eyebrow hero-kicker"><span></span>LE RENDEZ-VOUS DES COLLECTIONNEURS</p>
+<h1>
+<span>Votre prochaine</span><em>trouvaille Pokémon</em><span>commence ici.</span>
 </h1>
-<p>Repérez les disponibilités en magasin.<br class="desktop-break"> Partagez vos trouvailles avec la communauté.</p>
+<p class="hero-description">Des boosters aux coffrets les plus recherchés, retrouvez les produits signalés en magasin par la communauté.</p>
+<div class="hero-actions">
+<a class="btn hero-explore" href="#carte" data-view="map">Explorer la carte <svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"></path></svg></a><a class="hero-about" href="#fonctionnement">Le principe</a>
 </div>
-<div class="hero-stats" aria-label="Activité de la communauté">
-<div>
-<b id="reportCount">0</b><span>signalements actifs</span>
 </div>
-<div>
-<b id="cityCount">0</b><span>villes représentées</span>
+<figure class="hero-products" aria-label="Une sélection de produits du catalogue 30ᵉ Anniversaire"><div class="product-orbit" aria-hidden="true"></div>
+<div class="product-sun" aria-hidden="true"></div>
+<img class="hero-product hero-etb" src="assets/anniversaire-etb.svg" width="629" height="600" alt="Coffret Dresseur d’élite 30ᵉ Anniversaire" fetchpriority="high"><img class="hero-product hero-greninja" src="assets/anniversaire-amphinobi.svg" width="458" height="600" alt="Boîte 30ᵉ Anniversaire Amphinobi-ex"><img class="hero-product hero-sylveon" src="assets/anniversaire-nymphali.svg" width="458" height="600" alt="Boîte 30ᵉ Anniversaire Nymphali-ex"><figcaption><span>À L’AFFICHE</span>30ᵉ Anniversaire<small>Visuels du catalogue</small></figcaption></figure></section><section class="catalog-strip" aria-label="Le catalogue PokéStock"><p><span class="catalog-spark" aria-hidden="true">✳</span><strong>Toutes les générations.<br>Une même passion.</strong></p>
+<span class="strip-description">Du Set de Base aux dernières sorties,<br>retrouvez vos références sur une seule carte.</span><div class="strip-count">
+<b id="seriesCount">—</b><span>séries au catalogue</span>
 </div>
+<div hidden>
+<b id="reportCount">0</b><b id="cityCount">0</b>
+</div></section><section class="section map-section" id="carte" aria-labelledby="mapTitle"><div class="section-title">
 <div>
-<b id="seriesCount">0</b><span>séries au catalogue</span>
-</div>
-</div></section>
-<section class="section map-section" id="carte" aria-labelledby="mapTitle"><div class="section-title">
-<div>
+<p class="eyebrow map-eyebrow">LA CARTE AUX TROUVAILLES</p>
 <h2 id="mapTitle">Explorer les disponibilités</h2>
 <p>Une piste pour votre prochaine trouvaille.</p>
 </div>
