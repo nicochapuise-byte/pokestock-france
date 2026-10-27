@@ -205,6 +205,16 @@ function voteSummary(a,b){
   return {available,unavailable,state};
 }
 
+// Only public, active reports feed seller pages. Private identities and proof photos never leave this API.
+const SELLER_ID_SQL="encode(sha256(convert_to(CASE WHEN r.seller_type='private' THEN 'private:'||r.user_id ELSE 'professional:'||lower(btrim(r.store_name))||':'||lower(btrim(r.store_address))||':'||lower(btrim(r.city)) END,'UTF8')),'hex')";
+const PUBLIC_REPORT_FIELDS="r.id,r.store_name,r.store_address,r.seller_type,r.website_url,r.commune_code,r.city,r.series_id,r.product_name,r.price_eur,r.quantity,r.latitude,r.longitude,r.photo_object_key,r.catalog_variant_id,cv.variant_name,cv.image_object_key AS catalog_image_key,cv.image_approved,cp.source_url AS catalog_source_url,r.status,r.created_at,COALESCE(v.available_count,0)::int AS available_count,COALESCE(v.unavailable_count,0)::int AS unavailable_count";
+const PUBLIC_REPORT_JOINS=" FROM public.stock_reports r LEFT JOIN public.catalog_variants cv ON cv.id=r.catalog_variant_id LEFT JOIN public.catalog_products cp ON cp.id=cv.product_id LEFT JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE verdict='available') AS available_count,COUNT(*) FILTER (WHERE verdict='unavailable') AS unavailable_count FROM public.stock_votes WHERE report_id=r.id) v ON TRUE";
+const PUBLIC_REPORT_WHERE=" WHERE r.status IN ('approved','pending') AND r.expires_at>now() AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id)";
+const PRODUCT_KEY_SQL="COALESCE(r.catalog_variant_id,r.series_id||':'||r.product_name)";
+function publicReport(r){
+  return {id:r.id,sellerId:r.seller_id,store:r.seller_type==='private'?'Particulier':r.store_name,address:r.seller_type==='private'?null:r.store_address,sellerType:r.seller_type,websiteUrl:r.website_url,communeCode:r.commune_code,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,img:r.catalog_image_key&&r.image_approved?photoUrl(r.catalog_image_key,"catalog-images"):null,catalogVariantId:r.catalog_variant_id,artSet:r.variant_name||null,catalogSourceUrl:r.catalog_source_url||null,proofProvided:!!r.photo_object_key,votes:voteSummary(r.available_count,r.unavailable_count)};
+}
+
 export default {
   async fetch(request){
     const url=new URL(request.url),headers=cors(request);
@@ -488,8 +498,21 @@ export default {
         return json({ok:true,id,message:"Signalement supprimé de la carte et des disponibilités."},200,request);
       }
       if(url.pathname==="/reports"&&request.method==="GET"){
-        const rows=await sql("SELECT r.id,r.store_name,r.store_address,r.seller_type,r.website_url,r.commune_code,r.city,r.series_id,r.product_name,r.price_eur,r.quantity,r.latitude,r.longitude,r.photo_object_key,r.catalog_variant_id,cv.variant_name,cv.image_object_key AS catalog_image_key,cv.image_approved,cp.source_url AS catalog_source_url,r.status,r.created_at,COALESCE(v.available_count,0)::int AS available_count,COALESCE(v.unavailable_count,0)::int AS unavailable_count FROM public.stock_reports r LEFT JOIN public.catalog_variants cv ON cv.id=r.catalog_variant_id LEFT JOIN public.catalog_products cp ON cp.id=cv.product_id LEFT JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE verdict='available') AS available_count,COUNT(*) FILTER (WHERE verdict='unavailable') AS unavailable_count FROM public.stock_votes WHERE report_id=r.id) v ON TRUE WHERE r.status IN ('approved','pending') AND r.expires_at>now() AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) ORDER BY r.created_at DESC LIMIT 100");
-        return json({reports:rows.map(r=>({id:r.id,store:r.seller_type==='private'?'Particulier':r.store_name,address:r.seller_type==='private'?null:r.store_address,sellerType:r.seller_type,websiteUrl:r.website_url,communeCode:r.commune_code,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,img:r.catalog_image_key&&r.image_approved?photoUrl(r.catalog_image_key,"catalog-images"):null,catalogVariantId:r.catalog_variant_id,artSet:r.variant_name||null,catalogSourceUrl:r.catalog_source_url||null,proofProvided:!!r.photo_object_key,votes:voteSummary(r.available_count,r.unavailable_count)}))},200,request);
+        const rows=await sql("SELECT "+PUBLIC_REPORT_FIELDS+","+SELLER_ID_SQL+" AS seller_id"+PUBLIC_REPORT_JOINS+PUBLIC_REPORT_WHERE+" ORDER BY r.created_at DESC LIMIT 100");
+        return json({reports:rows.map(publicReport)},200,request);
+      }
+      const sellerMatch=/^\/sellers\/([a-f0-9]{64})$/.exec(url.pathname);
+      if(sellerMatch&&request.method==='GET'){
+        const sellerId=sellerMatch[1];
+        const limit=Math.min(48,Math.max(1,Number.parseInt(url.searchParams.get('limit'),10)||24));
+        const offset=Math.min(10000,Math.max(0,Number.parseInt(url.searchParams.get('offset'),10)||0));
+        const scope=PUBLIC_REPORT_WHERE+" AND "+SELLER_ID_SQL+"=$1";
+        const summary=await sql("SELECT COUNT(*)::int AS reports,COUNT(DISTINCT "+PRODUCT_KEY_SQL+")::int AS products,MAX(r.seller_type) AS seller_type,(array_agg(r.store_name ORDER BY r.created_at DESC,r.id DESC))[1] AS store_name,(array_agg(r.store_address ORDER BY r.created_at DESC,r.id DESC))[1] AS store_address,(array_agg(r.website_url ORDER BY r.created_at DESC,r.id DESC) FILTER(WHERE r.website_url IS NOT NULL))[1] AS website_url,array_agg(DISTINCT r.city ORDER BY r.city) AS cities,MAX(r.created_at) AS updated_at FROM public.stock_reports r"+scope,[sellerId]);
+        const seller=summary[0];
+        if(!seller||!Number(seller.reports))return json({error:'Cette fiche ne contient aucun signalement actif.'},404,request);
+        // Keep the latest sighting for each catalogue variant, without adding quantities across sightings.
+        const rows=await sql("SELECT * FROM (SELECT DISTINCT ON ("+PRODUCT_KEY_SQL+") "+PUBLIC_REPORT_FIELDS+","+SELLER_ID_SQL+" AS seller_id"+PUBLIC_REPORT_JOINS+scope+" ORDER BY "+PRODUCT_KEY_SQL+",r.created_at DESC,r.id DESC) items ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3",[sellerId,limit+1,offset]);
+        return json({seller:{id:sellerId,type:seller.seller_type,name:seller.seller_type==='private'?'Particulier':seller.store_name,address:seller.seller_type==='private'?null:seller.store_address,websiteUrl:seller.website_url||null,cities:seller.cities||[],productCount:Number(seller.products),reportCount:Number(seller.reports),updatedAt:seller.updated_at},reports:rows.slice(0,limit).map(publicReport),hasMore:rows.length>limit,nextOffset:offset+Math.min(rows.length,limit)},200,request);
       }
       if(url.pathname==="/me/votes"&&request.method==="GET"){
         const user=await authenticate(request);
