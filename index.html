@@ -9,9 +9,9 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="styles.css?v=20261026-admintabs-v2">
 <link rel="stylesheet" href="interface.css?v=20261027-design-v3">
-<link rel="stylesheet" href="identity.css?v=20261027-color-v1">
-<html><head><meta name="theme-color" content="#173483"></head></html>
-<html><head><link rel="icon" type="image/svg+xml" href="assets/brand-mark.svg"></head></html>
+<link rel="stylesheet" href="identity.css?v=20261027-color-v2">
+<meta name="theme-color" content="#173483">
+<link rel="icon" type="image/svg+xml" href="assets/brand-mark.svg">
 </head>
 <body>
   <header class="topbar"><a class="brand" href="#accueil" aria-label="PokéStock France, accueil"><span class="ball-logo" aria-hidden="true"><i></i></span><span class="brand-name">PokéStock<small>FRANCE</small></span></a><nav class="navlinks" aria-label="Navigation principale"><a href="#carte" data-view="map" class="is-active">La carte</a><a href="#disponibilites" data-view="list">Disponibilités</a><a href="#fonctionnement">Le principe</a></nav><div class="top-actions">
@@ -21,7 +21,7 @@
 <h1>
 <span>Votre prochaine</span><em>trouvaille Pokémon</em><span>commence ici.</span>
 </h1>
-<p class="hero-description">Des boosters aux coffrets les plus recherchés, retrouvez les produits signalés en magasin par la communauté.</p>
+<p class="hero-description"><span class="hero-description-long">Des boosters aux coffrets les plus recherchés, retrouvez les produits signalés en magasin par la communauté.</span><span class="hero-description-short">Repérez les produits signalés près de chez vous.</span></p>
 <div class="hero-actions">
 <a class="btn hero-explore" href="#carte" data-view="map">Explorer la carte <svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"></path></svg></a><a class="hero-about" href="#fonctionnement">Le principe</a>
 </div>
@@ -29,7 +29,7 @@
 <figure class="hero-products" aria-label="Une sélection de produits du catalogue 30ᵉ Anniversaire"><div class="product-orbit" aria-hidden="true"></div>
 <div class="product-sun" aria-hidden="true"></div>
 <img class="hero-product hero-etb" src="assets/anniversaire-etb.svg" width="629" height="600" alt="Coffret Dresseur d’élite 30ᵉ Anniversaire" fetchpriority="high"><img class="hero-product hero-greninja" src="assets/anniversaire-amphinobi.svg" width="458" height="600" alt="Boîte 30ᵉ Anniversaire Amphinobi-ex"><img class="hero-product hero-sylveon" src="assets/anniversaire-nymphali.svg" width="458" height="600" alt="Boîte 30ᵉ Anniversaire Nymphali-ex"><figcaption><span>À L’AFFICHE</span>30ᵉ Anniversaire<small>Visuels du catalogue</small></figcaption></figure></section><section class="catalog-strip" aria-label="Le catalogue PokéStock"><p><span class="catalog-spark" aria-hidden="true">✳</span><strong>Toutes les générations.<br>Une même passion.</strong></p>
-<span class="strip-description">Du Set de Base aux dernières sorties,<br>retrouvez vos références sur une seule carte.</span><div class="strip-count">
+<span class="strip-description">Du Set de Base aux dernières sorties,<br>retrouvez vos références sur une seule carte.</span><div class="strip-count" hidden="hidden">
 <b id="seriesCount">—</b><span>séries au catalogue</span>
 </div>
 <div hidden>
@@ -286,6 +286,6 @@
   <script src="catalog-ui.js?v=20261027-design-v3"></script>
   <script src="catalog-photo-workflow.js?v=20261026-admintabs-v1"></script>
   <script type="module" src="auth-ui.js?v=20261027-design-v1"></script>
-<script src="interface.js?v=20261027-design-v1"></script>
+<script src="interface.js?v=20261027-color-v2"></script>
 </body>
 </html>

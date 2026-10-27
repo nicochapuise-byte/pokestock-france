@@ -95,5 +95,8 @@
     else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
   });
   window.matchMedia('(max-width:900px)').addEventListener('change',()=>setFilters(!mobile(),false));
+  function updateCatalogCount(){const count=document.querySelector('.strip-count');if(count)count.hidden=!catalogReady;}
+  document.addEventListener('pokestock:catalogloaded',updateCatalogCount);
+  updateCatalogCount();
   document.body.dataset.view='map';setFilters(filtersOpen,false);setStep(0,false);refreshResults();
 })();
