@@ -15,7 +15,7 @@ function setMessage(id,message,isError=false){
   const el=$(id);el.textContent=message;el.classList.toggle("is-error",!!isError);
 }
 function safeImage(url){
-  if(url==="catalog-upc151-chat.svg")return url;
+  if(url==="catalog-upc151-chat.svg"||url==="catalog-archive-reference.svg")return url;
   try{const parsed=new URL(String(url));if(parsed.protocol==="https:"&&parsed.hostname.endsWith(".neon.tech"))return url;}catch{}
   return PLACEHOLDER;
 }
@@ -107,7 +107,12 @@ function renderStats(){
   $("admMissing").textContent=listings.length-withImages;
   const percent=listings.length?Math.round(withImages/listings.length*100):0;
   $("admProgress").value=percent;
-  $("admProgressLabel").textContent=percent+" % du catalogue illustré · "+withImages+" photo(s) validée(s) / "+listings.length+" variantes";
+  $("admProgressLabel").textContent=percent+" % avec photo exacte · "+withImages+" photo(s) validée(s) / "+listings.length+" variantes";
+  const visuals=listings.map(e=>PokestockVisuals.get(e,catalog.variants));
+  const boosters=visuals.filter(v=>v.kind==="booster").length;
+  const references=visuals.filter(v=>v.kind==="reference").length;
+  $("admVisualProgress").value=listings.length?100:0;
+  $("admVisualProgressLabel").textContent=(listings.length?"100":"0")+" % des fiches avec un visuel · "+withImages+" photos exactes, "+boosters+" illustrations indicatives de boosters, "+references+" fiche(s) de référence sans photo";
 }
 
 let allSeriesCoverage=[];
@@ -169,19 +174,22 @@ function renderGallery(){
   const root=$("admPhotoGallery");root.replaceChildren();
   const fragment=document.createDocumentFragment();
   for(const e of filtered.slice(0,pageSize)){
+    const visual=PokestockVisuals.get(e,catalog.variants);
     const article=document.createElement("article");article.className="adm-product";
     const cover=document.createElement("div");cover.className="adm-photo";
     const img=document.createElement("img");
-    img.loading="lazy";img.src=safeImage(e.image);
-    img.alt=e.image?"Photographie de "+e.product.name+" / "+e.name:"Illustration indicative, photo manquante";
-    img.onerror=()=>{img.onerror=null;img.src=PLACEHOLDER;};
+    img.loading="lazy";img.src=safeImage(visual.image);
+    img.alt=visual.kind==="exact"?"Photographie de "+e.product.name+" / "+e.name:visual.description;
+    img.onerror=()=>{img.onerror=null;img.src=PokestockVisuals.referenceImage;badge.textContent="Photo indisponible";badge.classList.remove("has-image");};
     const badge=document.createElement("span");badge.className="adm-image-badge"+(e.image?" has-image":"");
-    badge.textContent=e.image?"✓ Photo validée":"📷 À compléter";cover.append(img,badge);
+    badge.textContent=visual.label;cover.append(img,badge);
     const body=document.createElement("div");body.className="adm-product-body";
     const category=document.createElement("span");category.className="adm-series";
     category.textContent=(e.series?.code?e.series.code+" · ":"")+(e.series?.name||"—")+(e.series?.releaseDate?" · "+formatDate(e.series.releaseDate):"");
     const title=document.createElement("strong");title.textContent=e.product?.name||"Référence inconnue";
     const variation=document.createElement("p");variation.textContent="🎨 "+e.name;
+    const visualNote=document.createElement("small");
+    visualNote.textContent=visual.kind==="exact"?"":visual.description;
     const code=document.createElement("small");code.textContent=e.id;
     const button=document.createElement("button");button.type="button";button.dataset.selectId=e.id;
     button.textContent=e.image?"🔄 Changer la photo":"📸 Ajouter la photo";button.className=e.image?"adm-replace":"";
@@ -189,7 +197,7 @@ function renderGallery(){
     cardex.type="button";cardex.dataset.pokecardexId=e.id;
     cardex.className="adm-cardex-card-action";
     cardex.textContent="🌐 Depuis PokéCardex";
-    body.append(category,title,variation,code,button,cardex);article.append(cover,body);fragment.append(article);
+    body.append(category,title,variation,visualNote,code,button,cardex);article.append(cover,body);fragment.append(article);
   }
   root.append(fragment);
   if(!filtered.length){
@@ -226,13 +234,14 @@ function populateVariantSelect(productId){
 function setSelected(id){
   selectedId=id;
   const e=entryById.get(id);
-  $("admCurrentImage").src=safeImage(e?.image);
+  $("admCurrentImage").src=safeImage(PokestockVisuals.get(e,catalog.variants).image);
   $("admSelectedInfo").textContent=e
     ?(e.series?.name||"")+" → "+(e.product?.name||"")+" → "+e.name
     :"Choisis une référence précise pour attribuer sa photographie.";
   if(e?.image){
     $("admSelectedInfo").textContent+=" · Une photo est déjà associée à cette variante. L'import la remplacera.";
   }
+  else if(e){$("admSelectedInfo").textContent+=" · "+PokestockVisuals.get(e,catalog.variants).description;}
 }
 function selectEntryForUpload(id){
   const e=entryById.get(id);

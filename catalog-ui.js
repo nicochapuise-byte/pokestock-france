@@ -114,16 +114,11 @@ function onCatalogVariant(){
   if(contribution){contribution.hidden=!!variant.image;contribution.open=false;}
   if(legacyProduct)legacyProduct.value=product.name;
   title.textContent=product.name+" — "+variant.name;
-  const communityExample=variant.id==="151-upc-mew"&&!variant.image;
-  image.src=variant.image||(communityExample?"catalog-upc151-chat.svg":"catalog-placeholder.svg");
-  image.alt=variant.image?"Photo autorisée du produit : "+product.name+" ("+variant.name+")":
-    communityExample?"Photo du coffret 151 transmise par le responsable du site":"Visuel indicatif ; photo exacte non encore disponible";
-  image.onerror=()=>{image.onerror=null;image.src="catalog-placeholder.svg";};
-  message.textContent=variant.image
-    ?"✅ Visuel du produit disponible dans la médiathèque PokéStock."
-    :communityExample
-      ?"📸 Photo de ce coffret 151 fournie directement par le responsable de PokéStock."
-      :"🖼️ Photographie officielle non intégrée : visuel neutre en attendant une image utilisable avec autorisation.";
+  const visual=PokestockVisuals.get(variant,catalogData.variants);
+  image.src=visual.image;
+  image.alt=visual.kind==="exact"?"Photo du produit : "+product.name+" ("+variant.name+")":visual.description;
+  image.onerror=()=>{image.onerror=null;image.src=PokestockVisuals.referenceImage;message.textContent="Photo indisponible pour le moment. La référence de l’article reste affichée.";};
+  message.textContent=(visual.kind==="exact"?"✅ ":"🖼️ ")+visual.description;
   const url=variant.sourceUrl||product.sourceUrl;
   source.hidden=!url;
   if(url)source.href=url;
