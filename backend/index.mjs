@@ -432,6 +432,54 @@ export default {
         const rows=await sql("SELECT r.id FROM public.stock_reports r WHERE r.user_id=$1 AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) ORDER BY r.created_at DESC LIMIT 250",[user]);
         return json({ids:rows.map(x=>x.id)},200,request);
       }
+      if(url.pathname==='/me/watches'&&request.method==='GET'){
+        const user=await authenticate(request);if(!user)return json({error:'Connexion nécessaire.'},401,request);
+        const rows=await sql("SELECT w.id,w.variant_id,w.alerts_enabled,w.commune_code,w.city,w.radius_km,v.variant_name,v.image_object_key,v.image_approved,p.name AS product_name,s.name AS series_name FROM public.stock_watches w JOIN public.catalog_variants v ON v.id=w.variant_id JOIN public.catalog_products p ON p.id=v.product_id JOIN public.catalog_series s ON s.id=p.series_id WHERE w.user_id=$1 AND w.is_active ORDER BY w.created_at DESC LIMIT 100",[user]);
+        return json({watches:rows.map(r=>({id:r.id,variantId:r.variant_id,product:r.product_name,series:r.series_name,artSet:r.variant_name,alertsEnabled:r.alerts_enabled,communeCode:r.commune_code,city:r.city,radiusKm:r.radius_km,img:r.image_approved&&r.image_object_key?photoUrl(r.image_object_key,'catalog-images'):null}))},200,request);
+      }
+      if(url.pathname==='/me/watches'&&request.method==='POST'){
+        const user=await authenticate(request);if(!user)return json({error:'Connectez-vous pour enregistrer un favori.'},401,request);
+        const raw=await request.text();if(raw.length>500)return json({error:'Requête trop volumineuse.'},413,request);
+        let data;try{data=JSON.parse(raw);}catch{return json({error:'Données invalides.'},400,request);}
+        if(typeof data?.variantId!=='string'||!/^[a-z0-9-]{2,120}$/.test(data.variantId)||Object.keys(data).some(k=>k!=='variantId'))return json({error:'Choisissez une référence du catalogue.'},400,request);
+        const rows=await sql("INSERT INTO public.stock_watches(user_id,variant_id) SELECT $1,v.id FROM public.catalog_variants v JOIN public.catalog_products p ON p.id=v.product_id JOIN public.catalog_series s ON s.id=p.series_id WHERE v.id=$2 AND v.is_active AND p.is_active AND s.is_active AND ((SELECT COUNT(*) FROM public.stock_watches WHERE user_id=$1 AND is_active)<100 OR EXISTS(SELECT 1 FROM public.stock_watches WHERE user_id=$1 AND variant_id=$2 AND is_active)) ON CONFLICT(user_id,variant_id) DO UPDATE SET is_active=true RETURNING id",[user,data.variantId]);
+        if(!rows.length)return json({error:'Référence inconnue ou limite de 100 favoris atteinte.'},400,request);
+        return json({ok:true,id:rows[0].id},201,request);
+      }
+      const watchEdit=/^\/me\/watches\/([0-9a-f-]{36})$/.exec(url.pathname);
+      if(watchEdit&&['PATCH','DELETE'].includes(request.method)){
+        const user=await authenticate(request);if(!user)return json({error:'Connexion nécessaire.'},401,request);
+        const id=watchEdit[1];if(!isReportId(id))return json({error:'Identifiant invalide.'},400,request);
+        const own=await sql('SELECT id FROM public.stock_watches WHERE id=$1::uuid AND user_id=$2 AND is_active LIMIT 1',[id,user]);
+        if(!own.length)return json({error:'Favori introuvable dans votre compte.'},404,request);
+        if(request.method==='DELETE'){
+          await sql('UPDATE public.stock_watches SET is_active=false,alerts_enabled=false WHERE id=$1::uuid AND user_id=$2',[id,user]);
+          return json({ok:true,message:'Favori retiré et alerte désactivée.'},200,request);
+        }
+        const raw=await request.text();if(raw.length>600)return json({error:'Requête trop volumineuse.'},413,request);
+        let data;try{data=JSON.parse(raw);}catch{return json({error:'Données invalides.'},400,request);}
+        if(typeof data?.enabled!=='boolean'||Object.keys(data).some(k=>!['enabled','communeCode','radiusKm'].includes(k)))return json({error:'Réglages invalides.'},400,request);
+        if(!data.enabled){await sql('UPDATE public.stock_watches SET alerts_enabled=false WHERE id=$1::uuid AND user_id=$2',[id,user]);return json({ok:true,message:'Alerte désactivée. Le produit reste dans vos favoris.'},200,request);}
+        if(![10,25,50,100,200].includes(data.radiusKm))return json({error:'Rayon invalide.'},400,request);
+        const commune=await resolveCommune(data.communeCode);if(!commune)return json({error:'Recherchez et sélectionnez une commune valide.'},400,request);
+        const changed=await sql('UPDATE public.stock_watches SET alerts_enabled=true,commune_code=$3,city=$4,latitude=$5,longitude=$6,radius_km=$7,last_viewed_at=now() WHERE id=$1::uuid AND user_id=$2 AND is_active RETURNING id',[id,user,commune.communeCode,commune.city,commune.lat,commune.lng,data.radiusKm]);
+        if(!changed.length)return json({error:'Ce favori a été retiré. Actualisez votre liste.'},404,request);
+        return json({ok:true,message:'Alerte enregistrée. Consultez les correspondances dans votre compte.'},200,request);
+      }
+      if(url.pathname==='/me/watch-matches'&&request.method==='GET'){
+        const user=await authenticate(request);if(!user)return json({error:'Connexion nécessaire.'},401,request);
+        const offset=Math.min(10000,Math.max(0,Number.parseInt(url.searchParams.get('offset'),10)||0));
+        const distance="6371*acos(LEAST(1.0,GREATEST(-1.0,sin(radians(w.latitude))*sin(radians(r.latitude))+cos(radians(w.latitude))*cos(radians(r.latitude))*cos(radians(r.longitude-w.longitude)))))";
+        const joins=PUBLIC_REPORT_JOINS+' JOIN public.stock_watches w ON w.variant_id=r.catalog_variant_id';
+        const scope=PUBLIC_REPORT_WHERE+" AND w.user_id=$1 AND w.is_active AND w.alerts_enabled AND r.owner_stock_state='available' AND NOT(COALESCE(v.unavailable_count,0)>=2 AND COALESCE(v.unavailable_count,0)>COALESCE(v.available_count,0)) AND "+distance+'<=w.radius_km';
+        const [counts,rows]=await Promise.all([sql('SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE r.last_seen_at>w.last_viewed_at)::int AS unread'+joins+scope,[user]),sql('SELECT '+PUBLIC_REPORT_FIELDS+','+SELLER_ID_SQL+' AS seller_id,w.id AS watch_id,(r.last_seen_at>w.last_viewed_at) AS is_new,'+distance+' AS distance_km'+joins+scope+' ORDER BY r.last_seen_at DESC,r.id DESC LIMIT 21 OFFSET $2',[user,offset])]);
+        return json({total:Number(counts[0]?.total)||0,unread:Number(counts[0]?.unread)||0,reports:rows.slice(0,20).map(r=>({...publicReport(r),watchId:r.watch_id,isNew:r.is_new,distanceKm:Math.round(Number(r.distance_km))})),hasMore:rows.length>20,nextOffset:offset+Math.min(rows.length,20)},200,request);
+      }
+      if(url.pathname==='/me/watch-matches/read'&&request.method==='POST'){
+        const user=await authenticate(request);if(!user)return json({error:'Connexion nécessaire.'},401,request);
+        await sql('UPDATE public.stock_watches SET last_viewed_at=now() WHERE user_id=$1 AND is_active AND alerts_enabled',[user]);
+        return json({ok:true},200,request);
+      }
       if(url.pathname==='/me/listings'&&request.method==='GET'){
         const user=await authenticate(request);
         if(!user)return json({error:'Connectez-vous pour retrouver vos signalements.'},401,request);

@@ -255,6 +255,11 @@ function sellerWebsiteLink(report){
     return '<a class="seller-website" href="'+escapeHtml(url.href)+'" target="_blank" rel="noopener noreferrer">'+(report.sellerType==='private'?'Site du vendeur':'Site de la boutique')+' ↗</a>';
   }catch{return '';}
 }
+function watchProductButton(report){
+  if(report.demo||!report.catalogVariantId||!/^[a-z0-9-]{2,120}$/.test(report.catalogVariantId))return '';
+  const saved=window.pokestockWatches?.has(report.catalogVariantId)||false;
+  return '<button type="button" class="watch-product-button'+(saved?' is-saved':'')+'" data-watch-variant="'+escapeHtml(report.catalogVariantId)+'">'+(saved?'★ Favori et alerte':'☆ Ajouter aux favoris')+'</button>';
+}
 function sellerProfileLink(report){
   if(report.demo||typeof report.sellerId!=='string'||!/^[a-f0-9]{64}$/.test(report.sellerId))return '';
   return '<a class="seller-profile-link" href="seller.html?id='+report.sellerId+'">Voir les produits du vendeur <span aria-hidden="true">→</span></a>';
@@ -288,7 +293,7 @@ function buildProductPopup(report, options={}){
     '<div class="popup-product-details">'+
       '<h3 class="popup-product-title">'+title+'</h3>'+
       (artSet?'<span class="popup-product-artset">'+artSet+'</span>':"")+
-      '<p class="popup-product-store">'+(report.sellerType==='private'?'Particulier':store)+' · '+city+'</p>'+sellerDetails(report)+sellerWebsiteLink(report)+sellerProfileLink(report)+
+      '<p class="popup-product-store">'+(report.sellerType==='private'?'Particulier':store)+' · '+city+'</p>'+sellerDetails(report)+sellerWebsiteLink(report)+sellerProfileLink(report)+watchProductButton(report)+
       '<div class="popup-product-info"><span class="popup-product-status">'+status+'</span>'+counts+'</div>'+
       '<div class="popup-product-bottom"><span>'+escapeHtml(ageText(reportHours(report)))+'</span><b>'+escapeHtml(amount)+'</b></div>'+
       '<p class="popup-product-disclaimer">Stock déclaré par un membre ; disponibilité non garantie.</p>'+
@@ -344,7 +349,7 @@ function renderCards(items){
       <div class="stock-body">
         <span class="stock-series" style="color:${s.color}">${escapeHtml(s.name)}</span>
         <h3>${escapeHtml(r.product)}</h3>${r.artSet?`<p class="stock-artset">${escapeHtml(r.artSet)}</p>`:""}
-        <p class="stock-place">${escapeHtml(r.sellerType==='private'?'Particulier':r.store)} <span>· ${escapeHtml(r.city)}</span></p>${sellerDetails(r)}${sellerWebsiteLink(r)}${sellerProfileLink(r)}${r.sellerType!=='private'&&r.address?`<p class="stock-address">${escapeHtml(r.address)}</p>`:""}
+        <p class="stock-place">${escapeHtml(r.sellerType==='private'?'Particulier':r.store)} <span>· ${escapeHtml(r.city)}</span></p>${sellerDetails(r)}${sellerWebsiteLink(r)}${sellerProfileLink(r)}${watchProductButton(r)}${r.sellerType!=='private'&&r.address?`<p class="stock-address">${escapeHtml(r.address)}</p>`:""}
         <div class="stock-meta"><span>${r.qty||1} unité(s) aperçue(s)</span><b>${r.price!=null?new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(Number(r.price)):"Prix non renseigné"}</b></div>
       </div>
     </article>`;

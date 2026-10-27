@@ -14,7 +14,7 @@
 <link rel="icon" type="image/svg+xml" href="assets/brand-mark.svg">
 <link rel="preload" as="image" href="assets/background-pokemon-cards.jpg">
 <link rel="stylesheet" href="photo-background.css?v=20261027-photo-v1">
-<link rel="stylesheet" href="navigation.css?v=20261027-vendor-map-v1">
+<link rel="stylesheet" href="navigation.css?v=20261027-watches-v1">
 </head>
 <body data-page="home">
   <img id="siteBackground" class="site-background" src="assets/background-pokemon-cards.jpg" width="3000" height="2019" alt="" aria-hidden="true" fetchpriority="high"><header class="topbar"><a class="brand" href="#accueil" aria-label="PokéStock France, accueil"><span class="ball-logo" aria-hidden="true"><i></i></span><span class="brand-name">PokéStock<small>FRANCE</small></span></a><nav class="navlinks" aria-label="Navigation principale"><a href="#accueil" data-page-link="home" class="is-active" aria-current="page">Accueil</a><a href="#carte" data-view="map">Carte</a><a href="#disponibilites" data-view="list">Disponibilités</a><a href="#fonctionnement" data-page-link="about">Le principe</a><a href="admin.html" class="dashboard-link" hidden>Dashboard</a></nav><div class="top-actions">
@@ -119,10 +119,13 @@
       <section id="communityReputation" class="reputation-panel" hidden aria-label="Ma réputation communautaire"></section>
       <button class="btn btn-red full" type="submit" id="authSubmit">Se connecter</button>
       <button class="btn btn-white full" type="button" id="toggleAuthMode">Créer un compte</button>
+      <button class="btn btn-white full" type="button" id="watchOpenBtn" hidden>Favoris et alertes <b id="watchUnread" hidden></b></button>
       <button class="btn btn-red full" type="button" id="myReportsBtn" hidden>Mes signalements</button>
       <button class="btn btn-white full" type="button" id="signOutBtn" hidden>Se déconnecter</button>
     </form>
   </div>
+
+  <div class="modal" id="watchModal" aria-hidden="true"><div class="modal-backdrop" data-close-watches></div><section class="modal-card watch-card" role="dialog" aria-modal="true" aria-labelledby="watchTitle"><button type="button" class="modal-close" data-close-watches aria-label="Fermer les favoris">×</button><p class="eyebrow">MON ESPACE</p><h2 id="watchTitle">Favoris et alertes</h2><p class="modal-intro">Suivez vos références et retrouvez les signalements autour d’une commune. Alertes consultables ici, sans e-mail ni notification téléphone.</p><nav class="watch-tabs" aria-label="Favoris et correspondances"><button type="button" data-watch-tab="favorites" aria-pressed="true">Mes favoris</button><button type="button" data-watch-tab="alerts" aria-pressed="false">Signalements correspondants <b id="watchMatchCount">0</b></button></nav><p id="watchStatus" class="owner-status" role="status" aria-live="polite"></p><div id="watchFavoritesPanel"><details class="watch-add" open><summary>Ajouter un produit depuis le catalogue</summary><div class="watch-catalog-grid"><label><span>Rechercher une série</span><input id="watchSeriesSearch" type="search" placeholder="Nom ou code de série"></label><label><span>Série</span><select id="watchSeries"><option value="">Chargement du catalogue…</option></select></label><label class="watch-wide"><span>Produit et illustration</span><select id="watchVariant" disabled><option value="">Choisir une série</option></select></label><button id="watchAdd" class="btn" type="button">Ajouter aux favoris</button></div></details><div id="watchList" class="watch-list"></div><p id="watchEmpty" class="watch-empty" hidden>Aucun favori pour le moment. Choisissez un produit dans le catalogue ci-dessus, ou depuis un signalement.</p></div><div id="watchAlertsPanel" hidden><p class="watch-help">Activez une alerte dans un favori pour choisir sa commune et son rayon. Les distances sont approximatives, calculées depuis le centre de la commune suivie.</p><div class="watch-alert-actions"><button id="watchRefresh" class="btn btn-white" type="button">Actualiser</button><button id="watchMarkRead" class="btn btn-white" type="button">Tout marquer comme vu</button></div><div id="watchMatches" class="watch-list"></div><p id="watchNoMatches" class="watch-empty" hidden>Aucun signalement actif ne correspond à vos alertes. Vous retrouverez les prochaines observations ici.</p><button id="watchMore" type="button" class="btn btn-white" hidden>Afficher davantage</button></div></section></div>
 
   <div class="modal" id="myReportsModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-my-reports></div>
@@ -309,14 +312,15 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js?v=20261027-vendor-map-v1"></script>
+  <script src="script.js?v=20261027-watches-v1"></script>
   <script src="community.js?v=20261027-vendor-map-v1"></script>
   <script src="moderation.js?v=20261027-my-reports-v1"></script>
   <script src="catalog-visuals.js?v=20261027-archive-v1"></script>
   <script src="catalog-ui.js?v=20261027-design-v3"></script>
   <script src="catalog-photo-workflow.js?v=20261026-admintabs-v1"></script>
-  <script type="module" src="auth-ui.js?v=20261027-my-reports-v1"></script>
+  <script type="module" src="auth-ui.js?v=20261027-watches-v1"></script>
 <script src="my-reports.js?v=20261027-my-reports-v1"></script>
+<script src="watches.js?v=20261027-watches-v1"></script>
 <script src="interface.js?v=20261027-vendor-map-v1"></script>
 </body>
 </html>
