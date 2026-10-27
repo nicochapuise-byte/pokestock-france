@@ -83,7 +83,7 @@ async function currentKeys(){
   jwksCache={at:Date.now(),keys:data.keys};
   return data.keys;
 }
-async function authenticate(request){
+async function verifiedSubject(request){
   const value=request.headers.get("authorization")||"";
   const match=/^Bearer\s+([a-zA-Z0-9._-]+)$/.exec(value);
   if(!match)return null;
@@ -100,6 +100,14 @@ async function authenticate(request){
     const valid=verifySignature(null,Buffer.from(parts[0]+"."+parts[1]),createPublicKey({key,format:"jwk"}),decode(parts[2]));
     return valid?body.sub:null;
   }catch{return null;}
+}
+async function authenticate(request){
+  const subject=await verifiedSubject(request);
+  if(!subject)return null;
+  // A still-valid JWT must not recreate data after the Auth identity was erased.
+  // Do not cache positive results: account existence is checked on every request.
+  const rows=await sql('SELECT EXISTS(SELECT 1 FROM neon_auth."user" WHERE id::text=$1) AS present',[subject]);
+  return rows[0]?.present===true?subject:null;
 }
 async function isSiteAdmin(userId){
   if(!userId)return false;

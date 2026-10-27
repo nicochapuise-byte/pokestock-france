@@ -42,3 +42,11 @@ Le bouton « Vérifier les données à effacer » appelle `GET /admin/account-de
 Le nettoyage SQL est limité au compte et à une demande en cours, refuse une identité encore présente ou un rôle administrateur. Les retraits effectués sur les signalements d’autres membres sont anonymisés pour conserver leur retrait. Les références de photos du catalogue sont détachées sans supprimer les produits.
 
 Validation actuelle : tests simulés des échecs partiels et reprises, inventaire SQL en lecture seule et planification SQL sans exécution. Aucun compte ni fichier réellement effacé. La validation de bout en bout doit utiliser uniquement un compte jetable dédié sur la branche de développement, après autorisation explicite de sa suppression irréversible. Les rétentions de sauvegardes restent à documenter.
+
+## Vérification d’identité et adaptateur de fichiers
+
+L’API vérifie désormais l’existence de l’identité Neon Auth après vérification cryptographique du JWT, à chaque requête authentifiée sans cache positif. Un JWT encore valide mais associé à une identité supprimée est refusé ; une indisponibilité Postgres provoque une erreur de service et ne donne pas accès. Ceci ne draine pas les requêtes déjà authentifiées : le verrou durable et le traitement des téléversements en cours restent nécessaires avant activation de l’effacement.
+
+`erasure-storage.mjs` prépare les opérations DELETE et HEAD signées SigV4 sur le seul endpoint de branche injecté, avec buckets autorisés, délai maximal et interdiction des redirections. Une réponse HEAD 404 confirme l’absence ; un refus 403 ou une erreur 5xx bloque le traitement. Aucun appel DELETE réel n’a été effectué lors de cette validation. Le module n’est pas raccordé à une route HTTP.
+
+Limite importante du fournisseur : `DeleteObject` réalise une suppression logique sur la branche courante. La vérification HEAD établit l’absence du fichier actif, pas la purge physique de tous les historiques ou sauvegardes. Les règles de cycle de vie S3 ne sont actuellement pas exécutées par Neon. Définir et documenter la rétention avec le fournisseur avant toute promesse de suppression physique complète. Référence : https://neon.com/docs/storage/s3-compatibility

@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {readErasurePlan,publicErasurePreview,executeErasure,COUNT_KEYS,purgeAccountRows,verifyAccountEmpty} from './account-erasure.mjs';
+import {createErasureStorage} from './erasure-storage.mjs';
 const uid='10000000-0000-4000-8000-000000000001',rid='20000000-0000-4000-8000-000000000002';
 async function fixture({admin=false,shared=false,status='processing',identity=true}={}){
  const counts=Object.fromEntries(COUNT_KEYS.map(key=>[key,0]));Object.assign(counts,{reports:1,proof_photos:1,proposals:1,deletion_requests:1,admin_roles:admin?1:0});
@@ -37,4 +38,11 @@ test('rows cleanup is owner and request scoped, and verification fails closed fo
  const {plan}=await fixture();let params;await purgeAccountRows(async(query,p)=>{params=p;return[{executed:true}];},plan);assert.deepEqual(params,[uid,rid]);
  await assert.rejects(purgeAccountRows(async()=>[{executed:false}],plan));
  await assert.rejects(verifyAccountEmpty(async query=>query.startsWith('SELECT\n')?[{}]:[],uid));
+});
+test('a refused storage verification preserves database references for retry',async()=>{
+ const {plan}=await fixture();const methods=[];
+ const storage=createErasureStorage({endpoint:'https://storage.example/dev',region:'eu-central-1',accessKeyId:'test',secretAccessKey:'test',fetcher:async(url,options)=>{methods.push(options.method);return new Response(null,{status:options.method==='DELETE'?204:403});}});
+ const {adapters,calls}=adaptersFor(plan,storage);
+ await assert.rejects(executeErasure(plan,adapters,confirmation(plan)));
+ assert.deepEqual(methods,['DELETE','HEAD']);assert(!calls.includes('rows'));assert(!calls.includes('complete'));assert(calls.includes('failure'));assert.equal(calls.at(-1).release.keepBlocked,true);
 });
