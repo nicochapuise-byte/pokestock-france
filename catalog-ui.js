@@ -61,10 +61,11 @@ function setCatalogSeriesOptions(query=""){
 }
 
 function resetCatalogPhotoPreview(){
-  catalogDom("catalogPreviewImage").src="catalog-placeholder.svg";
+  catalogDom("catalogPreview").hidden=true;
+  catalogDom("catalogPreviewImage").src="catalog-product-reference.svg";
   catalogDom("catalogPreviewImage").alt="Illustration générique, pas une photo de l'article";
   catalogDom("catalogPreviewTitle").textContent="Choisis une référence";
-  catalogDom("catalogPreviewMessage").textContent="Les visuels de produits seront ajoutés au fur et à mesure des autorisations obtenues.";
+  catalogDom("catalogPreviewMessage").textContent="Sélectionnez un article pour consulter son visuel et sa référence.";
   catalogDom("catalogSourceLink").hidden=true;
   catalogDom("catalogVariantId").value="";
   const contribution=catalogDom("catalogContribute");
@@ -109,6 +110,7 @@ function onCatalogVariant(){
   const source=catalogDom("catalogSourceLink");
   const legacyProduct=document.querySelector('#reportForm input[name="product"]');
   if(!variant||!product){resetCatalogPhotoPreview();return;}
+  catalogDom("catalogPreview").hidden=false;
   catalogDom("catalogVariantId").value=variant.id;
   const contribution=catalogDom("catalogContribute");
   if(contribution){contribution.hidden=!!variant.image;contribution.open=false;}

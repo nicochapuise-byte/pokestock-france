@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="styles.css?v=20261026-admintabs-v2">
-<html><head><link rel="stylesheet" href="interface.css?v=20261027-design-v2"></head></html>
+<link rel="stylesheet" href="interface.css?v=20261027-design-v3">
 </head>
 <body>
   <header class="topbar"><a class="brand" href="#accueil" aria-label="PokéStock France, accueil"><span class="ball-logo" aria-hidden="true"><i></i></span><span class="brand-name">PokéStock<small>FRANCE</small></span></a><nav class="navlinks" aria-label="Navigation principale"><a href="#carte" data-view="map" class="is-active">La carte</a><a href="#disponibilites" data-view="list">Disponibilités</a><a href="#fonctionnement">Le principe</a></nav><div class="top-actions">
@@ -40,7 +40,7 @@
 </div>
 </div>
 <div class="finder-toolbar">
-<label class="searchbox"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"></circle><path d="m16 16 5 5"></path></svg><input id="searchInput" type="search" aria-label="Rechercher une ville, un magasin ou un produit" placeholder="Ville, magasin ou produit…"></label><button class="toolbar-button" id="showFilters" aria-controls="finderFilters" aria-expanded="false" type="button"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"></path><circle cx="9" cy="7" r="2" fill="currentColor"></circle><circle cx="15" cy="17" r="2" fill="currentColor"></circle></svg><span>Filtres</span><b id="activeFilterCount" hidden>0</b></button><button class="toolbar-button recent-filter" id="recentOnly" aria-pressed="false" type="button"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Moins de 24 h</button><button class="toolbar-button locate-button" id="locateBtn" type="button"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg><span>Autour de moi</span></button>
+<label class="searchbox"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"></circle><path d="m16 16 5 5"></path></svg><input id="searchInput" type="search" aria-label="Rechercher une ville, un magasin ou un produit" placeholder="Ville, magasin ou produit…"></label><button class="toolbar-button" id="showFilters" aria-controls="finderFilters" aria-expanded="false" type="button"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"></path><circle cx="9" cy="7" r="2" fill="currentColor"></circle><circle cx="15" cy="17" r="2" fill="currentColor"></circle></svg><span>Filtres</span><b id="activeFilterCount" hidden>0</b></button><button class="toolbar-button recent-filter" id="recentOnly" aria-pressed="false" type="button"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Moins de 24 h</button><button class="toolbar-button locate-button" id="locateBtn" type="button" aria-label="Me localiser sur la carte"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg><span>Autour de moi</span></button>
 </div>
 <div class="finder">
 <aside class="filters" id="finderFilters" aria-label="Filtrer les disponibilités"><div class="filter-head">
@@ -96,7 +96,7 @@
 </div></section></main><footer><a class="brand small" href="#accueil">PokéStock <span>France</span></a><p>Par des collectionneurs, pour des collectionneurs.</p>
 <small>Projet indépendant, non affilié à The Pokémon Company, Nintendo ou Game Freak.</small></footer><nav class="mobile-nav" aria-label="Navigation mobile"><button type="button" data-view="map" class="is-active" aria-pressed="true"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z"></path><path d="M9 3v15M15 6v15"></path></svg><span>Carte</span></button><button type="button" data-view="list" aria-pressed="false"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg><span>Disponibilités</span></button><button type="button" data-open-report class="mobile-report"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span>Signaler</span></button><button type="button" id="mobileAccount"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21v-2a8 8 0 0 1 16 0v2"></path></svg><span>Compte</span></button></nav><div class="modal" id="authModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-auth></div>
-    <form id="authForm" class="modal-card auth-card">
+    <form id="authForm" class="modal-card auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
       <button type="button" class="modal-close" data-close-auth aria-label="Fermer">×</button>
       <span class="eyebrow dark">Compte PokéStock</span>
       <h2 id="authTitle">Se connecter</h2>
@@ -199,10 +199,10 @@
 
   <div class="modal" id="reportModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-modal></div>
-    <form class="modal-card" id="reportForm" novalidate="novalidate">
+    <form class="modal-card" id="reportForm" novalidate="novalidate" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
       <button type="button" class="modal-close" data-close-modal aria-label="Fermer">×</button>
       <span class="eyebrow dark">Nouveau signalement</span>
-      <h2>Signaler un produit</h2>
+      <h2 id="reportTitle">Signaler un produit</h2>
       <p class="modal-intro">Un produit, un magasin, quelques informations. Votre photo de preuve est facultative et reste privée.</p>
 
       <ol class="report-progress" aria-label="Étapes du signalement">
@@ -211,19 +211,19 @@
 <li><button type="button" data-report-step-target="2"><span>3</span>Confirmer</button></li>
 </ol>
 <section class="report-step" data-report-step="0" aria-label="Étape 1 : le produit"><div class="catalog-picker wide">
-          <p class="catalog-intro">Choisis la référence exacte. L'image du catalogue remplacera la photo prise en magasin lorsque nous disposerons d'un visuel autorisé.</p>
+          <p class="catalog-intro">Sélectionnez la série, le produit et son illustration pour identifier votre trouvaille.</p>
           <div class="catalog-picker-grid">
             <label><span>Extension / Série *</span>
               <input id="catalogSeriesSearch" type="search" placeholder="Nom ou code : 151, ME03, Évolution..." autocomplete="off">
               <select id="catalogSeries" required><option value="">Chargement du catalogue…</option></select>
-              <small>30ᵉ Anniversaire en premier, puis sorties récentes vers anciennes.  : extension à venir.</small>
+              <small>Les nouveautés en premier. Les séries à venir sont désactivées.</small>
             </label>
             <label><span>Type de produit *</span><select id="catalogType" required disabled><option value="">Choisir une série</option></select></label>
             <label><span>Article *</span><select id="catalogProduct" required disabled><option value="">Choisir un type</option></select></label>
             <label><span>Art set / Variante *</span><select id="catalogVariant" required disabled><option value="">Choisir un article</option></select></label>
           </div>
-          <div id="catalogPreview" class="catalog-preview" aria-live="polite">
-            <img id="catalogPreviewImage" src="catalog-placeholder.svg" alt="Visuel indicatif de catalogue">
+          <div id="catalogPreview" class="catalog-preview" aria-live="polite" hidden="hidden">
+            <img id="catalogPreviewImage" src="catalog-product-reference.svg" alt="Visuel indicatif de catalogue">
             <div>
 <strong id="catalogPreviewTitle">Choisis une référence</strong>
               <p id="catalogPreviewMessage">Les références sont documentées par leur fiche source. Les visuels protégés ne sont pas reproduits sans autorisation.</p>
@@ -274,13 +274,13 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js?v=20261027-design-v1"></script>
+  <script src="script.js?v=20261027-design-v3"></script>
   <script src="community.js?v=20261027-design-v1"></script>
   <script src="moderation.js?v=20261026-admintabs-v1"></script>
   <script src="catalog-visuals.js?v=20261027-archive-v1"></script>
-  <script src="catalog-ui.js?v=20261027-archive-v1"></script>
+  <script src="catalog-ui.js?v=20261027-design-v3"></script>
   <script src="catalog-photo-workflow.js?v=20261026-admintabs-v1"></script>
   <script type="module" src="auth-ui.js?v=20261027-design-v1"></script>
-<html><head><script src="interface.js?v=20261027-design-v1"></script></head></html>
+<script src="interface.js?v=20261027-design-v1"></script>
 </body>
 </html>

@@ -89,6 +89,7 @@ function initMap(){
   }
   try{
     map = L.map("map",{zoomControl:true}).setView([46.6,2.4],6);
+    map.fitBounds([[41.5,-5.4],[51.2,9.7]],{padding:[12,12],maxZoom:6});
     markerLayer = L.layerGroup().addTo(map);
     mapMode = "leaflet";
 
