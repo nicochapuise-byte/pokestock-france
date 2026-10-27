@@ -1,6 +1,6 @@
-# Validation destructive proposée — compte jetable uniquement
+# Validation manuelle — compte jetable uniquement
 
-Ce protocole n’a pas encore été exécuté. Il exige l’autorisation explicite de supprimer définitivement l’identité et les données fictives créées pour ce test. Le suivi des opérations et les tests SQL annulés sont déjà distinctement testables sans cet effacement.
+Ce protocole a été exécuté après autorisation explicite de l’utilisateur. Résultat : réussite du test manuel des primitives réelles, uniquement en développement. Voir [le compte rendu du 28 octobre 2026](account-erasure-validation-result-20261028.md). Le raccordement automatique de l’exécuteur reste désactivé.
 
 ## Périmètre fermé
 
@@ -21,4 +21,4 @@ Ce protocole n’a pas encore été exécuté. Il exige l’autorisation explici
 6. Exécuter le nettoyage SQL préparé avec les seuls UUID de ce compte et de cette demande. Vérifier tous les compteurs à zéro et l’absence de référence de fichier, ainsi que l’absence de l’identité. Les tables du catalogue restent inchangées.
 7. Après une réussite vérifiée, enregistrer un reçu non identifiant et rouvrir les écritures de développement en libérant le verrou de cette demande. Vérifier le contrôle et l’accès public. En cas de résultat ambigu, arrêter et examiner l’état avant de libérer le verrou ou de reprendre.
 
-Ce test manuel validera les primitives réelles. Il ne suffit pas à activer automatiquement une route de suppression pour les utilisateurs : le raccordement des adaptateurs, la gestion des reprises, la confirmation finale utilisateur et la politique de rétention restent à vérifier séparément. Une absence dans la branche active ne certifie pas une purge physique de toutes les sauvegardes.
+Ce test manuel a validé les primitives réelles. Il ne suffit pas à activer automatiquement une route de suppression pour les utilisateurs : le raccordement des adaptateurs, la gestion des reprises, la confirmation finale utilisateur et la politique de rétention restent à vérifier séparément. Une absence dans la branche active ne certifie pas une purge physique de toutes les sauvegardes.
