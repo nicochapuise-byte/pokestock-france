@@ -15,5 +15,5 @@ export async function resolveCommune(code,fetcher=fetch){
   const c=Array.isArray(list)?list.find(c=>c.code===code):null;
   const [lng,lat]=c?.centre?.coordinates||[];
   if(!c||typeof c.nom!=='string'||!Number.isFinite(lat)||!Number.isFinite(lng)||lat<41||lat>52||lng< -6||lng>10)return null;
-  return {city:c.nom,address:c.nom,store:'Particulier',lat,lng,communeCode:c.code,websiteUrl:null};
+  return {city:c.nom,address:c.nom,store:'Particulier',lat,lng,communeCode:c.code};
 }

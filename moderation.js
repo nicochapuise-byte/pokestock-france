@@ -234,8 +234,8 @@ function editAdminReport(id){
   modSellerType=report.sellerType||'professional';modCommuneCode=report.communeCode||null;
   const privateSeller=modSellerType==='private';
   document.getElementById('adminSellerType').textContent=privateSeller?'Particulier · commune uniquement, aucune adresse personnelle':'Professionnel';
-  for(const id of ['adminStoreNameField','adminStreetField','adminWebsiteField'])document.getElementById(id).hidden=privateSeller;
-  for(const name of ['store','address','websiteUrl'])getModInput(name).disabled=privateSeller;
+  for(const id of ['adminStoreNameField','adminStreetField'])document.getElementById(id).hidden=privateSeller;
+  for(const name of ['store','address'])getModInput(name).disabled=privateSeller;
   getModInput('websiteUrl').value=report.websiteUrl||'';
   document.getElementById('adminFindAddress').textContent=privateSeller?'Vérifier la commune':'Vérifier une nouvelle adresse';
   for(const key of ["store","city","series","product","qty","address","status"]){
@@ -294,7 +294,7 @@ modForm.addEventListener("submit",async e=>{
   payload.qty=Number(getModInput("qty").value);
   payload.price=getModInput("price").value===""?null:Number(getModInput("price").value);
   payload.lat=modCoords.lat;payload.lng=modCoords.lng;
-  payload.communeCode=modCommuneCode;payload.websiteUrl=modSellerType==='private'?null:getModInput('websiteUrl').value.trim();
+  payload.communeCode=modCommuneCode;payload.websiteUrl=getModInput('websiteUrl').value.trim();
   const save=document.getElementById("adminSaveEdit");
   modBusy=true;save.disabled=true;save.textContent="⏳ Enregistrement...";
   try{

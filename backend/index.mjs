@@ -452,8 +452,8 @@ export default {
           if(!commune||(!payload.communeCode&&payload.city!==before[0].city))return json({error:"Sélectionnez une commune valide pour ce particulier."},400,request);
           Object.assign(payload,commune);
         }
-        const websiteUrl=sellerType==='private'?null:normalizeWebsite(payload.websiteUrl===undefined?before[0].website_url:payload.websiteUrl);
-        if(websiteUrl===false)return json({error:"Lien de boutique invalide : utilisez une URL http ou https."},400,request);
+        const websiteUrl=normalizeWebsite(payload.websiteUrl===undefined?before[0].website_url:payload.websiteUrl);
+        if(websiteUrl===false)return json({error:"Lien web invalide : utilisez une URL http ou https."},400,request);
         const updated=editedValues(payload);
         if(!updated)return json({error:"Vérifie les champs, le statut et les coordonnées."},400,request);
         const seriesRows=await sql("SELECT id FROM public.catalog_series WHERE id=$1 AND is_active=true LIMIT 1",[updated.series]);
@@ -489,7 +489,7 @@ export default {
       }
       if(url.pathname==="/reports"&&request.method==="GET"){
         const rows=await sql("SELECT r.id,r.store_name,r.store_address,r.seller_type,r.website_url,r.commune_code,r.city,r.series_id,r.product_name,r.price_eur,r.quantity,r.latitude,r.longitude,r.photo_object_key,r.catalog_variant_id,cv.variant_name,cv.image_object_key AS catalog_image_key,cv.image_approved,cp.source_url AS catalog_source_url,r.status,r.created_at,COALESCE(v.available_count,0)::int AS available_count,COALESCE(v.unavailable_count,0)::int AS unavailable_count FROM public.stock_reports r LEFT JOIN public.catalog_variants cv ON cv.id=r.catalog_variant_id LEFT JOIN public.catalog_products cp ON cp.id=cv.product_id LEFT JOIN LATERAL (SELECT COUNT(*) FILTER (WHERE verdict='available') AS available_count,COUNT(*) FILTER (WHERE verdict='unavailable') AS unavailable_count FROM public.stock_votes WHERE report_id=r.id) v ON TRUE WHERE r.status IN ('approved','pending') AND r.expires_at>now() AND NOT EXISTS(SELECT 1 FROM public.stock_report_removals d WHERE d.report_id=r.id) ORDER BY r.created_at DESC LIMIT 100");
-        return json({reports:rows.map(r=>({id:r.id,store:r.seller_type==='private'?'Particulier':r.store_name,address:r.seller_type==='private'?null:r.store_address,sellerType:r.seller_type,websiteUrl:r.seller_type==='private'?null:r.website_url,communeCode:r.commune_code,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,img:r.catalog_image_key&&r.image_approved?photoUrl(r.catalog_image_key,"catalog-images"):null,catalogVariantId:r.catalog_variant_id,artSet:r.variant_name||null,catalogSourceUrl:r.catalog_source_url||null,proofProvided:!!r.photo_object_key,votes:voteSummary(r.available_count,r.unavailable_count)}))},200,request);
+        return json({reports:rows.map(r=>({id:r.id,store:r.seller_type==='private'?'Particulier':r.store_name,address:r.seller_type==='private'?null:r.store_address,sellerType:r.seller_type,websiteUrl:r.website_url,communeCode:r.commune_code,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,img:r.catalog_image_key&&r.image_approved?photoUrl(r.catalog_image_key,"catalog-images"):null,catalogVariantId:r.catalog_variant_id,artSet:r.variant_name||null,catalogSourceUrl:r.catalog_source_url||null,proofProvided:!!r.photo_object_key,votes:voteSummary(r.available_count,r.unavailable_count)}))},200,request);
       }
       if(url.pathname==="/me/votes"&&request.method==="GET"){
         const user=await authenticate(request);
@@ -548,8 +548,8 @@ export default {
           // Discard supplied street, free-text identity and precise location before persistence.
           Object.assign(data,commune);
         }
-        const websiteUrl=sellerType==='private'?null:normalizeWebsite(data.websiteUrl);
-        if(websiteUrl===false)return json({error:"Lien de boutique invalide : utilisez une URL http ou https."},400,request);
+        const websiteUrl=normalizeWebsite(data.websiteUrl);
+        if(websiteUrl===false)return json({error:"Lien web invalide : utilisez une URL http ou https."},400,request);
         if(!validText(data.store,140)||!validText(data.address,240)||!validText(data.city,120)||!validCoordinates(Number(data.lat),Number(data.lng)))
           return json({error:"Vérifiez la boutique, sa commune et son adresse."},400,request);
         if(typeof data.catalogVariantId!=="string"||!/^[a-z0-9-]{2,120}$/.test(data.catalogVariantId))

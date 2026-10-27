@@ -14,7 +14,7 @@
 <link rel="icon" type="image/svg+xml" href="assets/brand-mark.svg">
 <link rel="preload" as="image" href="assets/background-pokemon-cards.jpg">
 <link rel="stylesheet" href="photo-background.css?v=20261027-photo-v1">
-<link rel="stylesheet" href="navigation.css?v=20261027-sellers-v1">
+<link rel="stylesheet" href="navigation.css?v=20261027-sellers-v2">
 </head>
 <body data-page="home">
   <img id="siteBackground" class="site-background" src="assets/background-pokemon-cards.jpg" width="3000" height="2019" alt="" aria-hidden="true" fetchpriority="high"><header class="topbar"><a class="brand" href="#accueil" aria-label="PokéStock France, accueil"><span class="ball-logo" aria-hidden="true"><i></i></span><span class="brand-name">PokéStock<small>FRANCE</small></span></a><nav class="navlinks" aria-label="Navigation principale"><a href="#accueil" data-page-link="home" class="is-active" aria-current="page">Accueil</a><a href="#carte" data-view="map">Carte</a><a href="#disponibilites" data-view="list">Disponibilités</a><a href="#fonctionnement" data-page-link="about">Le principe</a><a href="admin.html" class="dashboard-link">Dashboard</a></nav><div class="top-actions">
@@ -183,7 +183,7 @@
           <label><span>Produit *</span><input name="product" required maxlength="200"></label>
           <label><span>Prix (€)</span><input name="price" type="number" step="0.01" min="0"></label>
           <label><span>Quantité *</span><input name="qty" type="number" min="1" max="999" required></label>
-          <label class="wide" id="adminStreetField"><span>Adresse de la boutique *</span><input name="address" required maxlength="240"></label><label class="wide" id="adminWebsiteField"><span>Site web de la boutique</span><input name="websiteUrl" type="url" maxlength="2048" placeholder="https://www.votre-boutique.fr"></label>
+          <label class="wide" id="adminStreetField"><span>Adresse de la boutique *</span><input name="address" required maxlength="240"></label><label class="wide" id="adminWebsiteField"><span>Site web ou page de vente</span><input name="websiteUrl" type="url" maxlength="2048" placeholder="https://exemple.fr"></label>
           <div class="address-picker wide">
             <button type="button" class="btn btn-blue" id="adminFindAddress">Vérifier une nouvelle adresse</button>
             <select id="adminAddressOptions" hidden aria-label="Choisir la nouvelle adresse"></select>
@@ -259,7 +259,7 @@
         <label><span>Prix (€)</span><input name="price" type="number" min="0" step="0.01" placeholder="29.99"></label>
         <label><span>Quantité vue</span><input name="quantity" type="number" min="1" max="999" value="1"></label>
         <label class="wide" id="storeAddressField"><span>Adresse complète de la boutique *</span><input name="address" id="storeAddress" required maxlength="240" placeholder="Ex. 12 rue Nationale, Lille" autocomplete="street-address"></label>
-        <label class="wide" id="storeWebsiteField"><span>Site web de la boutique (facultatif)</span><input name="websiteUrl" id="storeWebsite" type="url" maxlength="2048" placeholder="https://www.votre-boutique.fr" autocomplete="url"></label>
+        <label class="wide" id="storeWebsiteField"><span id="storeWebsiteLabel">Site web de la boutique (facultatif)</span><input name="websiteUrl" id="storeWebsite" type="url" maxlength="2048" placeholder="https://exemple.fr" autocomplete="url"></label>
 <input type="hidden" name="communeCode" id="reportCommuneCode">
 <div class="address-picker wide">
           <button type="button" class="btn btn-blue" id="verifyAddress">Rechercher l'adresse</button>
@@ -284,13 +284,13 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js?v=20261027-sellers-v1"></script>
+  <script src="script.js?v=20261027-sellers-v2"></script>
   <script src="community.js?v=20261027-design-v1"></script>
-  <script src="moderation.js?v=20261027-sellers-v1"></script>
+  <script src="moderation.js?v=20261027-sellers-v2"></script>
   <script src="catalog-visuals.js?v=20261027-archive-v1"></script>
   <script src="catalog-ui.js?v=20261027-design-v3"></script>
   <script src="catalog-photo-workflow.js?v=20261026-admintabs-v1"></script>
   <script type="module" src="auth-ui.js?v=20261027-design-v1"></script>
-<script src="interface.js?v=20261027-sellers-v1"></script>
+<script src="interface.js?v=20261027-sellers-v2"></script>
 </body>
 </html>

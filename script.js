@@ -250,9 +250,9 @@ function popupProductPhoto(report){
   return url||"catalog-placeholder.svg";
 }
 function sellerWebsiteLink(report){
-  if(report.sellerType==='private'||!report.websiteUrl)return '';
+  if(!report.websiteUrl)return '';
   try{const url=new URL(report.websiteUrl);if(!['https:','http:'].includes(url.protocol)||url.username||url.password)return '';
-    return '<a class="seller-website" href="'+escapeHtml(url.href)+'" target="_blank" rel="noopener noreferrer">Site de la boutique ↗</a>';
+    return '<a class="seller-website" href="'+escapeHtml(url.href)+'" target="_blank" rel="noopener noreferrer">'+(report.sellerType==='private'?'Site du vendeur':'Site de la boutique')+' ↗</a>';
   }catch{return '';}
 }
 function sellerDetails(report){return report.sellerType==='private'?'<span class="seller-label">Particulier · Centre de la commune, localisation approximative</span>':report.sellerType==='professional'?'<span class="seller-label">Professionnel</span>':'';}
@@ -397,12 +397,13 @@ function resetVerifiedAddress(){
 }
 function updateSellerFields(){
   const privateSeller=isPrivateSeller();
-  for(const id of ['storeNameField','storeAddressField','storeWebsiteField'])$("#"+id).hidden=privateSeller;
-  for(const name of ['store','address','websiteUrl']){
+  for(const id of ['storeNameField','storeAddressField'])$("#"+id).hidden=privateSeller;
+  for(const name of ['store','address']){
     const field=$("#reportForm [name="+name+"]");field.disabled=privateSeller;
     if(name!=='websiteUrl')field.required=!privateSeller;
     if(privateSeller)field.value='';
   }
+  $("#storeWebsiteLabel").textContent=privateSeller?'Site web ou page de vente (facultatif)':'Site web de la boutique (facultatif)';
   $("#sellerPrivacyNote").hidden=!privateSeller;
   $("#verifyAddress").textContent=privateSeller?'Rechercher la commune':'Rechercher l’adresse';
   $("#addressResult").setAttribute('aria-label',privateSeller?'Choisir la commune':'Choisir l’adresse de la boutique');
@@ -590,7 +591,7 @@ function bindUI(){
         catalogVariantId:String(data.get("catalogVariantId")||""),
         sellerType:String(data.get("sellerType")||""),
         communeCode:isPrivateSeller()?verifiedAddress.communeCode:null,
-        websiteUrl:isPrivateSeller()?null:String(data.get("websiteUrl")||"").trim(),
+        websiteUrl:String(data.get("websiteUrl")||"").trim(),
         store:isPrivateSeller()?"Particulier":String(data.get("store")||"").trim().slice(0,140),
         city:String(data.get("city")||"").trim().slice(0,120),
         address:isPrivateSeller()?null:verifiedAddress.label,
