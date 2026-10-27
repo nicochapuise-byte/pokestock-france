@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PokéStock</string>
+    <string name="title_activity_main">PokéStock</string>
+    <string name="package_name">fr.pokestock.app</string>
+    <string name="custom_url_scheme">fr.pokestock.app</string>
+</resources>

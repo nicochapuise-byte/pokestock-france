@@ -1,0 +1,6 @@
+{
+  "appId": "fr.pokestock.app", "appName": "PokéStock", "webDir": "www", "backgroundColor": "#0b162c",
+  "server": { "hostname": "localhost", "iosScheme": "capacitor", "androidScheme": "https" },
+  "android": { "allowMixedContent": false },
+  "ios": { "contentInset": "automatic", "preferredContentMode": "mobile" }
+}

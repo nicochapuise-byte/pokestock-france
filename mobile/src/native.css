@@ -1,0 +1,8 @@
+/* Native-only rules; the public website is not altered. */
+html.native-app{background:#0b162c;overscroll-behavior-y:none}
+.native-app body{min-height:100dvh;padding-bottom:env(safe-area-inset-bottom,0px)}
+.native-app .topbar{padding-top:max(12px,env(safe-area-inset-top,0px))}
+.native-app .modal{padding-top:max(16px,env(safe-area-inset-top,0px));padding-bottom:max(16px,env(safe-area-inset-bottom,0px))}
+.native-app :is(input,select,textarea){font-size:16px}
+.native-network-status{position:sticky;top:0;z-index:2000;padding:12px 18px;color:#fff2b0;background:#493d13;font-size:13px;line-height:1.5}
+.native-network-status[hidden]{display:none}
