@@ -1,0 +1,12 @@
+{
+  "development": {
+    "name": "development",
+    "apiUrl": "https://br-morning-lab-b9mavkej-pokestock.compute.c-7.eu-central-1.aws.neon.tech",
+    "authUrl": "https://ep-morning-bonus-b92tax88.neonauth.c-7.eu-central-1.aws.neon.tech/neondb/auth"
+  },
+  "production": {
+    "name": "production",
+    "apiUrl": "https://br-nameless-math-b9dyokxp-pokestock.compute.c-7.eu-central-1.aws.neon.tech",
+    "authUrl": "https://ep-dark-bread-b9bd8cco.neonauth.c-7.eu-central-1.aws.neon.tech/neondb/auth"
+  }
+}

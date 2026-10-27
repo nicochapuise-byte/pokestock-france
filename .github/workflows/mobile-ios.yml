@@ -1,0 +1,40 @@
+name: Mobile iOS - simulator build
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['mobile/**', '.github/workflows/mobile-ios.yml']
+permissions:
+  contents: read
+concurrency:
+  group: mobile-ios-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ios-simulator:
+    runs-on: macos-26
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm run check
+      - run: npx cap sync ios
+      - run: xcodebuild -version
+      - name: Compile for simulator without distribution signing
+        run: xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build CODE_SIGNING_ALLOWED=NO build
+      - name: Package simulator app (not installable on iPhone)
+        run: ditto -c -k --sequesterRsrc --keepParent ios/build/Build/Products/Debug-iphonesimulator/App.app ios/PokeStock-simulator.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pokestock-ios-simulator
+          path: mobile/ios/PokeStock-simulator.zip
+          if-no-files-found: error
+          retention-days: 7
