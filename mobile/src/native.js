@@ -6,10 +6,12 @@ import { Network } from '@capacitor/network';
 import { CapacitorNeon } from '@capgo/capacitor-neon';
 import { createNativeAuthClient } from './auth-adapter.mjs';
 import { createApiFetch } from './api-transport.mjs';
+import { receiveCameraRestore } from './proof-camera.js';
 import { externalDestination, backDestination } from './navigation.mjs';
 export async function initializeNative() {
   if (!Capacitor.isNativePlatform()) throw Error('Native application required');
   const config=__MOBILE_CONFIG__;
+  App.addListener('appRestoredResult',receiveCameraRestore);
   const webFetch=window.fetch.bind(window);
   window.fetch=createApiFetch(config.apiUrl,options=>CapacitorHttp.request(options),webFetch);
   const authReady=CapacitorNeon.initialize({authUrl:config.authUrl});

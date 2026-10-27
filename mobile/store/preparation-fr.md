@@ -28,6 +28,10 @@ PokéStock est un projet communautaire indépendant. Les droits sur les marques 
 - Compte de test pour la revue (à créer séparément, sans credentials dans Git).
 - Visuels de boutique réalisés à partir des builds réels : carte, signalement, favoris, profil vendeur. Pas de captures de navigateur présentées comme des captures natives.
 
+## Photo native — ajout 0.3.0
+
+Les boutons caméra/photothèque et le retrait de la preuve sont intégrés. La caméra est sollicitée après un appui volontaire ; pas de sauvegarde automatique en photothèque ni de permission de stockage Android étendue. La preuve reste envoyée uniquement lors de la publication explicite, vers le stockage privé existant. Ces éléments sont couverts par des tests simulés ; ils doivent encore être vérifiés sur appareils réels.
+
 ## Critères pour passer de préparation à test privé
 
 - [ ] Authentification native fonctionnelle et session persistante ; déconnexion complète.

@@ -74,5 +74,7 @@
 	<string>Prenez une photo pour prouver la disponibilité d’un produit lors d’un signalement.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Choisissez une photo pour accompagner votre signalement.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>PokéStock ne sauvegarde pas automatiquement vos preuves dans la photothèque.</string>
 </dict>
 </plist>

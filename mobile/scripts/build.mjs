@@ -32,6 +32,22 @@ for(const entry of await readdir(root,{withFileTypes:true})){
     text=text.replace('if(!navigator.geolocation){','if(!window.pokestockNative&&!navigator.geolocation){')
       .replace(original,'(window.pokestockNative||navigator.geolocation).getCurrentPosition(pos=>{');
   }
+  if(entry.name==='script.js'){
+    const start=text.indexOf('  $("#photoInput").addEventListener("change",async e=>{');
+    const end=text.indexOf('  $("#reportForm").addEventListener("submit",async e=>{',start);
+    if(start<0||end<start)throw Error('Photo integration point changed');
+    let photo=text.slice(start,end);
+    photo=photo.replace('$("#photoInput").addEventListener("change",async e=>{','let nativePhotoRevision=0;\n  window.pokestockNative.prepareProofPhoto=async file=>{\n    const revision=++nativePhotoRevision;')
+      .replace('const file=e.target.files[0],preview=$("#photoPreview");','const preview=$("#photoPreview");')
+      .replace('e.target.value="";','$("#photoInput").value="";')
+      .replace('photoData=await imageAsJpeg(file);','const prepared=await imageAsJpeg(file);\n      if(revision!==nativePhotoRevision)return;\n      photoData=prepared;')
+      .replace('    }catch(err){','    }catch(err){\n      if(revision!==nativePhotoRevision)return;')
+      .replace('      toast(err.message);','      toast(err.message);throw err;');
+    const close=photo.lastIndexOf('  });');
+    photo=photo.slice(0,close)+'  };\n  $("#photoInput").addEventListener("change",e=>window.pokestockNative.prepareProofPhoto(e.target.files[0]).catch(()=>{}));\n\n';
+    text=text.slice(0,start)+photo+text.slice(end);
+    text=text.replace('function closeModal(){','function closeModal(){\n  document.dispatchEvent(new Event("pokestock:reportclosed"));');
+  }
   if(entry.name==='auth-ui.js'){
     const start=text.indexOf('  async getToken(){'),end=text.indexOf('  getUser(){');
     if(start<0||end<start)throw Error('Auth integration point changed');

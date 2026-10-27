@@ -8,3 +8,5 @@ html.native-app{background:#0b162c;overscroll-behavior-y:none}
 .native-network-status[hidden]{display:none}
 
 .native-test-build{margin:0;padding:8px 14px;background:#ffe16b;color:#0b162c;text-align:center;font-size:12px;font-weight:750}
+
+.native-proof-tools{border:1px solid #4d5d7b;border-radius:14px;padding:16px;background:#132440}.native-proof-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.native-proof-tools p{font-size:13px;line-height:1.5;color:#ccd7eb;margin-bottom:0}.native-photo-fallback{padding:8px 0}.native-photo-fallback summary{cursor:pointer;font-size:13px}.native-photo-fallback label{display:grid;gap:8px;margin-top:12px}.native-recovered-photo{padding:16px;background:#173b51;color:#fff}.native-recovered-photo p{line-height:1.5}.native-recovered-photo button{margin:4px}@media(max-width:480px){.native-proof-actions{display:grid;grid-template-columns:1fr}.native-proof-actions button{width:100%}}

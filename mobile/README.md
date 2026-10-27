@@ -1,4 +1,4 @@
-# PokéStock — préparation Android et iOS (0.2.0)
+# PokéStock — préparation Android et iOS (0.3.0)
 
 État : socle natif et intégration d’authentification native générés avec Capacitor 8.5.3, **pas encore une version validée sur téléphone**. Le site public et les accès de production sont inchangés. Identifiant provisoire `fr.pokestock.app` : vérifier et réserver les identifiants définitifs avant la première soumission.
 
@@ -10,7 +10,9 @@
 - Liens de boutiques et administration ouverts dans le navigateur du système ; profil vendeur et navigation restent dans l’app.
 - Message hors connexion, bouton retour Android, zones de sécurité iPhone et champs sans zoom automatique.
 - Icône provisoire originale (repère de carte étoilé), écrans de lancement ; aucun personnage ou logo Pokémon dans l’icône.
-- Photos : sélecteur HTML existant conservé. Prise de vue et choix depuis la photothèque à valider sur appareils ; pas encore de plugin Camera.
+- Photos : module officiel `@capacitor/camera` 8.2.6, boutons Prendre une photo / Choisir une photo, prévisualisation et retrait, refus/annulation, limite de 10 Mo. Aucun envoi automatique ni sauvegarde dans la photothèque. Le sélecteur de fichier reste disponible en secours.
+- Photo récupérée après interruption Android : proposition explicite de réutilisation, reprise des étapes du formulaire et confirmation avant publication. Aucun brouillon de compte ou d’adresse privée n’est écrit dans le stockage web.
+- Les préparations photo tardives sont ignorées après fermeture du formulaire, retrait ou changement de compte. La publication est bloquée pendant la préparation. La compression JPEG existante reste commune au site et à l’application.
 - Connexion e-mail/mot de passe native via `@capgo/capacitor-neon` 8.1.0 (module communautaire présenté dans le guide Neon). Persistance de session gérée par le module, pas par localStorage.
 - Transport HTTP natif limité à l’hôte exact de l’API PokéStock, avec JWT et réponses/statuts conservés, redirections désactivées. Les images et requêtes tierces conservent leur transport habituel.
 - Aucun push, paiement ou suivi publicitaire ajouté.
@@ -36,7 +38,7 @@ cd android
 
 iOS : un Mac avec Xcode 26+ et ses SDK est nécessaire. Ouvrir `ios/App/App.xcodeproj`, laisser SPM résoudre les dépendances, sélectionner une équipe Apple puis lancer sur simulateur/appareil. Cible minimale iOS 15. Les certificats et clés de signature restent hors du dépôt.
 
-Le premier socle Android 0.1.0 a été compilé avec succès dans GitHub Actions (run 40549086936). Cela ne valide pas les ajouts 0.2.0 ni le fonctionnement sur un téléphone.
+La version 0.2.0 a compilé sur Android (run 40550548743) et sur simulateur iOS (run 40550548734). Cela ne valide pas les ajouts 0.3.0 ni le fonctionnement sur un téléphone.
 
 Une action GitHub `Mobile Android - development build` prépare aussi un APK debug à chaque modification de `mobile/`. Un artefact n’est téléchargeable qu’après une compilation réussie ; aucune signature de publication n’est présente. Un APK debug ne valide pas les parcours réseau/authentifiés.
 
@@ -63,6 +65,7 @@ Les permissions sont demandées par les actions de l’utilisateur, pas au déma
 - https://capgo.app/docs/plugins/neon/getting-started/
 - https://capacitorjs.com/docs/apis/http
 - https://capacitorjs.com/docs/config
+- https://capacitorjs.com/docs/apis/camera
 - https://capacitorjs.com/docs/apis/geolocation
 - https://developer.apple.com/app-store/review/guidelines/ (1.2, 4.2, 5.1.1)
 - https://developer.apple.com/help/app-review/guideline-reference/5-1-1-account-deletion/

@@ -1,6 +1,8 @@
+import { installProofCamera } from './proof-camera.js';
 import { initializeNative } from './native.js';
 try {
   await initializeNative();
+  const localFetch=window.fetch.bind(window);
   const scripts=JSON.parse(document.getElementById('mobile-scripts').textContent);
   for(const spec of scripts){
     await new Promise((resolve,reject)=>{
@@ -10,6 +12,7 @@ try {
       document.body.append(script);
     });
   }
+  installProofCamera(localFetch);
 }catch{
   const message=document.createElement('p');message.className='native-network-status';message.setAttribute('role','alert');
   message.textContent='L’application n’a pas pu démarrer. Vérifiez votre connexion puis relancez PokéStock.';
