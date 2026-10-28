@@ -41,12 +41,28 @@ const api={
     $("#authModal").setAttribute("aria-hidden","false");
     $("#authEmail").focus();
   },
+  async signInGoogle(){
+    if(!client||loading)return;
+    loading=true;renderAuth();status("Ouverture de Google…");
+    try{
+      const result=await client.signIn.social({provider:"google",callbackURL:new URL("index.html",location.href).href});
+      if(result?.error)throw Error(result.error.message||"Connexion Google refusée.");
+      if(window.pokestockNative){status("Terminez la connexion dans le navigateur, puis revenez dans PokéStock.");}
+      else{await refreshSession();if(currentUser)closeAuth();}
+    }catch{status("La connexion Google n’a pas abouti. Réessayez ou utilisez votre adresse e-mail.");}
+    finally{loading=false;renderAuth();}
+  },
   ready:false
 };
 window.pokestockApi=api;
+const googleButton=document.createElement("button");googleButton.id="googleSignIn";googleButton.type="button";googleButton.className="btn google-sign-in";googleButton.textContent="Continuer avec Google";googleButton.disabled=true;
+$("#authTitle").after(googleButton);
+googleButton.addEventListener("click",()=>api.signInGoogle());
+document.addEventListener("pokestock:googlecompleted",async()=>{await refreshSession();if(currentUser)closeAuth();});
 function status(text){$("#authStatus").textContent=text;}
 function renderAuth(){
   const user=currentUser;
+  googleButton.hidden=!!user;googleButton.disabled=loading||!client;
   $("#accountBtn").textContent=user?(user.name||"Mon compte"):"Connexion";
   $("#authTitle").textContent=user?"Mon compte":signup?"Créer un compte":"Se connecter";
   $("#authNameWrap").hidden=!signup||!!user;

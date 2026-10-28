@@ -1,5 +1,5 @@
 // Keep session/refresh-token persistence in the native plugin, never web storage.
-export function createNativeAuthClient(plugin,ready=Promise.resolve()) {
+export function createNativeAuthClient(plugin,ready=Promise.resolve(),oauthRedirect) {
   let generation=0;
   return {
     async getSession() {
@@ -14,7 +14,7 @@ export function createNativeAuthClient(plugin,ready=Promise.resolve()) {
       if(serial!==generation)return {data:{user:null,token:null}};
       return {data:{token:session?.accessToken||null}};
     },
-    signIn:{email:async options=>{await ready;await plugin.signInWithPassword({email:options.email,password:options.password});return {data:{}};}},
+    signIn:{social:async options=>{await ready;if(options.provider!=='google'||!oauthRedirect)throw Error('Google sign-in unavailable');await plugin.signInWithOAuth({provider:'google',redirectTo:oauthRedirect});return {data:{pending:true}};},email:async options=>{await ready;await plugin.signInWithPassword({email:options.email,password:options.password});return {data:{}};}},
     signUp:{email:async options=>{await ready;await plugin.signUp({email:options.email,password:options.password,name:options.name});return {data:{}};}},
     signOut:async()=>{generation++;await ready;return plugin.signOut();}
   };

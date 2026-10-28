@@ -16,9 +16,10 @@ export async function initializeNative() {
   window.fetch=createApiFetch(config.apiUrl,options=>CapacitorHttp.request(options),webFetch);
   const authReady=CapacitorNeon.initialize({authUrl:config.authUrl});
   authReady.catch(()=>{});
+  await CapacitorNeon.addListener('authStateChange',({event})=>{if(event==='SIGNED_IN')document.dispatchEvent(new Event('pokestock:googlecompleted'));});
   document.documentElement.classList.add('native-app');
   window.pokestockNative = {
-    createAuthClient:()=>createNativeAuthClient(CapacitorNeon,authReady),
+    createAuthClient:()=>createNativeAuthClient(CapacitorNeon,authReady,"https://nicochapuise-byte.github.io/pokestock-france/"+(config.name==='production'?'android-auth.html':'android-auth-dev.html')),
     getCurrentPosition(success, failure) {
       // Explicit user action only, no watch/background GPS.
       Geolocation.getCurrentPosition({ enableHighAccuracy:false, timeout:15000, maximumAge:60000 }).then(success).catch(failure);
