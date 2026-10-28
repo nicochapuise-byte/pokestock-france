@@ -35,6 +35,20 @@ const api={
     }
     return token;
   },
+  async getDeletionSessionProof(){
+    if(!client)return null;
+    if(client.deletionSessionProof)return client.deletionSessionProof();
+    const result=await client.getSession({query:{disableCookieCache:true}});
+    return result?.data?.session?.token||null;
+  },
+  async reauthenticateForDeletion(){
+    if(!client)throw Error('Connexion indisponible.');
+    const result=await client.signOut();
+    if(result?.error)throw Error('Déconnexion non confirmée.');
+    sessionEpoch++;currentUser=null;signup=false;renderAuth();
+    document.dispatchEvent(new Event('pokestock:authchanged'));
+    api.openLogin();status('Reconnectez-vous avec le même compte pour confirmer sa suppression.');
+  },
   getUser(){return currentUser;},
   async clearDeletedSession(){
     try{await client?.signOut();}catch{}

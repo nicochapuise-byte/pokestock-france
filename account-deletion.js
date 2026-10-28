@@ -7,10 +7,11 @@
  let epoch=0,busy=false,record=null,owner=null,pendingOpen=location.hash==='#supprimer-compte',loaded=false;
  let automatic=false,erasing=false,receipt=null;
  const receiptKey='pokestock-erasure-receipt';
+ const reauthKey='pokestock-deletion-reauth-owner';
  try{const saved=JSON.parse(localStorage.getItem(receiptKey));if(saved&&/^[a-f0-9-]{36}$/.test(saved.requestId)&&/^[a-f0-9]{64}$/.test(saved.receiptToken)&&typeof saved.accountId==='string')receipt=saved;}catch{}
- async function erasureApi(path,method='GET',body,token){
-  const response=await fetch(API+path,{method,headers:{...(token?{Authorization:'Bearer '+token}:{}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{}),cache:'no-store',signal:AbortSignal.timeout(25000)});
-  const data=await response.json();if(!response.ok)throw Error(data.error||'Le traitement doit être vérifié ou repris.');return data;
+ async function erasureApi(path,method='GET',body,token,sessionProof){
+  const response=await fetch(API+path,{method,headers:{...(token?{Authorization:'Bearer '+token}:{}),...(body?{'Content-Type':'application/json'}:{}),...(sessionProof?{'X-Pokestock-Session':sessionProof}:{})},...(body?{body:JSON.stringify(body)}:{}),cache:'no-store',signal:AbortSignal.timeout(25000)});
+  const data=await response.json();if(!response.ok)throw Object.assign(Error(data.error||'Le traitement doit être vérifié ou repris.'),{code:data.code});return data;
  }
  async function finishErasure(){
   const deletedOwner=receipt.accountId;pendingOpen=false;
@@ -45,15 +46,25 @@
   busy=true;controls();message('Préparation de l’effacement…');
   try{
    const token=await window.pokestockApi.getToken();if(!token||user()?.id!==accountId)throw Error('Session modifiée.');
-   const prepared=await erasureApi('/me/account-erasure/prepare','POST',{confirmation:'SUPPRIMER'},token);
+   const proof=await window.pokestockApi.getDeletionSessionProof();
+   if(user()?.id!==accountId)throw Error('Session modifiée.');
+   const prepared=await erasureApi('/me/account-erasure/prepare','POST',{confirmation:'SUPPRIMER'},token,proof);
    receipt={requestId:prepared.requestId,receiptToken:prepared.receiptToken,accountId};
    localStorage.setItem(receiptKey,JSON.stringify(receipt));
    busy=false;await resumeErasure();
-  }catch{busy=false;controls();message('L’effacement n’a pas pu être démarré. Actualisez votre demande ou contactez l’assistance.');}
+  }catch(error){
+   busy=false;controls();
+   if(error.code==='REAUTH_REQUIRED'){
+    try{
+     sessionStorage.setItem(reauthKey,accountId);pendingOpen=false;close();
+     await window.pokestockApi.reauthenticateForDeletion();
+    }catch{sessionStorage.removeItem(reauthKey);message('La reconnexion n’a pas pu être démarrée. Déconnectez-vous, puis reconnectez-vous avant de réessayer.');}
+   }else message('L’effacement n’a pas pu être démarré. Actualisez votre demande ou contactez l’assistance.');
+  }
  }
  erasureApi('/account-erasure/capabilities').then(data=>{
   automatic=data.enabled===true;
-  if(automatic){modal.querySelector('.deletion-notice').textContent='La suppression efface votre identité de connexion, vos signalements, favoris, contributions et fichiers actifs. Elle est définitive. Un compte administrateur nécessite une prise en charge distincte.';$('accountDeletionTitle').textContent='Supprimer mon compte';$('accountDeletionSend').textContent='Supprimer définitivement mon compte';}
+  if(automatic){modal.querySelector('.deletion-notice').textContent='Une reconnexion peut être demandée si votre session a plus de cinq minutes. La suppression efface votre identité de connexion, vos signalements, favoris, contributions et fichiers actifs. Elle est définitive. Un compte administrateur nécessite une prise en charge distincte.';$('accountDeletionTitle').textContent='Supprimer mon compte';$('accountDeletionSend').textContent='Supprimer définitivement mon compte';modal.querySelector('.deletion-check span').textContent='Je confirme la suppression définitive de mon compte et de ses données associées.';}
   controls();
  }).catch(()=>{});
  const user=()=>window.pokestockApi?.getUser();
@@ -124,6 +135,12 @@
  function sync(){
   const id=user()?.id||null;$('accountDeletionBtn').hidden=!id;
   if(owner!==id){if(!erasing)reset();owner=id;if(!id&&!receipt&&modal.classList.contains('open'))close();}
+  let expected=null;try{expected=sessionStorage.getItem(reauthKey);}catch{}
+  if(id&&expected){
+   sessionStorage.removeItem(reauthKey);
+   if(id===expected){pendingOpen=true;}
+   else{pendingOpen=false;$('authStatus').textContent='Le compte connecté est différent. Aucune suppression n’a été lancée.';}
+  }
   if(pendingOpen)open();
  }
  document.addEventListener('pokestock:authchanged',sync);

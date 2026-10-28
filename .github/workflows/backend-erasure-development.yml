@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['backend/account-erasure-service.mjs', 'backend/erasure-identity.mjs', 'backend/deploy-erasure-development.mjs', '.github/workflows/backend-erasure-development.yml']
+    paths: ['backend/account-erasure-service.mjs', 'backend/erasure-identity.mjs', 'backend/erasure-session.mjs', 'backend/erasure-session.test.mjs', 'backend/deploy-erasure-development.mjs', '.github/workflows/backend-erasure-development.yml']
 permissions:
   contents: read
 concurrency:

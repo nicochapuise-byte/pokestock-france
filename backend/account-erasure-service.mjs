@@ -10,7 +10,7 @@ const branches={
  'https://ep-dark-bread-b9bd8cco.neonauth.c-7.eu-central-1.aws.neon.tech/neondb/auth':'br-nameless-math-b9dyokxp'
 };
 async function body(request){const raw=await request.text();if(raw.length>300)return null;try{return JSON.parse(raw);}catch{return null;}}
-export function createErasureService({sql,authenticate,isSiteAdmin,json,env,fetcher=fetch}){
+export function createErasureService({sql,authenticate,isSiteAdmin,json,env,fetcher=fetch,hasRecentSession=async()=>false}){
  const branchId=branches[env.NEON_AUTH_BASE_URL?.replace(/\/$/,'')];
  const enabled=env.ACCOUNT_ERASURE_ENABLED==='true'&&!!env.NEON_ERASURE_API_KEY&&branchId==='br-morning-lab-b9mavkej';
  const identity=enabled?createErasureIdentity({apiKey:env.NEON_ERASURE_API_KEY,projectId:'sparkling-bread-53722880',branchId,fetcher}):null;
@@ -64,6 +64,7 @@ export function createErasureService({sql,authenticate,isSiteAdmin,json,env,fetc
    const user=await authenticate(request);if(!user)return json({error:'Connexion nécessaire.'},401,request);
    if(await isSiteAdmin(user))return json({error:'Un compte administrateur nécessite un transfert de responsabilités avant suppression.'},409,request);
    const data=await body(request);if(!data||data.confirmation!=='SUPPRIMER'||Object.keys(data).length!==1)return json({error:'Confirmation invalide.'},400,request);
+   if(!await hasRecentSession(request,user))return json({error:'Reconnectez-vous pour confirmer la suppression de votre compte.',code:'REAUTH_REQUIRED'},403,request);
    // One statement prevents cancelled/new requests and receipts diverging.
    const receiptToken=randomBytes(32).toString('hex');
    const rows=await sql(`WITH request AS (

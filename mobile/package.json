@@ -1,11 +1,11 @@
 {
   "name": "pokestock-mobile",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "check": "node --test scripts/*.test.mjs ../backend/account-deletion.test.mjs ../backend/account-erasure.test.mjs ../backend/account-access.test.mjs ../backend/erasure-storage.test.mjs ../backend/account-operations.test.mjs ../backend/account-erasure-service.test.mjs ../backend/erasure-identity.test.mjs ../backend/deploy-erasure-development.test.mjs",
+    "check": "node --test scripts/*.test.mjs ../backend/account-deletion.test.mjs ../backend/account-erasure.test.mjs ../backend/account-access.test.mjs ../backend/erasure-storage.test.mjs ../backend/account-operations.test.mjs ../backend/account-erasure-service.test.mjs ../backend/erasure-session.test.mjs ../backend/erasure-identity.test.mjs ../backend/deploy-erasure-development.test.mjs",
     "sync": "npm run build && cap sync",
     "android": "npm run sync && cap open android",
     "ios": "npm run sync && cap open ios"

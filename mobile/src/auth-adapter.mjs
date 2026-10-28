@@ -8,6 +8,14 @@ export function createNativeAuthClient(plugin,ready=Promise.resolve(),oauthRedir
       if(serial!==generation)return {data:{user:null,token:null}};
       return {data:{user:session?.user||null}};
     },
+    async deletionSessionProof(){
+      await ready;const serial=generation;
+      const {session}=await plugin.getSession();
+      if(serial!==generation||!session?.refreshToken)return null;
+      // Native refreshToken is the signed session cookie; the DB stores its
+      // secret token before the signature. Keep both exclusively in memory.
+      try{return decodeURIComponent(session.refreshToken).split('.')[0]||null;}catch{return null;}
+    },
     async token() {
       await ready;const serial=generation;
       const {session}=await plugin.getSession();

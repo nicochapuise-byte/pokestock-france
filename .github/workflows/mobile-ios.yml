@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['mobile/**', '*.html', '*.js', '*.css', '*.svg', 'assets/**', 'backend/account-deletion.mjs', 'backend/account-deletion.test.mjs', 'backend/account-erasure.mjs', 'backend/account-erasure.test.mjs', 'backend/account-access.test.mjs', 'backend/erasure-storage.mjs', 'backend/erasure-storage.test.mjs', 'backend/index.mjs', 'backend/account-operations.mjs', 'backend/account-operations.test.mjs', 'backend/account-erasure-service.mjs', 'backend/account-erasure-service.test.mjs', 'backend/erasure-identity.mjs', 'backend/erasure-identity.test.mjs', '.github/workflows/mobile-ios.yml']
+    paths: ['mobile/**', '*.html', '*.js', '*.css', '*.svg', 'assets/**', 'backend/account-deletion.mjs', 'backend/account-deletion.test.mjs', 'backend/account-erasure.mjs', 'backend/account-erasure.test.mjs', 'backend/account-access.test.mjs', 'backend/erasure-storage.mjs', 'backend/erasure-storage.test.mjs', 'backend/index.mjs', 'backend/account-operations.mjs', 'backend/account-operations.test.mjs', 'backend/account-erasure-service.mjs', 'backend/account-erasure-service.test.mjs', 'backend/erasure-identity.mjs', 'backend/erasure-session.mjs', 'backend/erasure-session.test.mjs', 'backend/erasure-identity.test.mjs', '.github/workflows/mobile-ios.yml']
 permissions:
   contents: read
 concurrency:

@@ -1,4 +1,4 @@
-# Effacement automatique — bêta Android 0.7.0
+# Effacement automatique — bêta Android 0.7.1
 
 ## État réel
 
@@ -23,7 +23,7 @@ L’endpoint `GET /account-erasure/capabilities` renvoie `enabled:false` avant c
 
 ## Parcours et contrôles
 
-1. L’utilisateur connecté saisit SUPPRIMER et coche la confirmation. La préparation refuse un compte administrateur et tout identifiant de cible fourni par le client.
+1. L’utilisateur connecté saisit SUPPRIMER et coche la confirmation. Le serveur exige le secret de la session courante, rattaché au même utilisateur que le JWT, non expiré et créé depuis moins de cinq minutes. Un JWT renouvelé seul ne suffit pas. En cas de session ancienne, le client déconnecte, propose Google/e-mail et exige une nouvelle confirmation au retour ; un compte différent ne reprend pas la suppression. La préparation refuse un compte administrateur et tout identifiant de cible fourni par le client.
 2. Le serveur crée une demande processing et un reçu aléatoire de 256 bits ; seule son empreinte est stockée en base. Le client conserve temporairement le reçu et l’UUID du compte dans son stockage local pour reprendre après disparition de la session.
 3. L’exécution utilise ce reçu uniquement pour cette demande. Un seul worker persistant est admis. Le verrou global gèle les nouvelles écritures et exige le drainage des opérations existantes.
 4. L’inventaire figé doit être inchangé, sans partage ni rôle administrateur, avec au plus 30 fichiers. Sinon une vérification opérateur est nécessaire.
@@ -43,14 +43,18 @@ Si le SQL a réussi mais que le reçu final n’a pas été enregistré, la repr
 
 48 tests locaux réussis : contrôles d’accès, arrêt sur erreur, reprise après disparition d’identité, fin interrompue, concurrence des workers, interface de confirmation et restauration du reçu sans reconnexion. Migration et planification SQL vérifiées en développement, sans effacement réel supplémentaire. Le parcours a ensuite été confirmé sur appareil par le propriétaire et par le contrôle serveur décrit ci-dessus. Le cas d’un compte comportant des fichiers doit rester distingué de ce test utilisateur.
 
-La réauthentification récente n’est pas encore imposée au-delà du JWT courant ; la définir avant exposition publique. Les anciens objets orphelins antérieurs à l’instrumentation et la rétention physique des sauvegardes nécessitent une politique distincte. Les reçus terminés ne contiennent plus d’identifiant de compte, mais leur durée de conservation et leur nettoyage restent à définir avant production. Le service n’est donc pas déclaré prêt pour les stores à ce stade.
+La session récente est désormais contrôlée côté serveur ; le parcours de reconnexion Google/e-mail ajouté en 0.7.1 reste à confirmer sur appareil. Les anciens objets orphelins antérieurs à l’instrumentation et la rétention physique des sauvegardes nécessitent une politique distincte. Les reçus terminés ne contiennent plus d’identifiant de compte, mais leur durée de conservation et leur nettoyage restent à définir avant production. Le service n’est donc pas déclaré prêt pour les stores à ce stade.
 
 Sources : https://neon.com/docs/reference/api/auth/delete-branch-neon-auth-user et https://neon.com/docs/compute/functions/environment-variables
 
 ## Conditions de passage en production
 
-- Imposer une authentification récente liée à la session courante, vérifiée côté serveur ; la date d’émission d’un JWT renouvelé ne prouve pas une reconnexion. Le parcours actuel ne le fait pas encore.
+- Confirmer sur appareil le contrôle de session récente ajouté en 0.7.1 : session de plus de cinq minutes, reconnexion Google/e-mail, même compte, nouvelle confirmation, et refus de reprise sur un autre compte.
 - Définir la conservation des reçus terminés et leur nettoyage sans perdre la possibilité de réparer une libération de verrou interrompue.
 - Vérifier la reprise avec un compte jetable comportant des fichiers via le parcours automatique.
 - Configurer les propres identifiants Google OAuth du projet avant l’ouverture publique (les identifiants partagés Neon restent destinés aux essais).
 - Après ces contrôles, modifier explicitement la restriction de branche, installer le schéma des reçus et configurer la clé privée sur la production. Ne pas activer en changeant seulement une variable d’environnement.
+
+## Validation de la reconnexion 0.7.1
+
+Contrôle SQL préparé sur le schéma réel de développement sans lecture de secrets ni modification de session. La preuve de session est transmise uniquement au serveur HTTPS lors de la préparation ; elle n’est jamais ajoutée au reçu ni conservée en stockage web. Le plugin Android conserve son cookie signé dans le stockage natif ; le client extrait sa partie secrète uniquement en mémoire. Une preuve absente, révoquée, expirée, ancienne ou appartenant à un autre utilisateur ne peut produire de reçu. Le serveur de production reste désactivé.

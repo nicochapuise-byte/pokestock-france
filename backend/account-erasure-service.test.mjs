@@ -2,7 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import {createErasureService} from './account-erasure-service.mjs';import {COUNT_KEYS} from './account-erasure.mjs';
 const uid='10000000-0000-4000-8000-000000000001',rid='20000000-0000-4000-8000-000000000002';
 const env={ACCOUNT_ERASURE_ENABLED:'true',NEON_ERASURE_API_KEY:'fixture-key',NEON_AUTH_BASE_URL:'https://ep-morning-bonus-b92tax88.neonauth.c-7.eu-central-1.aws.neon.tech/neondb/auth',AWS_ENDPOINT_URL_S3:'https://storage.example/dev',AWS_REGION:'eu-central-1',AWS_ACCESS_KEY_ID:'test',AWS_SECRET_ACCESS_KEY:'test'};
-function fixture({admin=false,active=0,identityError=false,headError=false,overrides={}}={}){
+function fixture({admin=false,active=0,identityError=false,headError=false,overrides={},recent=true}={}){
  const state={identity:true,object:true,rows:true,request:true,blocked:false,job:null,events:[],failIdentity:identityError,failHead:headError};
  const sql=async(q,p=[])=>{
   if(q.startsWith('WITH request AS')){assert.equal(p[0],uid);state.job={request_id:rid,user_id:uid,receipt_hash:p[1],state:'prepared',stage:'prepared',worker_id:null};return[{request_id:rid}];}
@@ -27,7 +27,7 @@ function fixture({admin=false,active=0,identityError=false,headError=false,overr
   if(options.method==='DELETE'){state.events.push('file');state.object=false;return new Response(null,{status:204});}
   assert.equal(options.method,'HEAD');return new Response(null,{status:state.failHead?403:state.object?200:404});
  };
- const handler=createErasureService({sql,authenticate:async request=>request.headers.get('authorization')==='Bearer owner'?uid:null,isSiteAdmin:async()=>admin,json:(value,status)=>Response.json(value,{status}),env:{...env,...overrides},fetcher});
+ const handler=createErasureService({sql,authenticate:async request=>request.headers.get('authorization')==='Bearer owner'?uid:null,isSiteAdmin:async()=>admin,json:(value,status)=>Response.json(value,{status}),env:{...env,...overrides},fetcher,hasRecentSession:async()=>recent});
  const send=(path,method='GET',data,token)=>{const req=new Request('https://api.example'+path,{method,headers:token?{authorization:'Bearer '+token}:{},...(data?{body:JSON.stringify(data)}:{})});return handler(req,new URL(req.url));};
  return{state,send,sql};
 }
@@ -56,3 +56,5 @@ test('a running worker cannot be stolen and completed receipt can retry the fina
 
 test('a receipt resumes file cleanup after identity removal without deleting identity a second time',async()=>{const f=fixture({headError:true}),p=await prepare(f);await f.send('/account-erasure/'+rid+'/execute','POST',{confirmation:'SUPPRIMER'},p.receiptToken);assert.equal(f.state.identity,false);f.state.failHead=false;assert.equal((await f.send('/account-erasure/'+rid+'/execute','POST',{confirmation:'SUPPRIMER'},p.receiptToken)).status,200);assert.equal(f.state.events.filter(e=>e==='identity').length,1);assert.equal(f.state.rows,false);assert.equal(f.state.blocked,false);});
 test('completion after a lost response requires the persisted files-verified checkpoint',async()=>{for(const stage of ['files_verified','prepared']){const f=fixture(),p=await prepare(f);Object.assign(f.state,{request:false,identity:false,object:false,rows:false,blocked:true});f.state.job.stage=stage;const response=await f.send('/account-erasure/'+rid+'/execute','POST',{confirmation:'SUPPRIMER'},p.receiptToken);assert.equal(response.status,stage==='files_verified'?200:409);assert.equal(f.state.events.includes('completed'),stage==='files_verified');}});
+
+test('stale sessions cannot prepare or issue an erasure receipt',async()=>{const f=fixture({recent:false});const response=await f.send('/me/account-erasure/prepare','POST',{confirmation:'SUPPRIMER'},'owner');assert.equal(response.status,403);assert.equal((await response.json()).code,'REAUTH_REQUIRED');assert.equal(f.state.job,null);assert.deepEqual(f.state.events,[]);});

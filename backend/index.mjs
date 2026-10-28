@@ -1,3 +1,4 @@
+import {hasRecentErasureSession} from './erasure-session.mjs';
 // PokéStock France — API communautaire, Node 24 / Neon Functions.
 // Les identifiants Postgres et S3 sont injectés par Neon, jamais exposés au navigateur.
 import { randomUUID, createHash, createHmac, createPublicKey, verify as verifySignature } from "node:crypto";
@@ -20,7 +21,7 @@ function cors(request){
   if(origin===SITE_ORIGIN){
     h["Access-Control-Allow-Origin"]=SITE_ORIGIN;
     h["Access-Control-Allow-Methods"]="GET,POST,PATCH,DELETE,OPTIONS";
-    h["Access-Control-Allow-Headers"]="Authorization,Content-Type";
+    h["Access-Control-Allow-Headers"]="Authorization,Content-Type,X-Pokestock-Session";
   }
   return h;
 }
@@ -237,7 +238,7 @@ function publicReport(r){
   return {id:r.id,sellerId:r.seller_id,store:r.seller_type==='private'?'Particulier':r.store_name,address:r.seller_type==='private'?null:r.store_address,sellerType:r.seller_type,websiteUrl:r.website_url,communeCode:r.commune_code,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,lastSeenAt:r.last_seen_at,ownerStockState:r.owner_stock_state,img:r.catalog_image_key&&r.image_approved?photoUrl(r.catalog_image_key,"catalog-images"):null,catalogVariantId:r.catalog_variant_id,artSet:r.variant_name||null,catalogSourceUrl:r.catalog_source_url||null,proofProvided:!!r.photo_object_key,votes:{...voteSummary(r.available_count,r.unavailable_count),...(r.owner_stock_state==='unavailable'?{state:'out_of_stock'}:{})}};
 }
 
-const erasureService=createErasureService({sql,authenticate,isSiteAdmin,json,env:process.env});
+const erasureService=createErasureService({sql,authenticate,isSiteAdmin,json,env:process.env,hasRecentSession:(request,user)=>hasRecentErasureSession(sql,request,user)});
 const handler={
   async fetch(request){
     const url=new URL(request.url),headers=cors(request);
