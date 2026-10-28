@@ -49,7 +49,7 @@ for(const entry of await readdir(root,{withFileTypes:true})){
     text=text.replace('function closeModal(){','function closeModal(){\n  document.dispatchEvent(new Event("pokestock:reportclosed"));');
   }
   if(entry.name==='auth-ui.js'){
-    const start=text.indexOf('  async getToken(){'),end=text.indexOf('  getUser(){');
+    const start=text.indexOf('  async getToken(){'),end=text.indexOf('  async getDeletionSessionProof(){');
     if(start<0||end<start)throw Error('Auth integration point changed');
     text=text.slice(0,start)+`  async getToken(){
     const response=await client?.token();

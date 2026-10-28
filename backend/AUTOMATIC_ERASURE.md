@@ -1,4 +1,4 @@
-# Effacement automatique — bêta Android 0.7.1
+# Effacement automatique — bêta Android 0.7.2
 
 ## État réel
 
@@ -58,3 +58,7 @@ Sources : https://neon.com/docs/reference/api/auth/delete-branch-neon-auth-user 
 ## Validation de la reconnexion 0.7.1
 
 Contrôle SQL préparé sur le schéma réel de développement sans lecture de secrets ni modification de session. La preuve de session est transmise uniquement au serveur HTTPS lors de la préparation ; elle n’est jamais ajoutée au reçu ni conservée en stockage web. Le plugin Android conserve son cookie signé dans le stockage natif ; le client extrait sa partie secrète uniquement en mémoire. Une preuve absente, révoquée, expirée, ancienne ou appartenant à un autre utilisateur ne peut produire de reçu. Le serveur de production reste désactivé.
+
+## Correctif Android 0.7.2
+
+Le propriétaire a signalé un échec avant préparation en 0.7.1. Reproduction : le générateur remplaçait toute la section entre getToken et getUser, retirant aussi getDeletionSessionProof et reauthenticateForDeletion. Le générateur conserve désormais ces méthodes. Un test exécute les fichiers réellement compilés, vérifie le passage de la preuve de session à la préparation, simule le refus de session ancienne et confirme la déconnexion ainsi que l’ouverture de la reconnexion sans appel d’effacement. Ce test échoue sur l’ancien générateur et réussit après correction. Aucun compte n’a été supprimé pour ce correctif. Validation physique de la reconnexion toujours attendue.
