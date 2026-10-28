@@ -1,7 +1,7 @@
 // Client d'authentification sans étape de compilation, chargé comme module natif.
 const AUTH_URL="https://ep-dark-bread-b9bd8cco.neonauth.c-7.eu-central-1.aws.neon.tech/neondb/auth";
 const $=selector=>document.querySelector(selector);
-let client=null,currentUser=null,signup=false,loading=false;
+let client=null,currentUser=null,signup=false,loading=false,sessionEpoch=0;
 const api={
   async getToken(){
     if(!client)throw new Error("Le service de connexion n'est pas encore prêt.");
@@ -36,6 +36,11 @@ const api={
     return token;
   },
   getUser(){return currentUser;},
+  async clearDeletedSession(){
+    try{await client?.signOut();}catch{}
+    sessionEpoch++;currentUser=null;signup=false;renderAuth();
+    document.dispatchEvent(new Event("pokestock:authchanged"));
+  },
   openLogin(){
     $("#authModal").classList.add("open");
     $("#authModal").setAttribute("aria-hidden","false");
@@ -85,10 +90,12 @@ function renderAuth(){
 }
 async function refreshSession(){
   if(!client)return;
+  const serial=sessionEpoch;
   try{
     const response=await client.getSession();
+    if(serial!==sessionEpoch)return;
     currentUser=response?.data?.user||null;
-  }catch{currentUser=null;}
+  }catch{if(serial!==sessionEpoch)return;currentUser=null;}
   renderAuth();
   document.dispatchEvent(new Event("pokestock:authchanged"));
 }

@@ -1,0 +1,33 @@
+name: Backend - development account erasure
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['backend/account-erasure-service.mjs', 'backend/erasure-identity.mjs', 'backend/deploy-erasure-development.mjs', '.github/workflows/backend-erasure-development.yml']
+permissions:
+  contents: read
+concurrency:
+  group: backend-erasure-development
+  cancel-in-progress: false
+jobs:
+  deploy-development:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+        working-directory: mobile
+      - run: npm run build
+        working-directory: mobile
+      - run: npm run check
+        working-directory: mobile
+      - name: Activate only the development function
+        env:
+          NEON_ERASURE_API_KEY: ${{ secrets.NEON_ERASURE_API_KEY }}
+        run: node backend/deploy-erasure-development.mjs

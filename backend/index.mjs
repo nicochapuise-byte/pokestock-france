@@ -2,6 +2,7 @@
 // Les identifiants Postgres et S3 sont injectés par Neon, jamais exposés au navigateur.
 import { randomUUID, createHash, createHmac, createPublicKey, verify as verifySignature } from "node:crypto";
 
+import { createErasureService } from "./account-erasure-service.mjs";
 import { handleAccountDeletion } from "./account-deletion.mjs";
 import { createAccountOperations } from "./account-operations.mjs";
 
@@ -236,11 +237,14 @@ function publicReport(r){
   return {id:r.id,sellerId:r.seller_id,store:r.seller_type==='private'?'Particulier':r.store_name,address:r.seller_type==='private'?null:r.store_address,sellerType:r.seller_type,websiteUrl:r.website_url,communeCode:r.commune_code,city:r.city,series:r.series_id,product:r.product_name,price:r.price_eur,qty:r.quantity,lat:r.latitude,lng:r.longitude,status:r.status,createdAt:r.created_at,lastSeenAt:r.last_seen_at,ownerStockState:r.owner_stock_state,img:r.catalog_image_key&&r.image_approved?photoUrl(r.catalog_image_key,"catalog-images"):null,catalogVariantId:r.catalog_variant_id,artSet:r.variant_name||null,catalogSourceUrl:r.catalog_source_url||null,proofProvided:!!r.photo_object_key,votes:{...voteSummary(r.available_count,r.unavailable_count),...(r.owner_stock_state==='unavailable'?{state:'out_of_stock'}:{})}};
 }
 
+const erasureService=createErasureService({sql,authenticate,isSiteAdmin,json,env:process.env});
 const handler={
   async fetch(request){
     const url=new URL(request.url),headers=cors(request);
     if(request.method==="OPTIONS")return new Response(null,{status:204,headers});
     try{
+      const erasure=await erasureService(request,url);
+      if(erasure)return erasure;
       const accountDeletion=await handleAccountDeletion(request,url,{authenticate,isSiteAdmin,sql,json});
       if(accountDeletion)return accountDeletion;
       if(url.pathname==="/"&&request.method==="GET")return json({name:"PokéStock API",ok:true},200,request);
