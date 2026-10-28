@@ -1,12 +1,14 @@
 import {readFile,readdir} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {execFileSync} from 'node:child_process';
+import {apkCertificateSha256} from './apk-certificate.mjs';
 const sdk=process.env.ANDROID_HOME||process.env.ANDROID_SDK_ROOT;
 if(!sdk)throw Error('Android SDK absent');
 const versions=(await readdir(resolve(sdk,'build-tools'))).filter(x=>/^\d+\.\d+\.\d+$/.test(x)).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
 const tool=resolve(sdk,'build-tools',versions.at(-1),'apksigner');
-const result=execFileSync(tool,['verify','--print-certs','android/app/build/outputs/apk/debug/app-debug.apk'],{encoding:'utf8'});
-const digests=[...result.matchAll(/^Signer #\d+ certificate SHA-256 digest: (\w+)$/gm)].map(match=>match[1].toLowerCase());
+const apk='android/app/build/outputs/apk/debug/app-debug.apk';
+execFileSync(tool,['verify',apk],{stdio:'pipe'});
+const actual=apkCertificateSha256(await readFile(apk));
 const expected=(await readFile(new URL('../android/signing-certificate.sha256',import.meta.url),'utf8')).trim();
-if(digests.length!==1||digests[0]!==expected)throw Error('Unexpected APK signing identity: refusing delivery');
+if(actual!==expected)throw Error('Unexpected APK signing certificate '+actual+': refusing delivery');
 console.log('APK signing verified against permanent certificate: '+expected);
