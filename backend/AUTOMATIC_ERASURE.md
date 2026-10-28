@@ -2,11 +2,13 @@
 
 ## État réel
 
-Le service et l’interface sont raccordés et testés avec des adaptateurs simulés. Le schéma des reçus est installé sur la branche de développement. Le service y est déployé mais désactivé tant que sa clé de gestion n’est pas configurée. Aucun compte n’a été supprimé pendant ce raccordement. Le test manuel réel antérieur ne valide pas ce nouveau parcours automatique.
+Le 28 octobre 2026, le workflow de développement a activé le service avec la clé privée du projet. Le propriétaire a installé la version Android 0.7.0 et supprimé son compte d’essai depuis l’application. Contrôle serveur après son test : un reçu completed avec identifiant personnel effacé, zéro job running/failed, verrou global levé. Ce contrôle agrégé confirme l’achèvement du parcours ; il ne mesure pas un scénario avec fichiers si le compte d’essai n’en avait pas.
 
-L’activation est volontairement limitée à `br-morning-lab-b9mavkej` dans `sparkling-bread-53722880`. La production est refusée par le code, même si son indicateur est activé par erreur. La version web conserve le traitement manuel en attendant une validation séparée.
+L’activation reste limitée à `br-morning-lab-b9mavkej` dans `sparkling-bread-53722880`. La production est refusée par le code, même si son indicateur est activé par erreur. La version web conserve le traitement manuel.
 
-## Configuration privée restant à fournir par le propriétaire
+Le workflow `Backend - stage production account erasure` prépare séparément la production avec `ACCOUNT_ERASURE_ENABLED=false`. Il utilise le secret GitHub pour authentifier le déploiement, sans transmettre cette clé à l’environnement de la fonction de production. Sa vérification exige explicitement enabled:false. Ce déploiement ne lance aucune suppression et n’active pas la fonction publique.
+
+## Configuration privée en place en développement
 
 Parcours préparé pour le propriétaire : créer une clé de gestion Neon dédiée au projet, puis l’ajouter dans GitHub Actions comme secret de dépôt `NEON_ERASURE_API_KEY`. Le workflow `Backend - development account erasure` utilise le CLI officiel `neonctl@8.13.1`, cible explicitement le projet et la branche de développement, ajoute les deux variables privées ci-dessous par mise à jour ciblée et attend le déploiement. Il vérifie ensuite que le service annonce enabled:true. Il ne lance aucune suppression. Sans secret, il échoue sans activer le service. Après l’ajout, relancer son job en échec. Ne jamais utiliser la clé de signature Android comme clé Neon.
 
@@ -39,8 +41,16 @@ Si le SQL a réussi mais que le reçu final n’a pas été enregistré, la repr
 
 ## Validation et limites avant ouverture publique
 
-48 tests locaux réussis : contrôles d’accès, arrêt sur erreur, reprise après disparition d’identité, fin interrompue, concurrence des workers, interface de confirmation et restauration du reçu sans reconnexion. Migration et planification SQL vérifiées en développement, sans effacement réel supplémentaire. Il reste à valider le parcours complet avec la clé serveur et un compte jetable identifié, puis sur appareil.
+48 tests locaux réussis : contrôles d’accès, arrêt sur erreur, reprise après disparition d’identité, fin interrompue, concurrence des workers, interface de confirmation et restauration du reçu sans reconnexion. Migration et planification SQL vérifiées en développement, sans effacement réel supplémentaire. Le parcours a ensuite été confirmé sur appareil par le propriétaire et par le contrôle serveur décrit ci-dessus. Le cas d’un compte comportant des fichiers doit rester distingué de ce test utilisateur.
 
 La réauthentification récente n’est pas encore imposée au-delà du JWT courant ; la définir avant exposition publique. Les anciens objets orphelins antérieurs à l’instrumentation et la rétention physique des sauvegardes nécessitent une politique distincte. Les reçus terminés ne contiennent plus d’identifiant de compte, mais leur durée de conservation et leur nettoyage restent à définir avant production. Le service n’est donc pas déclaré prêt pour les stores à ce stade.
 
 Sources : https://neon.com/docs/reference/api/auth/delete-branch-neon-auth-user et https://neon.com/docs/compute/functions/environment-variables
+
+## Conditions de passage en production
+
+- Imposer une authentification récente liée à la session courante, vérifiée côté serveur ; la date d’émission d’un JWT renouvelé ne prouve pas une reconnexion. Le parcours actuel ne le fait pas encore.
+- Définir la conservation des reçus terminés et leur nettoyage sans perdre la possibilité de réparer une libération de verrou interrompue.
+- Vérifier la reprise avec un compte jetable comportant des fichiers via le parcours automatique.
+- Configurer les propres identifiants Google OAuth du projet avant l’ouverture publique (les identifiants partagés Neon restent destinés aux essais).
+- Après ces contrôles, modifier explicitement la restriction de branche, installer le schéma des reçus et configurer la clé privée sur la production. Ne pas activer en changeant seulement une variable d’environnement.
