@@ -5,3 +5,9 @@ out
 .env.local
 *.log
 .DS_Store
+
+# Private Android signing material
+*.p12
+*.jks
+*.keystore
+*signature-privee*

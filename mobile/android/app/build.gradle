@@ -7,8 +7,8 @@ android {
         applicationId "fr.pokestock.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 6
-        versionName "0.6.0"
+        versionCode 7
+        versionName "0.6.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +16,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        permanentTest {
+            if (System.getenv('PKST_KEYSTORE_FILE')) {
+                storeFile file(System.getenv('PKST_KEYSTORE_FILE'))
+                storePassword System.getenv('PKST_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('PKST_KEY_ALIAS')
+                keyPassword System.getenv('PKST_KEY_PASSWORD')
+            }
+        }
+    }
     buildTypes {
         debug {
+            if (System.getenv('PKST_KEYSTORE_FILE')) {
+                signingConfig signingConfigs.permanentTest
+            } else if (System.getenv('CI') == 'true') {
+                throw new GradleException('Permanent Android test signing is required in CI')
+            }
             applicationIdSuffix ".dev"
             versionNameSuffix "-dev"
             resValue "string", "app_name", "PokéStock Test"

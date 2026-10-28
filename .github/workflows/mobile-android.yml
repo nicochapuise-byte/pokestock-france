@@ -31,9 +31,18 @@ jobs:
       - run: npm run build
       - run: npm run check
       - run: npx cap sync android
+      - name: Restore and verify permanent signing key
+        env:
+          ANDROID_SIGNING_BUNDLE: ${{ secrets.ANDROID_SIGNING_BUNDLE }}
+        run: node scripts/restore-signing.mjs
       - name: Compile development APK (not a Play Store release)
         run: bash ./gradlew assembleDebug --no-daemon
         working-directory: mobile/android
+      - name: Verify APK signing certificate
+        run: node scripts/verify-apk-signing.mjs
+      - name: Remove temporary signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pokestock-signing.p12"
       - uses: actions/upload-artifact@v4
         with:
           name: pokestock-android-development
