@@ -9,4 +9,22 @@ html.native-app{background:#0b162c;overscroll-behavior-y:none}
 
 .native-test-build{margin:0;padding:8px 14px;background:#ffe16b;color:#0b162c;text-align:center;font-size:12px;font-weight:750}
 
+/* A compact app surface with thumb navigation, rather than the desktop masthead. */
+.app-shell body{background:#0c182c;padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+.app-shell .site-background,.app-shell body::before,.app-shell footer,.app-shell .topbar .navlinks,.app-shell .topbar .top-actions{display:none!important}
+.app-shell .topbar{position:sticky;top:0;z-index:900;min-height:62px;height:auto;padding:12px 20px;background:#0c182cf5;border-bottom:1px solid #ffffff10;backdrop-filter:blur(16px)}
+.app-shell .topbar .brand{font-size:22px}.app-shell .brand-name small{display:none}
+.app-shell .native-test-build{font-size:10px;padding:5px 12px;background:#17273f;color:#cbd6e7}
+.app-shell .app-tabbar{position:fixed;z-index:950;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));background:#10213af5;border-top:1px solid #ffffff14;backdrop-filter:blur(20px)}
+.app-tabbar button{border:0;background:none;color:#93a7c5;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;min-height:54px;font-family:inherit;font-size:10px;font-weight:600;line-height:1.2;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.app-tabbar button span{font-size:10px;font-weight:650}.app-tabbar svg{width:23px;height:23px}.app-tabbar button.selected{color:#ffe077}.app-tabbar button:focus-visible{outline:2px solid #ffe077;outline-offset:-2px;border-radius:12px}
+.app-tabbar [data-app-tab=report] svg{box-sizing:content-box;background:#ffe077;color:#10213a;border-radius:16px;padding:11px;margin-top:-26px;box-shadow:0 4px 16px #0004}.app-tabbar [data-app-tab=report]{color:#ffe077}
+.app-shell .toast{bottom:calc(94px + env(safe-area-inset-bottom,0px))}
+.app-shell body[data-page=map] .map-section,.app-shell body[data-page=list] .map-section{padding:16px 14px 8px;min-height:0}
+.app-shell body[data-page=map] .finder{height:calc(100dvh - 245px - env(safe-area-inset-bottom,0px));min-height:320px;border-radius:20px;overflow:hidden}
+.app-shell .map-section .section-head{margin-bottom:14px}.app-shell .map-section .section-head h2{font-size:24px}.app-shell .map-section .section-head>p,.app-shell .map-footnote,.app-shell .demo-notice{font-size:11px}
+.app-shell .modal{padding:0;background:#0c182c}.app-shell .modal.open{align-items:stretch}.app-shell .modal-card{width:100%;max-width:none;max-height:100dvh;border:0;border-radius:0;padding:calc(24px + env(safe-area-inset-top,0px)) 20px calc(24px + env(safe-area-inset-bottom,0px));box-sizing:border-box;overflow-y:auto}
+.app-shell .modal-close{min-width:44px;min-height:44px}.app-shell .modal :is(input,select,.btn){min-height:48px}
+.app-shell .hero.section{margin:16px;border-radius:20px;padding:24px}.app-shell .hero-products,.app-shell .hero-kicker,.app-shell .catalog-strip{display:none}.app-shell .hero h1{font-size:32px}
+
 .native-proof-tools{border:1px solid #4d5d7b;border-radius:14px;padding:16px;background:#132440}.native-proof-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.native-proof-tools p{font-size:13px;line-height:1.5;color:#ccd7eb;margin-bottom:0}.native-photo-fallback{padding:8px 0}.native-photo-fallback summary{cursor:pointer;font-size:13px}.native-photo-fallback label{display:grid;gap:8px;margin-top:12px}.native-recovered-photo{padding:16px;background:#173b51;color:#fff}.native-recovered-photo p{line-height:1.5}.native-recovered-photo button{margin:4px}@media(max-width:480px){.native-proof-actions{display:grid;grid-template-columns:1fr}.native-proof-actions button{width:100%}}
