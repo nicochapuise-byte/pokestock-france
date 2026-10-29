@@ -1,6 +1,6 @@
 # Préparation bêta — 29 octobre 2026
 
-État : préparation, aucune soumission aux stores. Les pages ajoutées sont des brouillons signalés comme tels. L’identité d’éditeur et les rétentions manquantes empêchent de présenter la confidentialité comme finalisée.
+État : préparation, aucune soumission aux stores. Les pages ajoutées sont des brouillons signalés comme tels. Les informations de conservation manquantes empêchent de présenter la confidentialité comme finalisée.
 
 ## Livré dans cette modification
 
@@ -33,7 +33,7 @@ Après configuration, tester avec un compte de test : connexion, inscription, an
 
 ## Points restant à finaliser avant ouverture
 
-- Identité de l’éditeur à confirmer ; e-mail confirmé : nico.chapuise@gmail.com.
+- Éditeur confirmé par l’utilisateur : Sébastien PASQUET ; contact : nico.chapuise@gmail.com.
 - Bases légales par finalité, durées de conservation et sauvegardes, inventaire des SDK et prestataires, transferts et modalités d’exercice des droits.
 - Canal permanent de support, signalement d’abus et blocage ; recette des autorisations GPS/caméra et de l’adresse privée.
 - Configuration Google effective, domaines et contacts ; comptes développeur et recette de distribution.
