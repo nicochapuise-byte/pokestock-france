@@ -20,7 +20,7 @@ PokéStock est un projet communautaire indépendant. Les droits sur les marques 
 
 ## Champs à finaliser avec l’éditeur
 
-- Identité légale et coordonnées de support réelles.
+- Éditeur : Sébastien PASQUET ; assistance et confidentialité : nico.chapuise@gmail.com.
 - URL publique de confidentialité et chemin de suppression de compte fonctionnels.
 - Identifiants définitifs iOS/Android, droits et nom disponibles.
 - Déclarations Apple App Privacy / Google Data Safety : compte (e-mail/pseudo), position à la demande, commune et localisation du point de vente, contenus/photos des signalements, favoris et votes. Vérifier le traitement exact des SDK et des métadonnées de photo avant de répondre aux formulaires. Aucune déclaration « aucune donnée collectée » par défaut.
@@ -32,9 +32,9 @@ PokéStock est un projet communautaire indépendant. Les droits sur les marques 
 
 Les boutons caméra/photothèque et le retrait de la preuve sont intégrés. La caméra est sollicitée après un appui volontaire ; pas de sauvegarde automatique en photothèque ni de permission de stockage Android étendue. La preuve reste envoyée uniquement lors de la publication explicite, vers le stockage privé existant. Ces éléments sont couverts par des tests simulés ; ils doivent encore être vérifiés sur appareils réels.
 
-## Demandes de suppression — ajout 0.4.0
+## Demandes de suppression — historique 0.4.0
 
-Parcours de demande, confirmation, suivi et annulation intégrés ; file administrateur avec prise en charge. L’effacement définitif, le délai annoncé, les rétentions et la confirmation de fin restent à finaliser. Ne pas cocher la suppression de compte comme complètement opérationnelle dans les formulaires des stores sur la seule base de cette file.
+La version 0.4.0 introduisait une file manuelle. Depuis, le parcours automatique avec reconnexion a été validé par l’utilisateur sur Android en 0.7.2 dans l’environnement de test. La validation de production, les rétentions et la recette iOS ne sont pas déduites de ce test. Voir [le suivi bêta du 29 octobre](beta-readiness-20261029.md).
 
 ## Critères pour passer de préparation à test privé
 
@@ -51,3 +51,7 @@ Parcours de demande, confirmation, suivi et annulation intégrés ; file adminis
 - [ ] Signature et comptes développeur configurés par l’éditeur.
 
 Aucun élément ci-dessus n’est présumé validé par la seule création des projets natifs.
+
+## Pages de préparation — 29 octobre 2026
+
+Pages confidentialité et assistance ajoutées au site et au build mobile, avec liens depuis l’accueil. Elles portent une mention de préparation et des champs explicitement manquants ; elles ne sont pas encore une politique ou un support prêts à soumettre. Voir [le suivi bêta](beta-readiness-20261029.md).
