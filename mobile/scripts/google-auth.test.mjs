@@ -20,11 +20,11 @@ test('Android callback clears the verifier from history, attempts one fixed app 
   assert.deepEqual(events,[['clean',pathname],['open',expected]]);assert.equal(target.hidden,false);assert.equal(target.href,expected);assert.match(status.textContent,/bouton/);
  }
 });
-test('invalid callback never launches an app or exposes an actionable return link',async()=>{
+test('missing or invalid verifier permits only manual app opening without credentials',async()=>{
  const source=await readFile(new URL('android-auth.js',root),'utf8');
- for(const query of ['', '?neon_auth_session_verifier=%0A', '?neon_auth_session_verifier='+ 'a'.repeat(4097)]){
+ for(const suffix of ['', '-dev'])for(const query of ['', '?neon_auth_session_verifier=%0A', '?neon_auth_session_verifier='+ 'a'.repeat(4097)]){
   const target={hidden:true},status={};let opens=0;
-  runInNewContext(source,{URL,URLSearchParams,location:{href:'https://nicochapuise-byte.github.io/pokestock-france/android-auth-dev.html'+query,replace:()=>opens++},history:{replaceState:()=>{}},document:{getElementById:id=>id==='returnToApp'?target:status}});
-  assert.equal(opens,0);assert.equal(target.hidden,true);assert.match(status.textContent,/interrompue/);
+  runInNewContext(source,{URL,URLSearchParams,location:{href:'https://nicochapuise-byte.github.io/pokestock-france/android-auth'+suffix+'.html'+query,replace:()=>opens++},history:{replaceState:()=>{}},document:{getElementById:id=>id==='returnToApp'?target:status}});
+  assert.equal(opens,0);assert.equal(target.hidden,false);assert.equal(target.href,'fr.pokestock.app'+(suffix?'.dev':'')+'://auth/callback');assert.match(status.textContent,/vérifier votre compte/);assert(!target.href.includes('verifier'));
  }
 });
