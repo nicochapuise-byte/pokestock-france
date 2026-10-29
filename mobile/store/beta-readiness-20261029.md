@@ -45,3 +45,12 @@ Après configuration, tester avec un compte de test : connexion, inscription, an
 - https://support.google.com/googleplay/android-developer/answer/10144311
 - https://support.google.com/googleplay/android-developer/answer/9859455
 - https://developers.google.com/identity/protocols/oauth2/production-readiness/policy-compliance
+
+## Mise à jour opérationnelle du 29 octobre
+
+- Identité et contact confirmés : Sébastien PASQUET, nico.chapuise@gmail.com.
+- Lecture des réglages Neon : région aws-eu-central-1 ; fenêtre historique de la base 21 600 secondes (6 h). Ce n’est pas un délai de purge garanti pour tous les objets et sauvegardes.
+- Google sur la branche de développement : fournisseur `shared` (identifiants de test Neon). Nom de l’intégration mis à jour vers PokéStock France ; ceci ne change pas la marque affichée par Google.
+- Console Google Cloud inaccessible depuis le navigateur de travail : identifiants propres au projet non créés. Ne pas désactiver le fournisseur fonctionnel en attendant.
+- Build Android de test préparé en 0.7.3, versionCode 11, même identifiant et même mécanisme de signature.
+- Pages publiables comme informations de préparation ; les points inconnus restent visibles. La politique n’est pas déclarée finalisée pour les stores.
