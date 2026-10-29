@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex"><title>Associer Google — PokéStock bêta</title>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin"><meta name="robots" content="noindex"><title>Associer Google — PokéStock bêta</title>
 <style>body{margin:0;background:radial-gradient(at top left,#304b78,#101d32);color:#eef4ff;font:17px system-ui;min-height:100vh;display:grid;place-items:center}main{box-sizing:border-box;width:min(92%,540px);padding:32px;background:#172a42;border:1px solid #40536d;border-radius:24px;margin:24px}h1{font-size:30px}p{line-height:1.6}label{display:block;margin:18px 0}input,button,a.action{box-sizing:border-box;width:100%;padding:14px;border-radius:12px;font:inherit}input{display:block;margin-top:8px;border:1px solid #6c7f99}button,a.action{border:0;background:#ffe17b;color:#172332;font-weight:700;cursor:pointer}button:disabled{opacity:.5;cursor:wait}a{color:#ffe17b}a.action{display:block;text-align:center;text-decoration:none;margin:20px 0}small{color:#bdcce2}[hidden]{display:none!important}#status{white-space:pre-line}</style></head>
 <body><main><small>POKÉSTOCK FRANCE · BÊTA ANDROID</small><h1>Associer mon compte Google</h1>
 <p>Connectez-vous avec votre compte PokéStock existant, puis autorisez Google. Vos signalements et vos données restent sur ce même compte.</p>
 <form id="login"><label>Adresse e-mail du compte PokéStock<input id="email" type="email" autocomplete="username" required></label><label>Mot de passe PokéStock<input id="password" type="password" autocomplete="current-password" required></label><button id="submit" disabled>Me connecter</button></form>
-<section id="account" hidden><p id="identity"></p><button id="link" disabled>Associer mon compte Google</button><p>Choisissez le compte Google utilisant la même adresse e-mail.</p><button id="logout">Changer de compte</button></section>
+<section id="account" hidden><p id="identity"></p><button id="link" disabled>Associer mon compte Google</button><div id="googleButton" hidden></div><p>Choisissez le compte Google utilisant la même adresse e-mail.</p><button id="logout">Changer de compte</button></section>
 <p id="diagnostic" role="status" hidden></p>
 <p id="status" role="status" aria-live="polite">Chargement de la connexion…</p>
 <a id="return" class="action" href="fr.pokestock.app.dev://auth/callback" hidden>Ouvrir PokéStock</a>
@@ -12,22 +12,23 @@
 <small>Votre mot de passe est transmis au service de connexion Neon. Cette page ne l’enregistre pas.</small>
 <script type="module">
 const AUTH_URL='https://ep-morning-bonus-b92tax88.neonauth.c-7.eu-central-1.aws.neon.tech/neondb/auth';
-const CALLBACK='https://nicochapuise-byte.github.io/pokestock-france/associer-google-beta.html';
+const GOOGLE_CLIENT_ID='294036219139-cqmoivcaq542uncr3m38la6ha3ao3auj.apps.googleusercontent.com';
 const $=id=>document.getElementById(id);
-let client,user=null,busy=false,canLink=false;
+let client,user=null,busy=false,canLink=false,googleAttempt=null,googleScript=null;
 const params=new URL(location.href).searchParams;
 const failed=params.has('error');
-const knownErrors=new Set(['access_denied','state_mismatch','state_not_found','invalid_state','invalid_code','invalid_callback_request','unable_to_link_account','email_does_not_match','account_already_linked_to_different_user','account_already_linked','account_not_linked','email_not_verified','unable_to_get_user_info','failed_to_get_user_info','invalid_client','invalid_grant','invalid_token','oauth_provider_not_found','internal_server_error','session_expired','unauthorized']);
+const knownErrors=new Set(['access_denied','state_mismatch','state_not_found','invalid_state','invalid_code','invalid_callback_request','unable_to_link_account','email_does_not_match','account_already_linked_to_different_user','account_already_linked','account_not_linked','email_not_verified','unable_to_get_user_info','failed_to_get_user_info','invalid_client','invalid_grant','invalid_token','oauth_provider_not_found','internal_server_error','session_expired','unauthorized','linking_not_allowed','linking_different_emails_not_allowed','social_account_already_linked','linking_failed','id_token_not_supported']);
 function diagnostic(value){const code=String(value||'').toLowerCase();return knownErrors.has(code)?code:'unclassified_error';}
 function showDiagnostic(value){$('diagnostic').hidden=false;$('diagnostic').textContent='Diagnostic : '+diagnostic(value);}
 
 function message(text){$('status').textContent=text;}
 function lock(value){busy=value;for(const id of ['submit','link','logout'])$(id).disabled=value||!client;$('link').disabled=value||!canLink;}
+function resetGoogle(){googleAttempt=null;$('googleButton').hidden=true;$('googleButton').replaceChildren();}
 function clearSuccess(){$('return').hidden=true;$('done').hidden=true;}
 if(failed)showDiagnostic(params.get('error'));
 async function refresh(){
- clearSuccess();user=null;canLink=false;$('account').hidden=true;$('login').hidden=false;
- const session=await client.getSession({query:{disableCookieCache:true}});
+ resetGoogle();clearSuccess();user=null;canLink=false;$('account').hidden=true;$('login').hidden=false;
+ const session=await client.getSession({query:{disableCookieCache:true},fetchOptions:{headers:{'X-Force-Fetch':'true'}}});
  if(session.error)throw Error('session');
  user=session.data?.user||null;
  if(!user){message('Connectez-vous avec votre adresse e-mail et votre mot de passe PokéStock habituels.');return;}
@@ -49,19 +50,48 @@ $('login').addEventListener('submit',async e=>{
  }catch{message('Connexion ou vérification impossible. Vérifiez vos identifiants et votre connexion Internet.');}
  finally{$('password').value='';lock(false);}
 });
-$('link').addEventListener('click',async()=>{
- if(busy||!client||!user||!canLink)return;lock(true);clearSuccess();
+function loadGoogle(){
+ if(window.google?.accounts?.id)return Promise.resolve();
+ if(googleScript)return googleScript;
+ googleScript=new Promise((resolve,reject)=>{
+  const script=document.createElement('script');script.src='https://accounts.google.com/gsi/client';script.async=true;
+  const timer=setTimeout(()=>{script.remove();googleScript=null;reject(Error('google'));},15000);
+  script.onload=()=>{clearTimeout(timer);resolve();};
+  script.onerror=()=>{clearTimeout(timer);script.remove();googleScript=null;reject(Error('google'));};
+  document.head.append(script);
+ });return googleScript;
+}
+async function finishGoogle(response,attempt){
+ if(busy||googleAttempt!==attempt||!canLink||user?.id!==attempt.userId)return;
+ googleAttempt=null;lock(true);clearSuccess();$('googleButton').hidden=true;
  try{
-  const session=await client.getSession({query:{disableCookieCache:true}});
+  const session=await client.getSession({query:{disableCookieCache:true},fetchOptions:{headers:{'X-Force-Fetch':'true'}}});
+  if(session.error||session.data?.user?.id!==attempt.userId)throw Error('session');
+  if(!response?.credential)throw Error('google');
+  const result=await client.linkSocial({provider:'google',idToken:{token:response.credential,nonce:attempt.nonce}});
+  if(result.error){showDiagnostic(result.error.code);throw Error('link');}
+  await refresh();
+ }catch{message('L’association n’a pas été confirmée. Votre compte est conservé. Si un diagnostic apparaît, transmettez uniquement ce code.');}
+ finally{if(response)response.credential='';lock(false);}
+}
+$('link').addEventListener('click',async()=>{
+ if(busy||!client||!user||!canLink)return;lock(true);clearSuccess();resetGoogle();
+ try{
+  const session=await client.getSession({query:{disableCookieCache:true},fetchOptions:{headers:{'X-Force-Fetch':'true'}}});
   if(session.error||session.data?.user?.id!==user.id)throw Error('session');
   sessionStorage.setItem('pokestock-google-link-user',user.id);$('diagnostic').hidden=true;
-  const result=await client.linkSocial({provider:'google',callbackURL:CALLBACK,errorCallbackURL:CALLBACK,loginHint:user.email});
-  if(result.error){showDiagnostic(result.error.code);throw Error('link');}message('Terminez l’autorisation chez Google. L’association sera vérifiée à votre retour.');
- }catch{message('Impossible de démarrer l’association. Aucun compte n’a été supprimé. Réessayez après vous être reconnecté.');}
+  await loadGoogle();
+  const attempt={userId:user.id,nonce:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('')};
+  googleAttempt=attempt;
+  window.google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,nonce:attempt.nonce,auto_select:false,ux_mode:'popup',login_hint:user.email,callback:response=>finishGoogle(response,attempt)});
+  $('googleButton').hidden=false;
+  window.google.accounts.id.renderButton($('googleButton'),{type:'standard',theme:'outline',size:'large',text:'continue_with',locale:'fr'});
+  message('Appuyez sur le bouton Google ci-dessus, puis choisissez le compte de même adresse.');
+ }catch{resetGoogle();message('Impossible de préparer Google. Réessayez dans Chrome avec votre compte PokéStock connecté.');}
  finally{lock(false);}
 });
 $('logout').addEventListener('click',async()=>{
- if(busy||!client)return;lock(true);
+ if(busy||!client)return;lock(true);resetGoogle();
  try{const r=await client.signOut();if(r?.error)throw Error('logout');sessionStorage.removeItem('pokestock-google-link-user');await refresh();}
  catch{message('Déconnexion non confirmée. Réessayez.');}finally{lock(false);}
 });
