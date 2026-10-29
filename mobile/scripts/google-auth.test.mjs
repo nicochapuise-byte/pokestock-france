@@ -28,3 +28,12 @@ test('missing or invalid verifier permits only manual app opening without creden
   assert.equal(opens,0);assert.equal(target.hidden,false);assert.equal(target.href,'fr.pokestock.app'+(suffix?'.dev':'')+'://auth/callback');assert.match(status.textContent,/vérifier votre compte/);assert(!target.href.includes('verifier'));
  }
 });
+
+test('provider failures show only known non-sensitive diagnostics and never exchange a verifier',async()=>{
+ const source=await readFile(new URL('android-auth.js',root),'utf8');
+ for(const error of ['state_mismatch','account_not_linked','secret@example.invalid']){
+  const target={hidden:true},status={};let opened=false;
+  runInNewContext(source,{URL,URLSearchParams,location:{href:'https://nicochapuise-byte.github.io/pokestock-france/android-auth-dev.html?error='+encodeURIComponent(error)+'&error_description=private-detail&neon_auth_session_verifier=secret',replace:()=>{opened=true;}},history:{replaceState:()=>{}},document:{getElementById:id=>id==='returnToApp'?target:status}});
+  assert.equal(opened,false);assert.equal(target.href,'fr.pokestock.app.dev://auth/callback');assert.match(status.textContent,/PS-AUTH-02/);assert(!status.textContent.includes('secret'));assert(!status.textContent.includes('private-detail'));
+ }
+});
