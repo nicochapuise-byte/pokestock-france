@@ -106,7 +106,8 @@
     const modals=[...document.querySelectorAll('.modal.open')].sort((a,b)=>Number(getComputedStyle(b).zIndex)-Number(getComputedStyle(a).zIndex));
     const panel=modals[0]?.querySelector('.modal-card')||(filtersOpen&&(mobile()||document.body.dataset.view==='list')?el('finderFilters'):null);
     if(!panel)return;
-    const focusable=[...panel.querySelectorAll('button,a[href],input,select,textarea,[tabindex="0"]')].filter(node=>!node.disabled&&node.getClientRects().length);
+    const tabbar=modals[0]?.classList.contains('app-tab-panel')?document.querySelector('.app-tabbar:not([hidden])'):null;
+    const focusable=[...panel.querySelectorAll('button,a[href],input,select,textarea,[tabindex="0"]'),...(tabbar?.querySelectorAll('button')||[])].filter(node=>!node.disabled&&node.getClientRects().length);
     if(!focusable.length)return;
     const first=focusable[0],last=focusable[focusable.length-1];
     if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}

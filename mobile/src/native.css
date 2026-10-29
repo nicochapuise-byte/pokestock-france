@@ -32,3 +32,8 @@ html.native-app{background:#0b162c;overscroll-behavior-y:none}
 .app-shell .app-welcome{position:relative;overflow:hidden;background:radial-gradient(ellipse at 90% 25%,#294878 0,transparent 65%),#132640!important;min-height:calc(100dvh - 210px);margin:14px!important;padding:26px 22px!important;border:1px solid #ffffff12}.app-shell .app-welcome h1{font-size:34px;line-height:1.12;letter-spacing:-1.3px;margin:18px 0}.app-shell .app-welcome h1 em{color:#ffe077;font-style:normal}.app-welcome>p{font-size:14px;line-height:1.6;color:#c3d1e7;position:relative;z-index:1}.app-welcome-product{display:block;width:140px;height:145px;object-fit:contain;margin:18px auto;filter:drop-shadow(0 12px 18px #0005)}.app-welcome-actions{display:grid;gap:10px;position:relative;z-index:1}.app-welcome-actions .btn{width:100%;min-height:50px;margin:0;justify-content:center;text-align:center;white-space:normal}.app-welcome-note{text-align:center;font-size:11px!important}.app-shell .app-welcome .eyebrow{color:#ffe077;font-size:10px;letter-spacing:2px}
 .app-shell .app-welcome:not([hidden]){display:block!important}
 .app-shell .app-welcome[hidden]{display:none!important}
+
+/* Keep main navigation available while browsing account and favorites. */
+.app-shell .app-tabbar{z-index:2100}
+.app-shell .app-tab-panel{bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+.app-shell .app-tab-panel .modal-card{max-height:100%;padding-bottom:24px}

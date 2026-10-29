@@ -1,12 +1,21 @@
 // App navigation delegates to existing authenticated flows, never duplicates writes.
 export function installAppShell(doc=document,win=window){
  if(!doc.getElementById('carte')||doc.querySelector('.app-tabbar'))return;
+ const tabPanels={watchModal:'favorites',authModal:'account'};
+ for(const id of Object.keys(tabPanels)){
+  const panel=doc.getElementById(id);panel?.classList.add('app-tab-panel');
+  panel?.querySelector('.modal-card')?.setAttribute('aria-modal','false');
+ }
  const paths={home:'m3 10 9-7 9 7v11h-6v-7H9v7H3V10',map:'m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6m6-3v15m6-12v15',list:'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',report:'M12 5v14M5 12h14',favorites:'m12 3 2.8 5.8 6.4.9-4.6 4.5 1.1 6.4L12 17.6l-5.7 3 1.1-6.4-4.6-4.5 6.4-.9L12 3',account:'M20 21v-2a7 7 0 0 0-14 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8'};
  const nav=doc.createElement('nav');nav.className='app-tabbar';nav.setAttribute('aria-label','Navigation de l’application');
  for(const [key,label] of [['home','Accueil'],['map','Carte'],['report','Signaler'],['favorites','Favoris'],['account','Compte']]){
   const button=doc.createElement('button');button.type='button';button.dataset.appTab=key;
   button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+paths[key]+'"/></svg><span>'+label+'</span>';
   button.addEventListener('click',()=>{
+   const open=[...doc.querySelectorAll('.modal.open')];
+   if(open.some(panel=>!tabPanels[panel.id]))return;
+   if(open.length===1&&tabPanels[open[0].id]===key)return;
+   for(const panel of open)panel.querySelector('.modal-close')?.click();
    if(key==='home')doc.querySelector('.navlinks [data-page-link=home]')?.click();
    else if(key==='map'||key==='list')doc.querySelector('.navlinks [data-view="'+key+'"]').click();
    else doc.getElementById({report:'openReportTop',favorites:'watchOpenBtn',account:'accountBtn'}[key])?.click();
@@ -17,8 +26,8 @@ export function installAppShell(doc=document,win=window){
   const modal=[...doc.querySelectorAll('.modal.open')].at(-1);
   const key=modal?({watchModal:'favorites',authModal:'account',reportModal:'report'}[modal.id]||null):({home:'home',map:'map',list:'map'}[doc.body.dataset.page]||null);
   nav.querySelectorAll('button').forEach(button=>{const active=button.dataset.appTab===key;button.classList.toggle('selected',active);if(active)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');});
-  // Modals own focus and their bottom action area; background navigation is inert.
-  nav.hidden=!!modal;
+  // Account and favorites are app tabs; editing/confirmation dialogs still own focus.
+  nav.hidden=[...doc.querySelectorAll('.modal.open')].some(panel=>!tabPanels[panel.id]);
  };
  const observer=new win.MutationObserver(records=>{if(records.some(r=>r.target===doc.body||r.target.matches('.modal')))update();});observer.observe(doc.body,{subtree:true,attributes:true,attributeFilter:['class','data-page']});update();
  const hero=doc.querySelector('.hero');
