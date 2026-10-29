@@ -52,6 +52,11 @@ test('changed session or failed account verification blocks linking',async()=>{
 });
 test('callback error cannot imply success or expose raw diagnostics',async()=>{
  const {w,get}=await setup({signedIn:true,query:'?error=private-detail&error_description=private-secret'});
- try{assert(get('done').hidden);assert.match(get('status').textContent,/pas abouti/);assert(!get('status').textContent.includes('private'));assert.equal(w.location.search,'');}
+ try{assert(get('done').hidden);assert.match(get('status').textContent,/pas abouti/);assert(!w.document.body.textContent.includes('private-secret'));assert.equal(get('diagnostic').textContent,'Diagnostic : unclassified_error');assert.equal(w.location.search,'');}
+ finally{w.close();}
+});
+test('known OAuth failure stays visible after the URL is cleaned',async()=>{
+ const {w,get}=await setup({signedIn:true,query:'?error=unable_to_link_account&error_description=private-detail'});
+ try{assert.equal(get('diagnostic').hidden,false);assert.equal(get('diagnostic').textContent,'Diagnostic : unable_to_link_account');assert.equal(w.location.search,'');assert(!w.document.body.textContent.includes('private-detail'));}
  finally{w.close();}
 });
