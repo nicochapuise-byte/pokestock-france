@@ -5,6 +5,7 @@
 <p>Connectez-vous avec votre compte PokéStock existant, puis autorisez Google. Vos signalements et vos données restent sur ce même compte.</p>
 <form id="login"><label>Adresse e-mail du compte PokéStock<input id="email" type="email" autocomplete="username" required></label><label>Mot de passe PokéStock<input id="password" type="password" autocomplete="current-password" required></label><button id="submit" disabled>Me connecter</button></form>
 <section id="account" hidden><p id="identity"></p><button id="link" disabled>Associer mon compte Google</button><p>Choisissez le compte Google utilisant la même adresse e-mail.</p><button id="logout">Changer de compte</button></section>
+<p id="diagnostic" role="status" hidden></p>
 <p id="status" role="status" aria-live="polite">Chargement de la connexion…</p>
 <a id="return" class="action" href="fr.pokestock.app.dev://auth/callback" hidden>Ouvrir PokéStock</a>
 <p id="done" hidden>Dans l’application, utilisez ensuite « Continuer avec Google ». Si le bouton n’ouvre pas l’application, ouvrez-la depuis son icône.</p>
@@ -16,9 +17,14 @@ const $=id=>document.getElementById(id);
 let client,user=null,busy=false,canLink=false;
 const params=new URL(location.href).searchParams;
 const failed=params.has('error');
+const knownErrors=new Set(['access_denied','state_mismatch','state_not_found','invalid_state','invalid_code','invalid_callback_request','unable_to_link_account','email_does_not_match','account_already_linked_to_different_user','account_already_linked','account_not_linked','email_not_verified','unable_to_get_user_info','failed_to_get_user_info','invalid_client','invalid_grant','invalid_token','oauth_provider_not_found','internal_server_error','session_expired','unauthorized']);
+function diagnostic(value){const code=String(value||'').toLowerCase();return knownErrors.has(code)?code:'unclassified_error';}
+function showDiagnostic(value){$('diagnostic').hidden=false;$('diagnostic').textContent='Diagnostic : '+diagnostic(value);}
+
 function message(text){$('status').textContent=text;}
 function lock(value){busy=value;for(const id of ['submit','link','logout'])$(id).disabled=value||!client;$('link').disabled=value||!canLink;}
 function clearSuccess(){$('return').hidden=true;$('done').hidden=true;}
+if(failed)showDiagnostic(params.get('error'));
 async function refresh(){
  clearSuccess();user=null;canLink=false;$('account').hidden=true;$('login').hidden=false;
  const session=await client.getSession({query:{disableCookieCache:true}});
@@ -32,7 +38,7 @@ async function refresh(){
  if(accounts.error||!Array.isArray(accounts.data))throw Error('accounts');
  if(accounts.data.some(a=>a.providerId==='google'&&a.userId===user.id)){
   $('link').hidden=true;$('return').hidden=false;$('done').hidden=false;sessionStorage.removeItem('pokestock-google-link-user');message('Google est bien associé à ce compte PokéStock.');
- }else {canLink=true;message(failed?'L’association n’a pas abouti. Votre compte est conservé. Vous pouvez réessayer en choisissant le compte Google de même adresse.':'Votre compte est retrouvé. Appuyez sur « Associer mon compte Google ».');}
+ }else {canLink=true;message(failed?'L’association n’a pas abouti. Votre compte est conservé. Transmettez le code de diagnostic affiché ci-dessus pour identifier le blocage.':'Votre compte est retrouvé. Appuyez sur « Associer mon compte Google ».');}
 }
 $('login').addEventListener('submit',async e=>{
  e.preventDefault();if(busy||!client)return;lock(true);clearSuccess();
@@ -48,9 +54,9 @@ $('link').addEventListener('click',async()=>{
  try{
   const session=await client.getSession({query:{disableCookieCache:true}});
   if(session.error||session.data?.user?.id!==user.id)throw Error('session');
-  sessionStorage.setItem('pokestock-google-link-user',user.id);
+  sessionStorage.setItem('pokestock-google-link-user',user.id);$('diagnostic').hidden=true;
   const result=await client.linkSocial({provider:'google',callbackURL:CALLBACK,errorCallbackURL:CALLBACK,loginHint:user.email});
-  if(result.error)throw Error('link');message('Terminez l’autorisation chez Google. L’association sera vérifiée à votre retour.');
+  if(result.error){showDiagnostic(result.error.code);throw Error('link');}message('Terminez l’autorisation chez Google. L’association sera vérifiée à votre retour.');
  }catch{message('Impossible de démarrer l’association. Aucun compte n’a été supprimé. Réessayez après vous être reconnecté.');}
  finally{lock(false);}
 });
