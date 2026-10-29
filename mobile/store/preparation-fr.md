@@ -20,7 +20,7 @@ PokéStock est un projet communautaire indépendant. Les droits sur les marques 
 
 ## Champs à finaliser avec l’éditeur
 
-- Identité légale et coordonnées de support réelles.
+- Identité légale à confirmer ; support confirmé : nico.chapuise@gmail.com.
 - URL publique de confidentialité et chemin de suppression de compte fonctionnels.
 - Identifiants définitifs iOS/Android, droits et nom disponibles.
 - Déclarations Apple App Privacy / Google Data Safety : compte (e-mail/pseudo), position à la demande, commune et localisation du point de vente, contenus/photos des signalements, favoris et votes. Vérifier le traitement exact des SDK et des métadonnées de photo avant de répondre aux formulaires. Aucune déclaration « aucune donnée collectée » par défaut.

@@ -1,6 +1,6 @@
 # Préparation bêta — 29 octobre 2026
 
-État : préparation, aucune soumission aux stores. Les pages ajoutées sont des brouillons signalés comme tels. Les coordonnées et rétentions manquantes empêchent de présenter la confidentialité comme finalisée.
+État : préparation, aucune soumission aux stores. Les pages ajoutées sont des brouillons signalés comme tels. L’identité d’éditeur et les rétentions manquantes empêchent de présenter la confidentialité comme finalisée.
 
 ## Livré dans cette modification
 
@@ -14,7 +14,7 @@ L’utilisateur a confirmé le parcours Android de suppression avec reconnexion 
 
 ## Configuration Google à exécuter dans le compte du projet
 
-Préparer un projet de test distinct du projet de production. Nom affiché : **PokéStock France**. Renseigner une adresse réelle d’assistance et les contacts du projet. Ne jamais stocker le secret OAuth dans le dépôt, les pages ou le bundle mobile.
+Préparer un projet de test distinct du projet de production. Nom affiché : **PokéStock France**. Adresse d’assistance et de confidentialité confirmée : **nico.chapuise@gmail.com**. La renseigner dans la console Google avec les contacts du projet. Ne jamais stocker le secret OAuth dans le dépôt, les pages ou le bundle mobile.
 
 URLs candidates après publication effective des pages :
 
@@ -33,7 +33,7 @@ Après configuration, tester avec un compte de test : connexion, inscription, an
 
 ## Points restant à finaliser avant ouverture
 
-- Identité de l’éditeur et e-mail de support/confidentialité.
+- Identité de l’éditeur à confirmer ; e-mail confirmé : nico.chapuise@gmail.com.
 - Bases légales par finalité, durées de conservation et sauvegardes, inventaire des SDK et prestataires, transferts et modalités d’exercice des droits.
 - Canal permanent de support, signalement d’abus et blocage ; recette des autorisations GPS/caméra et de l’adresse privée.
 - Configuration Google effective, domaines et contacts ; comptes développeur et recette de distribution.
