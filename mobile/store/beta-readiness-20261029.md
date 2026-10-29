@@ -54,3 +54,31 @@ Après configuration, tester avec un compte de test : connexion, inscription, an
 - Console Google Cloud inaccessible depuis le navigateur de travail : identifiants propres au projet non créés. Ne pas désactiver le fournisseur fonctionnel en attendant.
 - Build Android de test préparé en 0.7.3, versionCode 11, même identifiant et même mécanisme de signature.
 - Pages publiables comme informations de préparation ; les points inconnus restent visibles. La politique n’est pas déclarée finalisée pour les stores.
+
+## Reprise après la version 0.7.5
+
+- Version Android livrée : 0.7.5 (versionCode 13). Compilation et signature vérifiées ; 55 tests passent.
+- 0.7.4 : l’accueil respecte la navigation et ne reste plus au-dessus de la carte.
+- 0.7.5 : navigation directe depuis Compte et Favoris, avec fermeture par les gestionnaires existants. Les dialogues de publication et de confirmation conservent leur fonctionnement modal.
+- L’utilisateur a confirmé la connexion par e-mail et le fonctionnement de la carte. Ne pas lui redemander toute la recette déjà effectuée. La persistance de session après redémarrage n’est pas explicitement confirmée dans cet échange.
+- Configuration relue : Google shared et SMTP shared sur la branche de développement ; vérification e-mail désactivée. Aucun changement de configuration effectué à cette étape.
+
+### Google : deux chantiers séparés
+
+1. Identifiants propres à PokéStock : créer/configurer l’application OAuth dans Google Cloud, puis enregistrer ses identifiants dans Neon. Ceci concerne l’identité du service et la préparation à la diffusion, pas la liaison des comptes.
+2. Rattachement explicite : le module natif installé (@capgo/capacitor-neon 8.1.0) n’expose pas de méthode de liaison dans son interface publique. Le client Neon web documente des fonctions de liaison, mais leur existence ne valide pas le parcours natif. Garder le compte existant et son accès par e-mail. Ne pas modifier les identités par SQL ni considérer une adresse identique comme une autorisation de fusion. Implémentation et recette authentifiée encore nécessaires.
+
+### Configuration Google de test à préparer
+
+- Console : https://console.cloud.google.com/auth/overview
+- Nom : PokéStock France ; assistance et contact éditeur : nico.chapuise@gmail.com.
+- Créer ou sélectionner un projet de test appartenant à l’éditeur. Conserver le mode test pendant la préparation ; ajouter individuellement les comptes testeurs autorisés.
+- Type du client OAuth : Application Web, puisque Google revient vers Neon avant de revenir dans Android.
+- Dans Neon, projet sparkling-bread-53722880, branche dev-seller-types-20261027, ouvrir Auth et la configuration Google. Copier l’URI exacte affichée dans ce dialogue dans les URI de redirection autorisées Google.
+- Valeur attendue d’après la base URL relue et la documentation officielle : https://ep-morning-bonus-b92tax88.neonauth.c-7.eu-central-1.aws.neon.tech/neondb/auth/callback/google ; à comparer au dialogue avant enregistrement.
+- Origine web de l’application : https://nicochapuise-byte.github.io (sans chemin).
+- Le retour Android android-auth-dev.html n’est PAS l’URI OAuth à enregistrer chez Google.
+- Saisir Client ID et Client Secret directement dans la configuration Google de Neon ; ne pas envoyer le secret en conversation et ne pas le committer.
+- Les pages publiques de confidentialité restent des brouillons : ne pas les présenter comme finalisées, ne pas publier l’écran de consentement ni soumettre aux stores à cette étape.
+
+Documentation vérifiée : https://neon.com/docs/auth/guides/setup-oauth et interface publique du module natif installé.
