@@ -82,3 +82,14 @@ Après configuration, tester avec un compte de test : connexion, inscription, an
 - Les pages publiques de confidentialité restent des brouillons : ne pas les présenter comme finalisées, ne pas publier l’écran de consentement ni soumettre aux stores à cette étape.
 
 Documentation vérifiée : https://neon.com/docs/auth/guides/setup-oauth et interface publique du module natif installé.
+
+## Mise à jour du 30 octobre 2026 — 0.7.6
+
+Cette section remplace les anciens constats Google shared et association non implémentée ci-dessus.
+
+- Google utilise désormais les identifiants propres au projet sur la branche bêta ; l’écran de consentement reste en mode test.
+- Association explicite via Google Identity Services et `linkSocial` avec preuve d’identité Google, vérifiée par Neon. Ce parcours remplace la redirection d’association qui échouait avec `state_mismatch`. Aucun changement d’identité par SQL.
+- Le 29 octobre, la capture de l’utilisateur confirme l’association réussie au compte existant. La connexion Google dans l’APK et la persistance après fermeture restent à confirmer ; ne pas les présenter comme déjà validées.
+- Version 0.7.6, versionCode 14 : raccourci vers l’association dans Compte, visible seulement après connexion et seulement dans la bêta. Aucun identifiant, e-mail ou jeton n’est ajouté à l’URL. La page est ouverte par le gestionnaire natif de liens existant.
+- L’APK de test doit conserver `fr.pokestock.app.dev` et le certificat permanent pour permettre la mise à jour sans désinstallation.
+- Aucune soumission Google Play ou App Store, aucun passage en production. Les points de confidentialité et de diffusion encore ouverts restent à finaliser.
