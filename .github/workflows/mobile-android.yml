@@ -49,3 +49,45 @@ jobs:
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 7
+
+  publish-beta:
+    needs: android-debug
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: pokestock-android-development
+          path: apk
+      - name: Publish versioned APK for beta testers
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./mobile/package.json').version")"
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          TAG="android-beta-v$VERSION"
+          APK="PokeStock-France-$VERSION-test.apk"
+          cp apk/app-debug.apk "$APK"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "This beta version is already published. Bump the app version for a new release."
+            exit 0
+          fi
+          cat > beta-release-notes.md <<'NOTES'
+          Version Android de test de PokéStock France.
+          
+          Téléchargez le fichier APK ci-dessous et ouvrez-le sur Android.
+          Pour mettre à jour une version de test existante, installez cet APK sans désinstaller l'application.
+          
+          Utilisez une adresse e-mail et un mot de passe pour créer votre compte testeur. Google reste limité aux comptes de test autorisés.
+          
+          Cette bêta utilise un environnement de développement distinct de la production. Les signalements de test ne constituent pas des disponibilités garanties.
+          NOTES
+          sha256sum "$APK" > "$APK.sha256"
+          gh release create "$TAG" "$APK" "$APK.sha256" --target "$GITHUB_SHA" --prerelease --title "PokéStock France $VERSION — bêta Android" --notes-file beta-release-notes.md
