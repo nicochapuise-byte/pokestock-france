@@ -2,6 +2,16 @@
 
 **Site public :** https://nicochapuise-byte.github.io/pokestock-france/
 
+## Télécharger la bêta Android
+
+**[Télécharger les APK de test et consulter les mises à jour](https://github.com/nicochapuise-byte/pokestock-france/releases)**
+
+Ouvrez la release Android la plus récente, puis téléchargez le fichier `PokeStock-France-…-test.apk` dans **Assets**. Les archives « Source code » ne sont pas des applications Android.
+
+Installez les mises à jour sans désinstaller la version de test précédente. Pour créer un compte testeur, utilisez une adresse e-mail et un mot de passe ; Google reste limité aux comptes de test autorisés. Cette bêta utilise les données de développement.
+
+Chaque nouvelle version Android est publiée automatiquement après réussite des tests, de la compilation et de la vérification de signature. Une version déjà publiée n’est pas remplacée : les mises à jour doivent porter un nouveau numéro de version.
+
 ## Architecture
 
 - `index.html`, `styles.css`, `script.js` : interface statique compatible iPhone / Safari.
