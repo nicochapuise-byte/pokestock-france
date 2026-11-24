@@ -9,16 +9,16 @@
  const scheme=current.pathname.endsWith('/android-auth-dev.html')?'fr.pokestock.app.dev':'fr.pokestock.app';
  if(error){
   target.href=scheme+'://auth/callback';target.hidden=false;
-  status.textContent=(reasons[error]||'Le service de connexion a renvoyé une erreur.')+' Revenez dans PokéStock. Code de diagnostic : PS-AUTH-02'+(Object.hasOwn(reasons,error)?' / '+error:'')+'.';return;
+  status.textContent=(reasons[error]||'Le service de connexion a renvoyé une erreur.')+' Revenez dans PokeTool. Code de diagnostic : PS-AUTH-02'+(Object.hasOwn(reasons,error)?' / '+error:'')+'.';return;
  }
  if(!verifier||verifier.length>4096||/[\s\x00-\x1f]/.test(verifier)){
   // Reopening the cleaned page does not prove that native sign-in failed.
   target.href=scheme+'://auth/callback';target.hidden=false;
-  status.textContent='Ce lien ne contient plus de code de connexion utilisable. Ouvrez PokéStock pour vérifier votre compte. Si vous n’êtes pas connecté, relancez la connexion depuis l’application. Code de diagnostic : '+(verifier?'PS-AUTH-03':'PS-AUTH-01')+'.';return;
+  status.textContent='Ce lien ne contient plus de code de connexion utilisable. Ouvrez PokeTool pour vérifier votre compte. Si vous n’êtes pas connecté, relancez la connexion depuis l’application. Code de diagnostic : '+(verifier?'PS-AUTH-03':'PS-AUTH-01')+'.';return;
  }
  target.href=scheme+'://auth/callback?'+new URLSearchParams({neon_auth_session_verifier:verifier});
  target.hidden=false;
- status.textContent='Ouverture de PokéStock… Si l’application ne s’ouvre pas, touchez le bouton ci-dessous pour terminer votre connexion.';
+ status.textContent='Ouverture de PokeTool… Si l’application ne s’ouvre pas, touchez le bouton ci-dessous pour terminer votre connexion.';
  // Best effort only: browsers may require the explicit link gesture. Keep
  // the link visible and never loop, reload, or claim the verifier was exchanged.
  try{location.replace(target.href);}catch{}

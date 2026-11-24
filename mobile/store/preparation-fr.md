@@ -2,7 +2,7 @@
 
 ## Proposition de fiche
 
-Nom : **PokéStock France**
+Nom : **PokeTool**
 
 Sous-titre Apple : **Les stocks près de chez vous**
 
@@ -16,7 +16,7 @@ Partagez une disponibilité avec une photo, précisez le prix et la quantité ob
 
 Enregistrez vos références favorites et consultez, dans l’application, les signalements qui correspondent à votre recherche. Une disponibilité peut changer : vérifiez auprès du vendeur avant de vous déplacer.
 
-PokéStock est un projet communautaire indépendant. Les droits sur les marques et illustrations doivent être vérifiés avant diffusion. Ne pas publier cette fiche avant validation des fonctions sur téléphone.
+PokeTool est un projet communautaire indépendant. Les droits sur les marques et illustrations doivent être vérifiés avant diffusion. Ne pas publier cette fiche avant validation des fonctions sur téléphone.
 
 ## Champs à finaliser avec l’éditeur
 

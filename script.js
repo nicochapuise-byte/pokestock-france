@@ -504,7 +504,7 @@ async function loadCommunityReports(){
     renderAll();
   }catch(err){
     communityLoadState="error";updateStats();
-    console.warn("API PokéStock indisponible:",err);
+    console.warn("API PokeTool indisponible:",err);
     msg.textContent="Les signalements ne se chargent pas pour le moment. Actualisez la page pour réessayer. Les exemples fictifs sont accessibles dans les filtres.";
   }
 }

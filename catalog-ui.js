@@ -1,4 +1,4 @@
-// Catalogue PokéStock — produits et art sets structurés.
+// Catalogue PokeTool — produits et art sets structurés.
 // Les visuels officiels protégés ne sont affichés que si l'admin a ajouté un fichier autorisé.
 const CATALOG_ENDPOINT="https://br-nameless-math-b9dyokxp-pokestock.compute.c-7.eu-central-1.aws.neon.tech";
 const catalogDom=id=>document.getElementById(id);

@@ -1,4 +1,4 @@
-// PokéStock France — médiathèque communautaire et import par lots.
+// PokeTool — médiathèque communautaire et import par lots.
 // Les images tierces ne sont jamais copiées automatiquement ; chaque ajout est
 // attesté par le contributeur et contrôlé avant d'être publié.
 const photoUi=id=>document.getElementById(id);
@@ -261,7 +261,7 @@ photoUi("catalogPendingPhotos").addEventListener("click",async event=>{
   const button=event.target.closest("[data-catalog-review]");
   if(!button||pendingReviewBusy||!userIsAdmin)return;
   const id=button.dataset.catalogReview,decision=button.dataset.decision;
-  if(decision==="approved"&&!window.confirm("Publier cette photographie sur PokéStock ? Confirme la bonne référence, l'absence de données privées et les droits déclarés."))return;
+  if(decision==="approved"&&!window.confirm("Publier cette photographie sur PokeTool ? Confirme la bonne référence, l'absence de données privées et les droits déclarés."))return;
   if(decision==="rejected"&&!window.confirm("Refuser cette proposition ?"))return;
   pendingReviewBusy=true;
   try{

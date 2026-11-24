@@ -3,20 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="PokéStock France : administration des photographies officielles ou autorisées du catalogue Pokémon.">
+<meta name="description" content="PokeTool : administration des photographies officielles ou autorisées du catalogue Pokémon.">
 <meta name="robots" content="noindex,nofollow">
-<title>Dashboard — PokéStock France</title>
+<title>Dashboard — PokeTool</title>
 <link rel="stylesheet" href="admin-page.css?v=20261027-erasure-barrier-v1">
 </head>
 <body>
 <header class="adm-header">
-  <a class="adm-brand" href="index.html"><span class="adm-ball" aria-hidden="true"></span>PokéStock <b>France</b></a>
+  <a class="adm-brand" href="index.html"><span class="adm-ball" aria-hidden="true"></span>PokeTool</a>
   <a class="adm-back" href="index.html">← Retour au site</a>
 </header>
 <main class="adm-layout">
   <section class="adm-intro">
     <div><span class="adm-eyebrow">🛡️ ESPACE ADMINISTRATEUR</span>
-      <h1>Dashboard <em>PokéStock</em></h1>
+      <h1>Dashboard <em>PokeTool</em></h1>
       <p>Pilote le catalogue, les photos et les signalements de la communauté depuis ton espace administrateur.</p>
     </div>
     <span class="adm-lock">🔒 Accès sécurisé</span>
@@ -24,7 +24,7 @@
 
   <div id="admGate" class="adm-gate" role="status">
     <div class="adm-spinner"></div><h2>Vérification du compte…</h2>
-    <p>La photothèque est réservée aux administrateurs de PokéStock France.</p>
+    <p>La photothèque est réservée aux administrateurs de PokeTool.</p>
   </div>
   <div id="admProtected" hidden>
     <section class="adm-stats" aria-label="Statistiques du catalogue">
@@ -45,7 +45,7 @@
       <a class="adm-tab adm-tab-link" href="index.html#administration">🗺️ Signalements ↗</a>
     </nav>
     <section id="admOverviewPanel" class="adm-panel">
-      <div class="adm-section-head"><div><h2>Vue d’ensemble</h2><p>Tous les outils pour gérer PokéStock France.</p></div></div>
+      <div class="adm-section-head"><div><h2>Vue d’ensemble</h2><p>Tous les outils pour gérer PokeTool.</p></div></div>
       <div class="dashboard-summary" aria-label="Priorités du catalogue">
         <div><span>SÉRIES À COMPLÉTER</span><strong id="admIncompleteSeries">—</strong><small id="admSeriesSummary">Calcul depuis le catalogue</small></div>
         <div><span>ARTICLES SANS PHOTO EXACTE</span><strong id="admMissingProducts">—</strong><small id="admMissingVariants">Un article peut avoir plusieurs variantes</small></div>
@@ -121,7 +121,7 @@
           <label>📷 Sélectionner la photo<input id="admPhotoFile" type="file" accept="image/*"></label>
           <p class="adm-tip">JPG, PNG ou HEIC reconnu par Safari, 10 Mo maximum. Image compressée automatiquement.</p>
           <label>📄 Origine et droits de publication<textarea id="admRights" rows="3" maxlength="240" placeholder="Par exemple : photographie personnelle dont je détiens les droits"></textarea></label>
-          <label class="adm-checkbox"><input type="checkbox" id="admRightsCheck"> Je confirme avoir le droit de publier cette image sur PokéStock.</label>
+          <label class="adm-checkbox"><input type="checkbox" id="admRightsCheck"> Je confirme avoir le droit de publier cette image sur PokeTool.</label>
           <button id="admUploadOne" type="button" class="adm-primary">💾 Enregistrer comme photo principale</button>
           <p id="admUploadStatus" class="adm-message" role="status"></p>
         </div>
@@ -134,7 +134,7 @@
         <p>La liste des séries et leurs cartes est sur PokéCardex ; les photographies des coffrets, boosters et ETB sont principalement dans son <a href="https://www.pokecardex.com/produits" target="_blank" rel="noopener noreferrer">catalogue de produits ↗</a>.</p></div></div>
       <div class="adm-formgrid">
         <div class="adm-fieldbox">
-          <label>🎴 Rechercher un item PokéStock
+          <label>🎴 Rechercher un item PokeTool
             <input id="admCardexSearch" type="search" placeholder="151, ETB, Noctali, anniversaire…" autocomplete="off">
           </label>
           <label>🎨 Choisir l'art set à illustrer
@@ -163,7 +163,7 @@
           <label>📄 Origine et droits de réutilisation
             <textarea id="admCardexRights" rows="3" maxlength="240" placeholder="Accord de réutilisation obtenu auprès de PokéCardex…"></textarea>
           </label>
-          <label class="adm-checkbox"><input id="admCardexRightsConfirm" type="checkbox"> Je confirme disposer des droits de reproduction et de diffusion sur PokéStock.</label>
+          <label class="adm-checkbox"><input id="admCardexRightsConfirm" type="checkbox"> Je confirme disposer des droits de reproduction et de diffusion sur PokeTool.</label>
           <button type="button" class="adm-primary" id="admCardexImport" disabled>📥 Enregistrer cette photo dans la base</button>
           <p id="admCardexImportStatus" class="adm-message" role="status"></p>
         </div>
@@ -194,7 +194,7 @@
     </section>
   </div>
 </main>
-<footer class="adm-footer">PokéStock France · Gestion sécurisée des visuels · Les photographies de preuve des signalements restent privées.</footer>
+<footer class="adm-footer">PokeTool · Gestion sécurisée des visuels · Les photographies de preuve des signalements restent privées.</footer>
 <script src="catalog-visuals.js?v=20261027-archive-v1"></script>
 <script src="admin-page.js?v=20261027-erasure-barrier-v1"></script>
 </body>

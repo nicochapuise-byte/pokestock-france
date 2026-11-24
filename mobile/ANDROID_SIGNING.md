@@ -1,6 +1,6 @@
 # Signature permanente des APK Android de test
 
-La version 0.6.1 conserve le paquet `fr.pokestock.app.dev` et utilise une clé PKCS12 permanente propre à PokéStock. La clé privée n’est jamais enregistrée dans le dépôt. Seul son certificat SHA-256 public est versionné dans `android/signing-certificate.sha256`.
+La version 0.6.1 conserve le paquet `fr.pokestock.app.dev` et utilise une clé PKCS12 permanente propre à PokeTool. La clé privée n’est jamais enregistrée dans le dépôt. Seul son certificat SHA-256 public est versionné dans `android/signing-certificate.sha256`.
 
 ## Activation unique par le propriétaire GitHub
 

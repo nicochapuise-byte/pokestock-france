@@ -7,7 +7,7 @@ export function installGoogleLinkEntry(environment,doc=document,win=window){
  link.href='https://nicochapuise-byte.github.io/pokestock-france/associer-google-beta.html';
  link.textContent='Associer mon compte Google';
  const help=doc.createElement('p');help.className='muted';
- help.textContent='Ouvre une page sécurisée dans le navigateur. Connectez-vous avec ce même compte PokéStock, puis autorisez Google. Si Google est déjà associé, la page vous le confirmera.';
+ help.textContent='Ouvre une page sécurisée dans le navigateur. Connectez-vous avec ce même compte PokeTool, puis autorisez Google. Si Google est déjà associé, la page vous le confirmera.';
  section.append(link,help);signOut.before(section);
  const update=()=>{section.hidden=!win.pokestockApi?.getUser();};
  doc.addEventListener('pokestock:authchanged',update);update();

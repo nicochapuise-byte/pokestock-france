@@ -14,7 +14,7 @@ L’origine du site figure déjà dans les domaines de confiance de l’environn
 
 ## Avant ouverture publique
 
-Configurer un client OAuth Web appartenant à PokéStock dans Google Cloud (nom, contact et domaine de consentement), puis renseigner ses identifiants directement dans les réglages OAuth de Neon, jamais dans le dépôt ni dans le JavaScript. Autoriser les redirections exactes suivantes :
+Configurer un client OAuth Web appartenant à PokeTool dans Google Cloud (nom, contact et domaine de consentement), puis renseigner ses identifiants directement dans les réglages OAuth de Neon, jamais dans le dépôt ni dans le JavaScript. Autoriser les redirections exactes suivantes :
 
 - Développement : `https://ep-morning-bonus-b92tax88.neonauth.c-7.eu-central-1.aws.neon.tech/neondb/auth/callback/google`
 - Production : `https://ep-dark-bread-b9bd8cco.neonauth.c-7.eu-central-1.aws.neon.tech/neondb/auth/callback/google`

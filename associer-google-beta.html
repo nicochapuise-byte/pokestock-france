@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin"><meta name="robots" content="noindex"><title>Associer Google — PokéStock bêta</title>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin"><meta name="robots" content="noindex"><title>Associer Google — PokeTool bêta</title>
 <style>body{margin:0;background:radial-gradient(at top left,#304b78,#101d32);color:#eef4ff;font:17px system-ui;min-height:100vh;display:grid;place-items:center}main{box-sizing:border-box;width:min(92%,540px);padding:32px;background:#172a42;border:1px solid #40536d;border-radius:24px;margin:24px}h1{font-size:30px}p{line-height:1.6}label{display:block;margin:18px 0}input,button,a.action{box-sizing:border-box;width:100%;padding:14px;border-radius:12px;font:inherit}input{display:block;margin-top:8px;border:1px solid #6c7f99}button,a.action{border:0;background:#ffe17b;color:#172332;font-weight:700;cursor:pointer}button:disabled{opacity:.5;cursor:wait}a{color:#ffe17b}a.action{display:block;text-align:center;text-decoration:none;margin:20px 0}small{color:#bdcce2}[hidden]{display:none!important}#status{white-space:pre-line}</style></head>
-<body><main><small>POKÉSTOCK FRANCE · BÊTA ANDROID</small><h1>Associer mon compte Google</h1>
-<p>Connectez-vous avec votre compte PokéStock existant, puis autorisez Google. Vos signalements et vos données restent sur ce même compte.</p>
-<form id="login"><label>Adresse e-mail du compte PokéStock<input id="email" type="email" autocomplete="username" required></label><label>Mot de passe PokéStock<input id="password" type="password" autocomplete="current-password" required></label><button id="submit" disabled>Me connecter</button></form>
+<body><main><small>POKETOOL · BÊTA ANDROID</small><h1>Associer mon compte Google</h1>
+<p>Connectez-vous avec votre compte PokeTool existant, puis autorisez Google. Vos signalements et vos données restent sur ce même compte.</p>
+<form id="login"><label>Adresse e-mail du compte PokeTool<input id="email" type="email" autocomplete="username" required></label><label>Mot de passe PokeTool<input id="password" type="password" autocomplete="current-password" required></label><button id="submit" disabled>Me connecter</button></form>
 <section id="account" hidden><p id="identity"></p><button id="link" disabled>Associer mon compte Google</button><div id="googleButton" hidden></div><p>Choisissez le compte Google utilisant la même adresse e-mail.</p><button id="logout">Changer de compte</button></section>
 <p id="diagnostic" role="status" hidden></p>
 <p id="status" role="status" aria-live="polite">Chargement de la connexion…</p>
-<a id="return" class="action" href="fr.pokestock.app.dev://auth/callback" hidden>Ouvrir PokéStock</a>
+<a id="return" class="action" href="fr.pokestock.app.dev://auth/callback" hidden>Ouvrir PokeTool</a>
 <p id="done" hidden>Dans l’application, utilisez ensuite « Continuer avec Google ». Si le bouton n’ouvre pas l’application, ouvrez-la depuis son icône.</p>
 <small>Votre mot de passe est transmis au service de connexion Neon. Cette page ne l’enregistre pas.</small>
 <script type="module">
@@ -31,14 +31,14 @@ async function refresh(){
  const session=await client.getSession({query:{disableCookieCache:true},fetchOptions:{headers:{'X-Force-Fetch':'true'}}});
  if(session.error)throw Error('session');
  user=session.data?.user||null;
- if(!user){message('Connectez-vous avec votre adresse e-mail et votre mot de passe PokéStock habituels.');return;}
+ if(!user){message('Connectez-vous avec votre adresse e-mail et votre mot de passe PokeTool habituels.');return;}
  const expected=sessionStorage.getItem('pokestock-google-link-user');
  if(expected&&expected!==user.id){message('Le compte connecté a changé. Changez de compte pour retrouver le compte à associer.');$('account').hidden=false;$('login').hidden=true;$('identity').textContent=user.email||'';$('link').hidden=true;return;}
- $('login').hidden=true;$('account').hidden=false;$('identity').textContent='Compte PokéStock : '+user.email;$('link').hidden=false;
+ $('login').hidden=true;$('account').hidden=false;$('identity').textContent='Compte PokeTool : '+user.email;$('link').hidden=false;
  const accounts=await client.listAccounts();
  if(accounts.error||!Array.isArray(accounts.data))throw Error('accounts');
  if(accounts.data.some(a=>a.providerId==='google'&&a.userId===user.id)){
-  $('link').hidden=true;$('return').hidden=false;$('done').hidden=false;sessionStorage.removeItem('pokestock-google-link-user');message('Google est bien associé à ce compte PokéStock.');
+  $('link').hidden=true;$('return').hidden=false;$('done').hidden=false;sessionStorage.removeItem('pokestock-google-link-user');message('Google est bien associé à ce compte PokeTool.');
  }else {canLink=true;message(failed?'L’association n’a pas abouti. Votre compte est conservé. Transmettez le code de diagnostic affiché ci-dessus pour identifier le blocage.':'Votre compte est retrouvé. Appuyez sur « Associer mon compte Google ».');}
 }
 $('login').addEventListener('submit',async e=>{
@@ -87,7 +87,7 @@ $('link').addEventListener('click',async()=>{
   $('googleButton').hidden=false;
   window.google.accounts.id.renderButton($('googleButton'),{type:'standard',theme:'outline',size:'large',text:'continue_with',locale:'fr'});
   message('Appuyez sur le bouton Google ci-dessus, puis choisissez le compte de même adresse.');
- }catch{resetGoogle();message('Impossible de préparer Google. Réessayez dans Chrome avec votre compte PokéStock connecté.');}
+ }catch{resetGoogle();message('Impossible de préparer Google. Réessayez dans Chrome avec votre compte PokeTool connecté.');}
  finally{lock(false);}
 });
 $('logout').addEventListener('click',async()=>{

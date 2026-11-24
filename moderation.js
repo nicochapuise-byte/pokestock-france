@@ -1,4 +1,4 @@
-// Administration de PokéStock : autorisations vérifiées par l'API Neon.
+// Administration de PokeTool : autorisations vérifiées par l'API Neon.
 // Aucun privilège admin n'est défini dans le navigateur.
 const MOD_API="https://br-nameless-math-b9dyokxp-pokestock.compute.c-7.eu-central-1.aws.neon.tech";
 let ownedReportIds=new Set();
@@ -13,7 +13,7 @@ let modBusy=false;
 
 async function moderationToken(){
   const api=window.pokestockApi;
-  if(!api?.ready||!api.getUser())throw Error("Connecte-toi à ton compte PokéStock.");
+  if(!api?.ready||!api.getUser())throw Error("Connecte-toi à ton compte PokeTool.");
   const token=await api.getToken();
   if(!token)throw Error("La session a expiré. Reconnecte-toi.");
   return token;
@@ -63,7 +63,7 @@ async function updateModerationPermissions(){
     if(requestId!==modRequestSerial)return;
     userIsAdmin=false;ownedReportIds=new Set();
     updateAdminNavigation(false);
-    console.warn("Impossible de vérifier les autorisations PokéStock",error);
+    console.warn("Impossible de vérifier les autorisations PokeTool",error);
   }
   renderCards(filteredReports());
   // Accessible depuis l'onglet « Signalements » de l'administration dédiée.
@@ -119,7 +119,7 @@ async function removeModerationReport(id){
   }
   const message=owner
     ?"Supprimer ton signalement ? Il disparaîtra de la carte et des disponibilités. Cette action ne peut pas être annulée depuis le site."
-    :"Supprimer ce référencement de PokéStock ? Il disparaîtra de la carte et des disponibilités.";
+    :"Supprimer ce référencement de PokeTool ? Il disparaîtra de la carte et des disponibilités.";
   if(!window.confirm(message))return;
   modBusy=true;
   try{

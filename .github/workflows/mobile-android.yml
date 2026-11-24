@@ -73,14 +73,14 @@ jobs:
           VERSION="$(node -p "require('./mobile/package.json').version")"
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
           TAG="android-beta-v$VERSION"
-          APK="PokeStock-France-$VERSION-test.apk"
+          APK="PokeTool-$VERSION-test.apk"
           cp apk/app-debug.apk "$APK"
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "This beta version is already published. Bump the app version for a new release."
             exit 0
           fi
           cat > beta-release-notes.md <<'NOTES'
-          Version Android de test de PokéStock France.
+          Version Android de test de PokeTool.
           
           Téléchargez le fichier APK ci-dessous et ouvrez-le sur Android.
           Pour mettre à jour une version de test existante, installez cet APK sans désinstaller l'application.
@@ -90,4 +90,4 @@ jobs:
           Cette bêta utilise un environnement de développement distinct de la production. Les signalements de test ne constituent pas des disponibilités garanties.
           NOTES
           sha256sum "$APK" > "$APK.sha256"
-          gh release create "$TAG" "$APK" "$APK.sha256" --target "$GITHUB_SHA" --prerelease --title "PokéStock France $VERSION — bêta Android" --notes-file beta-release-notes.md
+          gh release create "$TAG" "$APK" "$APK.sha256" --target "$GITHUB_SHA" --prerelease --title "PokeTool $VERSION — bêta Android" --notes-file beta-release-notes.md

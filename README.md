@@ -1,4 +1,6 @@
-# PokéStock France — carte communautaire Pokémon
+# PokeTool — carte communautaire Pokémon
+
+> Depuis la version Android 0.7.7, le projet porte le nom **PokeTool**. Les identifiants techniques existants (`fr.pokestock.app`, URL GitHub Pages, API Neon, clés de stockage et liens OAuth) sont conservés pour la continuité des comptes, des données et des mises à jour. Les anciennes releases gardent leur nom d’origine.
 
 **Site public :** https://nicochapuise-byte.github.io/pokestock-france/
 
@@ -6,7 +8,7 @@
 
 **[Télécharger les APK de test et consulter les mises à jour](https://github.com/nicochapuise-byte/pokestock-france/releases)**
 
-Ouvrez la release Android la plus récente, puis téléchargez le fichier `PokeStock-France-…-test.apk` dans **Assets**. Les archives « Source code » ne sont pas des applications Android.
+Ouvrez la release Android la plus récente, puis téléchargez le fichier `PokeTool-…-test.apk` dans **Assets**. Les archives « Source code » ne sont pas des applications Android.
 
 Installez les mises à jour sans désinstaller la version de test précédente. Pour créer un compte testeur, utilisez une adresse e-mail et un mot de passe ; Google reste limité aux comptes de test autorisés. Cette bêta utilise les données de développement.
 
@@ -68,7 +70,7 @@ Le travail sur les images n'est **pas limité à 30ᵉ Anniversaire** : l'admini
 
 L'onglet **« 🌐 Depuis PokéCardex »** de `admin.html` permet, pour un art set précis, de récupérer les images d'une page de **produit** de PokéCardex (`https://www.pokecardex.com/produits`) ou de son URL image directe. Les images des cartes de `/series` ne représentent pas nécessairement les produits scellés (booster, coffret, ETB).
 
-1. Choisir la variante PokéStock, puis coller l'URL HTTPS de sa fiche produit PokéCardex.
+1. Choisir la variante PokeTool, puis coller l'URL HTTPS de sa fiche produit PokéCardex.
 2. Le serveur (compte administrateur vérifié) examine les balises images de la page et propose des vignettes. La source ne fournit pas nécessairement de vignettes si les images sont chargées dynamiquement ou si le site refuse les requêtes automatiques.
 3. Vérifier visuellement la correspondance **produit / art set**, sélectionner une vignette, indiquer la provenance et confirmer les droits de réutilisation.
 4. Le serveur importe les octets (JPEG, PNG, WebP, GIF, max 2,6 Mo), les stocke dans `catalog-images` et inscrit l'image principale, la page source et l'horodatage dans `catalog_variants` (`image_object_key`, `image_source_url`, `image_imported_at`).

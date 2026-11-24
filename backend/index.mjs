@@ -1,5 +1,5 @@
 import {hasRecentErasureSession} from './erasure-session.mjs';
-// PokéStock France — API communautaire, Node 24 / Neon Functions.
+// PokeTool — API communautaire, Node 24 / Neon Functions.
 // Les identifiants Postgres et S3 sont injectés par Neon, jamais exposés au navigateur.
 import { randomUUID, createHash, createHmac, createPublicKey, verify as verifySignature } from "node:crypto";
 
@@ -248,7 +248,7 @@ const handler={
       if(erasure)return erasure;
       const accountDeletion=await handleAccountDeletion(request,url,{authenticate,isSiteAdmin,sql,json});
       if(accountDeletion)return accountDeletion;
-      if(url.pathname==="/"&&request.method==="GET")return json({name:"PokéStock API",ok:true},200,request);
+      if(url.pathname==="/"&&request.method==="GET")return json({name:"PokeTool API",ok:true},200,request);
 
 
 
@@ -738,7 +738,7 @@ const handler={
       return json({error:"Route introuvable"},404,request);
     }catch(error){
       if(error?.status===423)return json({error:error.message},423,request);
-      console.error("PokéStock backend:",error?.message||"erreur");
+      console.error("PokeTool backend:",error?.message||"erreur");
       return json({error:"Service momentanément indisponible."},503,request);
     }
   }

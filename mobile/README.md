@@ -1,4 +1,4 @@
-# PokéStock — préparation Android et iOS (0.4.0)
+# PokeTool — préparation Android et iOS (0.4.0)
 
 État : socle natif et intégration d’authentification native générés avec Capacitor 8.5.3, **pas encore une version validée sur téléphone**. Le site public et les accès de production sont inchangés. Identifiant provisoire `fr.pokestock.app` : vérifier et réserver les identifiants définitifs avant la première soumission.
 
@@ -14,7 +14,7 @@
 - Photo récupérée après interruption Android : proposition explicite de réutilisation, reprise des étapes du formulaire et confirmation avant publication. Aucun brouillon de compte ou d’adresse privée n’est écrit dans le stockage web.
 - Les préparations photo tardives sont ignorées après fermeture du formulaire, retrait ou changement de compte. La publication est bloquée pendant la préparation. La compression JPEG existante reste commune au site et à l’application.
 - Connexion e-mail/mot de passe native via `@capgo/capacitor-neon` 8.1.0 (module communautaire présenté dans le guide Neon). Persistance de session gérée par le module, pas par localStorage.
-- Transport HTTP natif limité à l’hôte exact de l’API PokéStock, avec JWT et réponses/statuts conservés, redirections désactivées. Les images et requêtes tierces conservent leur transport habituel.
+- Transport HTTP natif limité à l’hôte exact de l’API PokeTool, avec JWT et réponses/statuts conservés, redirections désactivées. Les images et requêtes tierces conservent leur transport habituel.
 - Aucun push, paiement ou suivi publicitaire ajouté.
 
 ## Demandes de suppression — 0.4.0
@@ -54,7 +54,7 @@ Une seconde action `Mobile iOS - simulator build` compile sur macOS 26 avec Xcod
 
 ## Points bloquants avant de tester les comptes et de distribuer
 
-1. **Environnement de test par défaut** : `npm run build` utilise l’API et l’Auth de la branche Neon `br-morning-lab-b9mavkej`. Le bandeau « Version de test » le signale. L’APK debug utilise l’identifiant `fr.pokestock.app.dev`, le nom PokéStock Test et ne partage pas son stockage avec la future version de production. Les comptes de développement sont distincts ; les comptes de production existants n’y sont pas automatiquement ajoutés après la création de la branche. Ne pas utiliser cet APK comme version publique.
+1. **Environnement de test par défaut** : `npm run build` utilise l’API et l’Auth de la branche Neon `br-morning-lab-b9mavkej`. Le bandeau « Version de test » le signale. L’APK debug utilise l’identifiant `fr.pokestock.app.dev`, le nom PokeTool Test et ne partage pas son stockage avec la future version de production. Les comptes de développement sont distincts ; les comptes de production existants n’y sont pas automatiquement ajoutés après la création de la branche. Ne pas utiliser cet APK comme version publique.
 2. **Connexion intégrée, recette encore requise** : le client web de l’interface est adapté au module natif (connexion, inscription, session, JWT, déconnexion). Démarrage ordonné : ponts natifs avant les scripts du site. Les règles CORS/trusted domains de production sont inchangées : les appels à l’API passent par le client HTTP natif pour ce seul hôte. Vérifier sur Android et iOS la restauration réelle, le renouvellement et les erreurs réseau. Aucune connexion réelle d’utilisateur ni création de compte n’a été simulée sur le serveur pour ces tests. Le module communautaire doit rester versionné et revu à chaque mise à jour.
 3. **Parcours de bout en bout** : inscription, connexion, déconnexion, expiration, photo, signalement, correction/rupture, favoris, retour Android, liens, GPS refusé/approximatif et appareils avec encoche. Tester avec un compte administrateur et un compte classique.
 4. **Fonctions requises avant les stores** : suppression de compte et des données associées dans l’app + chemin web pour Google ; politique de confidentialité/contact réels ; signalement de contenu abusif et blocage des utilisateurs pour le contenu communautaire. Les contrôles de modération existants ne constituent pas à eux seuls une validation de toutes ces exigences.

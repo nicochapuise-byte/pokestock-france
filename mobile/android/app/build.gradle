@@ -7,8 +7,8 @@ android {
         applicationId "fr.pokestock.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 14
-        versionName "0.7.6"
+        versionCode 15
+        versionName "0.7.7"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -35,8 +35,8 @@ android {
             }
             applicationIdSuffix ".dev"
             versionNameSuffix "-dev"
-            resValue "string", "app_name", "PokéStock Test"
-            resValue "string", "title_activity_main", "PokéStock Test"
+            resValue "string", "app_name", "PokeTool Test"
+            resValue "string", "title_activity_main", "PokeTool Test"
         }
         release {
             minifyEnabled false

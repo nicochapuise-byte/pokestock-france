@@ -31,10 +31,10 @@ jobs:
       - name: Compile for simulator without distribution signing
         run: xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build CODE_SIGNING_ALLOWED=NO build
       - name: Package simulator app (not installable on iPhone)
-        run: ditto -c -k --sequesterRsrc --keepParent ios/build/Build/Products/Debug-iphonesimulator/App.app ios/PokeStock-simulator.zip
+        run: ditto -c -k --sequesterRsrc --keepParent ios/build/Build/Products/Debug-iphonesimulator/App.app ios/PokeTool-simulator.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: pokestock-ios-simulator
-          path: mobile/ios/PokeStock-simulator.zip
+          name: poketool-ios-simulator
+          path: mobile/ios/PokeTool-simulator.zip
           if-no-files-found: error
           retention-days: 7

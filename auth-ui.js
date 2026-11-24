@@ -66,7 +66,7 @@ const api={
     try{
       const result=await client.signIn.social({provider:"google",callbackURL:new URL("index.html",location.href).href});
       if(result?.error)throw Error(result.error.message||"Connexion Google refusée.");
-      if(window.pokestockNative){status("Terminez la connexion dans le navigateur, puis revenez dans PokéStock.");}
+      if(window.pokestockNative){status("Terminez la connexion dans le navigateur, puis revenez dans PokeTool.");}
       else{await refreshSession();if(currentUser)closeAuth();}
     }catch{status("La connexion Google n’a pas abouti. Réessayez ou utilisez votre adresse e-mail.");}
     finally{loading=false;renderAuth();}

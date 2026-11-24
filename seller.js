@@ -12,7 +12,7 @@
   function imageUrl(url){try{const u=new URL(url);if(u.protocol==='https:'&&u.hostname.endsWith('.neon.tech'))return u.href;}catch{}return url==='catalog-upc151-chat.svg'?url:'catalog-placeholder.svg';}
   function renderSeller(seller){
     const privateSeller=seller.type==='private';
-    document.title=(privateSeller?'Particulier':seller.name)+' — PokéStock France';
+    document.title=(privateSeller?'Particulier':seller.name)+' — PokeTool';
     el('sellerName').textContent=seller.name||'Vendeur';
     el('sellerBadge').textContent=privateSeller?'Particulier · statut déclaré':'Professionnel · statut déclaré';el('sellerBadge').classList.toggle('is-private',privateSeller);
     el('sellerLocation').textContent=(seller.cities||[]).join(' · ');

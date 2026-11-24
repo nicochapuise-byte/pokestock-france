@@ -1,4 +1,4 @@
-/* PokéStock France – administration indépendante des photos d'articles.
+/* PokeTool – administration indépendante des photos d'articles.
    Autorisations contrôlées côté API Neon ; aucune clé privée côté navigateur. */
 "use strict";
 const ADMIN_API="https://br-nameless-math-b9dyokxp-pokestock.compute.c-7.eu-central-1.aws.neon.tech";
@@ -31,7 +31,7 @@ async function token(){
     headers:{"Accept":"application/json"},cache:"no-store",
     signal:AbortSignal.timeout(14000)
   });
-  if(!res.ok)throw Object.assign(Error(res.status===401||res.status===403?"Connecte-toi d'abord sur PokéStock.":"Service d'authentification indisponible."),{status:res.status});
+  if(!res.ok)throw Object.assign(Error(res.status===401||res.status===403?"Connecte-toi d'abord sur PokeTool.":"Service d'authentification indisponible."),{status:res.status});
   const data=await res.json();
   const next=typeof data?.token==="string"?data.token:data?.data?.token;
   if(!next||next.split(".").length!==3)throw Error("Session non validée : reconnecte-toi.");
@@ -66,7 +66,7 @@ function showGate(message,allowed=false){
     const h=document.createElement("h2");h.textContent=message;
     const p=document.createElement("p");
     p.textContent="Cette page n'est accessible qu'aux comptes administrateurs autorisés.";
-    const a=document.createElement("a");a.href="index.html#connexion";a.textContent="→ Se connecter sur PokéStock";
+    const a=document.createElement("a");a.href="index.html#connexion";a.textContent="→ Se connecter sur PokeTool";
     $("admGate").append(h,p,a);
   }
 }
@@ -349,7 +349,7 @@ function csvMissing(){
   const rows=[header,...items.map(e=>[e.id,e.series?.name,e.series?.code,e.product?.name,e.name,e.id+".jpg"])];
   const content="\ufeff"+rows.map(row=>row.map(quote).join(";")).join("\r\n");
   const url=URL.createObjectURL(new Blob([content],{type:"text/csv;charset=utf-8"}));
-  const a=document.createElement("a");a.href=url;a.download="pokestock-photos-manquantes.csv";
+  const a=document.createElement("a");a.href=url;a.download="poketool-photos-manquantes.csv";
   document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
 async function compressPhoto(file){

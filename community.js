@@ -1,4 +1,4 @@
-// PokéStock France : votes de disponibilité et réputation (HTML/JS sans compilation).
+// PokeTool : votes de disponibilité et réputation (HTML/JS sans compilation).
 const stockVotesByMe={};
 const stockPendingVotes=new Set();
 const stockApiRoot="https://br-nameless-math-b9dyokxp-pokestock.compute.c-7.eu-central-1.aws.neon.tech";
