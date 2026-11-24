@@ -10,20 +10,21 @@
   <link rel="stylesheet" href="styles.css?v=20261026-admintabs-v2">
 <link rel="stylesheet" href="interface.css?v=20261027-design-v3">
 <link rel="stylesheet" href="identity.css?v=20261028-google-v1">
-<meta name="theme-color" content="#0b162c">
-<link rel="icon" type="image/svg+xml" href="assets/brand-mark.svg">
+<meta name="theme-color" content="#09265f">
+<link rel="icon" type="image/webp" href="assets/poketool-icon.webp">
 <link rel="preload" as="image" href="assets/background-pokemon-cards.jpg">
 <link rel="stylesheet" href="photo-background.css?v=20261027-photo-v1">
 <link rel="stylesheet" href="navigation.css?v=20261027-watches-v1">
 <link rel="stylesheet" href="account-deletion.css?v=20261027-deletion-v2">
+<link rel="stylesheet" href="poketool-theme.css?v=20261124-v1">
 </head>
 <body data-page="home">
-  <img id="siteBackground" class="site-background" src="assets/background-pokemon-cards.jpg" width="3000" height="2019" alt="" aria-hidden="true" fetchpriority="high"><header class="topbar"><a class="brand" href="#accueil" aria-label="PokeTool, accueil"><span class="ball-logo" aria-hidden="true"><i></i></span><span class="brand-name">PokeTool</span></a><nav class="navlinks" aria-label="Navigation principale"><a href="#accueil" data-page-link="home" class="is-active" aria-current="page">Accueil</a><a href="#carte" data-view="map">Carte</a><a href="#disponibilites" data-view="list">Disponibilités</a><a href="#fonctionnement" data-page-link="about">Le principe</a><a href="admin.html" class="dashboard-link" hidden>Dashboard</a></nav><div class="top-actions">
+  <img id="siteBackground" class="site-background" src="assets/background-pokemon-cards.jpg" width="3000" height="2019" alt="" aria-hidden="true" fetchpriority="high"><header class="topbar"><a class="brand" href="#accueil" aria-label="PokeTool, accueil"><img class="poketool-brand-icon" src="assets/poketool-icon.webp" width="64" height="64" alt=""><span class="brand-name poketool-wordmark">Poke<b>Tool</b></span></a><nav class="navlinks" aria-label="Navigation principale"><a href="#accueil" data-page-link="home" class="is-active" aria-current="page">Accueil</a><a href="#carte" data-view="map">Carte</a><a href="#disponibilites" data-view="list">Disponibilités</a><a href="#fonctionnement" data-page-link="about">Le principe</a><a href="admin.html" class="dashboard-link" hidden>Dashboard</a></nav><div class="top-actions">
 <button class="btn btn-white" id="adminBtn" type="button" hidden>Administration</button><button class="btn btn-white" id="accountBtn" type="button">Mon compte</button><button class="btn btn-red" id="openReportTop" type="button"><svg class="ui-icon" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span>Signaler un produit</span></button>
 </div></header><main id="accueil"><section class="hero section"><div class="hero-copy">
 <p class="eyebrow hero-kicker"><span></span>LE RENDEZ-VOUS DES COLLECTIONNEURS</p>
 <h1>
-<span>Votre prochaine</span><em>trouvaille Pokémon</em><span>commence ici.</span>
+<span>Trouvez.</span><em>Collectionnez.</em><span>Partagez.</span>
 </h1>
 <p class="hero-description"><span class="hero-description-long">Des boosters aux coffrets les plus recherchés, retrouvez les produits signalés en magasin par la communauté.</span><span class="hero-description-short">Repérez les produits signalés près de chez vous.</span></p>
 <div class="hero-actions">
@@ -105,7 +106,7 @@
 </div></article><article><span>03</span><div>
 <b>La communauté vérifie</b><p>Les autres membres confirment la disponibilité ou signalent une rupture.</p>
 </div></article>
-</div></section></main><footer><a class="brand small" href="#accueil">PokeTool</a><p>Par des collectionneurs, pour des collectionneurs.</p>
+</div></section></main><footer><a class="brand small" href="#accueil">PokeTool</a><p>Trouvez. Collectionnez. Partagez.</p>
 <small>Projet indépendant, non affilié à The Pokémon Company, Nintendo ou Game Freak.</small><p class="photo-credit">Photo : <a href="https://unsplash.com/photos/a-bunch-of-pokemon-cards-on-a-table-mGUs05ZMeec" target="_blank" rel="noopener noreferrer">Thimo Pedersen / Unsplash</a></p><p><a href="confidentialite.html">Confidentialité</a> · <a href="assistance.html">Assistance</a> · <a href="suppression-compte.html">Suppression de compte</a></p></footer><div class="modal" id="authModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-auth></div>
     <form id="authForm" class="modal-card auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">

@@ -1,0 +1,35 @@
+/* PokeTool • playful identity, preserving the existing map, auth and navigation. */
+:root{--pt-navy:#09265f;--pt-blue:#0754c8;--pt-yellow:#ffd01a;--pt-red:#ff344a;--pt-cream:#fffaf4}
+.topbar{background:#09265ff5;border-bottom:3px solid var(--pt-yellow);box-shadow:0 4px 18px #061b4540}
+.topbar .brand{gap:2px;flex-shrink:0}
+.poketool-brand-icon{width:55px;height:55px;object-fit:contain;display:block;flex-shrink:0}
+.topbar .poketool-wordmark{font-family:ui-rounded,"Arial Rounded MT Bold",Manrope,system-ui,sans-serif;font-size:clamp(24px,2.4vw,33px);font-weight:950;font-style:italic;letter-spacing:-1.6px;color:#fff;line-height:1;white-space:nowrap}
+.poketool-wordmark b{color:var(--pt-yellow)}
+.topbar .navlinks a.is-active{color:var(--pt-yellow)}
+.topbar .navlinks a:hover{color:#fff}
+.top-actions #openReportTop{background:var(--pt-red);color:white;border:1px solid #ff6e7e;border-radius:12px}
+.hero.section{background:linear-gradient(118deg,#09265f 0%,#0754c8 65%,#087fe8 100%);border:1px solid #66a5ff66;border-bottom:5px solid var(--pt-yellow);border-radius:24px;box-shadow:0 18px 44px #001c5670}
+.hero h1,.hero h1 em,.app-welcome h1{font-family:ui-rounded,"Arial Rounded MT Bold",Manrope,system-ui,sans-serif;font-weight:950;letter-spacing:-.045em}
+.hero h1 span{color:#fff;text-shadow:0 3px 0 #09265f45}
+.hero h1 em{color:var(--pt-yellow);font-style:italic;text-shadow:0 3px 0 #09265f45}
+.hero .hero-copy>p.hero-description{color:#fff}
+.hero .hero-kicker{color:#fff!important}
+.hero .hero-explore{background:var(--pt-yellow);color:var(--pt-navy);border-radius:12px;box-shadow:0 4px 0 #b58b00;min-height:46px;font-weight:850}
+.hero .hero-explore:hover{background:#ffe45b;color:var(--pt-navy)}
+.hero-about{color:#fff;text-decoration:underline;text-underline-offset:4px}
+.product-sun{background:var(--pt-yellow)}
+.catalog-strip{border-color:#ffd01a55}
+.catalog-spark,.community-count b,.strip-count b{color:var(--pt-yellow)}
+.section-title .eyebrow,.map-eyebrow,.how .eyebrow{color:var(--pt-yellow)}
+.finder{border-color:#66a5ff66;border-radius:18px}
+.toolbar-button,.view-switch button,.seller-filter-options label>span{border-radius:10px}
+.seller-filter-options input:checked+span,.view-switch button.is-active{background:var(--pt-yellow);color:var(--pt-navy)}
+.map-chip{border:1px solid #0754c844;border-radius:10px}
+.stock-card{border-radius:16px;border-color:#83b6ff50}
+.mobile-nav{background:var(--pt-navy);border-top:2px solid var(--pt-yellow)}
+.mobile-nav button.is-active,.mobile-nav .mobile-report{color:var(--pt-yellow)}
+.mobile-report .ui-icon{background:var(--pt-yellow);color:var(--pt-navy)}
+.modal-card{border-color:#66a5ff66}
+.btn:focus-visible,a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #ffd01a;outline-offset:3px}
+@media(max-width:600px){.topbar{padding-left:12px;padding-right:16px}.poketool-brand-icon{width:47px;height:47px}.topbar .poketool-wordmark{font-size:25px}.hero.section{border-radius:20px}.hero h1{font-size:clamp(27px,8vw,39px);line-height:1.09}.hero .hero-explore{min-height:44px;box-shadow:0 3px 0 #b58b00}.hero .hero-copy>p.hero-description{font-size:12px}.hero-about{font-size:11px}.mobile-nav button{min-height:44px}}
+@media(prefers-reduced-motion:reduce){.btn,.stock-card,.navlinks a{transition:none}.btn:hover,.stock-card:hover{transform:none}}

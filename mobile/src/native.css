@@ -37,3 +37,6 @@ html.native-app{background:#0b162c;overscroll-behavior-y:none}
 .app-shell .app-tabbar{z-index:2100}
 .app-shell .app-tab-panel{bottom:calc(80px + env(safe-area-inset-bottom,0px))}
 .app-shell .app-tab-panel .modal-card{max-height:100%;padding-bottom:24px}
+
+/* PokeTool brand palette and native welcome */
+.app-shell .topbar{background:#09265f;border-bottom:3px solid #ffd01a}.app-shell .topbar .poketool-brand-icon{width:49px;height:49px}.app-shell .app-tabbar{background:#09265f;border-top:2px solid #ffd01a}.app-tabbar button.selected,.app-tabbar [data-app-tab=report]{color:#ffd01a}.app-tabbar [data-app-tab=report] svg{background:#ffd01a;color:#09265f}.app-shell .app-welcome{background:linear-gradient(145deg,#09265f,#0754c8 80%,#087fe8)!important;border-bottom:5px solid #ffd01a}.app-shell .app-welcome h1 em,.app-shell .app-welcome .eyebrow{color:#ffd01a}.app-welcome>p{color:white}.app-welcome-actions .btn-red{background:#ffd01a;color:#09265f}.app-shell .hero.section{min-height:0}.app-shell .hero .hero-copy>p.hero-description,.app-shell .hero .hero-actions{max-width:100%}.app-shell .hero .hero-description-long{display:inline}.app-shell .hero .hero-description-short{display:none}
