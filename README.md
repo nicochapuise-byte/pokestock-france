@@ -6,6 +6,10 @@
 
 ## Télécharger la bêta Android
 
+**[Page d'installation et guide pour les testeurs Android](https://nicochapuise-byte.github.io/pokestock-france/beta/)**
+
+Version 0.7.8 : [téléchargement APK direct](https://github.com/nicochapuise-byte/pokestock-france/releases/download/android-beta-v0.7.8/PokeTool-0.7.8-test.apk) · [SHA-256](https://github.com/nicochapuise-byte/pokestock-france/releases/download/android-beta-v0.7.8/PokeTool-0.7.8-test.apk.sha256) · [release](https://github.com/nicochapuise-byte/pokestock-france/releases/tag/android-beta-v0.7.8).
+
 **[Télécharger les APK de test et consulter les mises à jour](https://github.com/nicochapuise-byte/pokestock-france/releases)**
 
 Ouvrez la release Android la plus récente, puis téléchargez le fichier `PokeTool-…-test.apk` dans **Assets**. Les archives « Source code » ne sont pas des applications Android.
