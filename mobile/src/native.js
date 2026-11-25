@@ -7,7 +7,7 @@ import { CapacitorNeon } from '@capgo/capacitor-neon';
 import { createNativeAuthClient } from './auth-adapter.mjs';
 import { createApiFetch } from './api-transport.mjs';
 import { receiveCameraRestore } from './proof-camera.js';
-import { externalDestination, backDestination } from './navigation.mjs';
+import { externalDestination, backDestination, closeOpenFilters } from './navigation.mjs';
 export async function initializeNative() {
   if (!Capacitor.isNativePlatform()) throw Error('Native application required');
   const config=__MOBILE_CONFIG__;
@@ -49,6 +49,7 @@ export async function initializeNative() {
     const close=modal?.querySelector('.modal-close, [data-close-modal], [data-close-auth], [data-close-watches], [data-close-my-reports], [data-close-admin]');
     if (close) { close.click(); return; }
     if (document.querySelector('.modal.open')) return;
+    if (closeOpenFilters(document)) return;
     const next=backDestination(location.pathname,location.hash);
     if (next==='index.html') location.href='index.html';
     else if (next) location.hash=next;

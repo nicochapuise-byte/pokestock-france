@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile,access,readdir} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
-import {externalDestination,backDestination} from '../src/navigation.mjs';
+import {externalDestination,backDestination,closeOpenFilters} from '../src/navigation.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 test('external URLs stay out of the app WebView, local navigation stays inside',()=>{
   for(const base of ['capacitor://localhost/index.html','https://localhost/index.html']){
@@ -17,6 +17,25 @@ test('back goes from seller to home, then home tab, then minimizes',()=>{
   assert.equal(backDestination('/seller.html','#foo'),'index.html');
   assert.equal(backDestination('/index.html','#carte'),'#accueil');
   assert.equal(backDestination('/index.html','#accueil'),null);
+});
+test('Android Back closes the map filter drawer before changing screens',async()=>{
+  let closes=0;
+  const backdrop={hidden:false};
+  const close={click(){closes++;backdrop.hidden=true;}};
+  const doc={getElementById:id=>({filterBackdrop:backdrop,closeFilters:close}[id]||null)};
+  assert.equal(closeOpenFilters(doc),true);
+  assert.equal(closes,1);
+  assert.equal(backdrop.hidden,true);
+  assert.equal(closeOpenFilters(doc),false);
+  assert.equal(closes,1);
+  assert.equal(closeOpenFilters({getElementById:()=>null}),false);
+  // Native Back must check this only after closing actual modals,
+  // but before switching screens or minimizing the Android app.
+  const nativeSource=await readFile(resolve(root,'src/native.js'),'utf8');
+  const modals=nativeSource.indexOf("if (document.querySelector('.modal.open')) return;");
+  const filters=nativeSource.indexOf('if (closeOpenFilters(document)) return;');
+  const screens=nativeSource.indexOf('const next=backDestination(location.pathname,location.hash);');
+  assert(modals>=0&&filters>modals&&screens>filters);
 });
 test('native bundle ships local pages and map library, and uses explicit GPS hook',async()=>{
   const html=await readFile(resolve(root,'www/index.html'),'utf8');
